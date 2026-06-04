@@ -1,16 +1,17 @@
 import { webhookCallback } from "grammy";
+import type { IncomingMessage, ServerResponse } from "node:http";
 import { bot } from "../src/bot.js";
 import { config } from "../src/config.js";
 import { logger } from "../src/utils/logger.js";
 
-// Создаем обработчик вебхука для Vercel (совместимый с Express/Node.js HTTP)
-const handleUpdate = webhookCallback(bot, "express");
+// Адаптер "http" — совместим с нативными Vercel Serverless Functions (req/res без Express)
+const handleUpdate = webhookCallback(bot, "http");
 
 /**
  * Основной обработчик запросов от Telegram API на серверах Vercel.
  * Защищен с помощью секретного токена X-Telegram-Bot-Api-Secret-Token.
  */
-export default async function handler(req: any, res: any): Promise<void> {
+export default async function handler(req: IncomingMessage, res: ServerResponse): Promise<void> {
   // Логируем входящие запросы только в режиме отладки или для диагностики
   logger.info(`Получен вебхук запрос: ${req.method} ${req.url}`);
 

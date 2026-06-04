@@ -53,17 +53,3 @@ export const rateLimiter: Middleware<Context> = async (ctx, next) => {
 
   await next();
 };
-
-// Фоновый сборщик мусора для очистки неактивных пользователей из памяти раз в 5 минут
-setInterval(() => {
-  const now = Date.now();
-  for (const [userId, timestamps] of userHistory.entries()) {
-    const active = timestamps.filter((t) => now - t < WINDOW_MS);
-    if (active.length === 0) {
-      userHistory.delete(userId);
-    } else {
-      userHistory.set(userId, active);
-    }
-  }
-}, 5 * 60 * 1000).unref(); // unref(), чтобы таймер не мешал завершению процесса в тестах/локально
-

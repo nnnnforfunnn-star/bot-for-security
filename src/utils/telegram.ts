@@ -40,15 +40,6 @@ export async function isUserAdmin(ctx: Context, userId?: number): Promise<boolea
   }
 }
 
-// Очистка кэша админов раз в 5 минут
-setInterval(() => {
-  const now = Date.now();
-  for (const [key, val] of adminCache.entries()) {
-    if (val.expiresAt < now) {
-      adminCache.delete(key);
-    }
-  }
-}, 5 * 60 * 1000).unref();
 
 /**
  * Безопасное групповое удаление сообщений с учетом лимитов Telegram API.
