@@ -1,0 +1,21 @@
+{
+  "name": "tg-moderator-bot",
+  "version": "1.0.0",
+  "description": "Enterprise-grade Telegram Moderator Bot optimized for Vercel Serverless Functions",
+  "type": "module",
+  "main": "api/webhook.js",
+  "scripts": {
+    "dev": "tsx watch src/local.ts",
+    "build": "tsc",
+    "start": "node dist/src/local.js"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "grammy": "^1.23.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.24",
+    "tsx": "^4.7.1",
+    "typescript": "^5.3.3"
+  }
+}
