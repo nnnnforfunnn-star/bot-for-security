@@ -6,7 +6,7 @@
   "main": "api/webhook.js",
   "scripts": {
     "dev": "tsx watch src/local.ts",
-    "build": "tsc",
+    "build:ts": "tsc",
     "start": "node dist/src/local.js"
   },
   "dependencies": {
