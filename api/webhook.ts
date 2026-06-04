@@ -1,17 +1,29 @@
-import { Bot, webhookCallback } from "grammy";
+import { bot } from "../src/bot.js";
+import { config } from "../src/config.js";
+import { logger } from "../src/utils/logger.js";
 
-// Читаем токен напрямую из process.env (Vercel инжектирует его автоматически)
-const token = process.env.BOT_TOKEN;
-if (!token) throw new Error("BOT_TOKEN is unset");
+export default async function handler(req: any, res: any) {
+  if (req.method !== "POST") {
+    return res.status(405).send("Method Not Allowed");
+  }
 
-const bot = new Bot(token);
+  // Ручная проверка секретного токена вебхука
+  if (config.WEBHOOK_SECRET) {
+    const telegramSecret = req.headers["x-telegram-bot-api-secret-token"];
+    if (telegramSecret !== config.WEBHOOK_SECRET) {
+      logger.warn("Unauthorized webhook access attempt.");
+      return res.status(403).send("Forbidden");
+    }
+  }
 
-// Простая команда для проверки
-bot.command("start", (ctx) =>
-  ctx.reply("🛡️ Бот работает! Webhook на Vercel подключен успешно.")
-);
+  try {
+    // Vercel автоматически парсит JSON и кладет его в req.body
+    // Передаем готовый объект напрямую в grammY
+    await bot.handleUpdate(req.body);
+    return res.status(200).send("OK");
+  } catch (error) {
+    logger.error("Error handling update", error);
+    return res.status(500).send("Internal Server Error");
+  }
+}
 
-// Обработка ошибок, чтобы бот не падал
-bot.catch((err) => console.error("Bot error:", err));
-
-export default webhookCallback(bot, "express");
