@@ -1,46 +1,17 @@
 import { webhookCallback } from "grammy";
-import type { IncomingMessage, ServerResponse } from "node:http";
 import { bot } from "../src/bot.js";
 import { config } from "../src/config.js";
 import { logger } from "../src/utils/logger.js";
 
-// Адаптер "http" — совместим с нативными Vercel Serverless Functions (req/res без Express)
-const handleUpdate = webhookCallback(bot, "http");
-
 /**
- * Основной обработчик запросов от Telegram API на серверах Vercel.
- * Защищен с помощью секретного токена X-Telegram-Bot-Api-Secret-Token.
+ * Vercel Serverless Function для приема вебхуков от Telegram.
+ *
+ * Vercel автоматически парсит тело запроса и помещает его в req.body,
+ * поэтому используем адаптер "express" (он читает req.body, а не raw stream).
+ * Секретный токен проверяется через встроенную опцию grammY secretToken.
  */
-export default async function handler(req: IncomingMessage, res: ServerResponse): Promise<void> {
-  // Логируем входящие запросы только в режиме отладки или для диагностики
-  logger.info(`Получен вебхук запрос: ${req.method} ${req.url}`);
+const handleUpdate = webhookCallback(bot, "express", {
+  secretToken: config.WEBHOOK_SECRET || undefined,
+});
 
-  if (req.method !== "POST") {
-    res.statusCode = 405;
-    res.end("Method Not Allowed");
-    return;
-  }
-
-  // Защита вебхука: верифицируем секретный токен, заданный при setWebhook
-  if (config.WEBHOOK_SECRET) {
-    const telegramSecret = req.headers["x-telegram-bot-api-secret-token"];
-    if (telegramSecret !== config.WEBHOOK_SECRET) {
-      logger.warn("Попытка несанкционированного доступа к вебхуку. Секретный токен неверен.");
-      res.statusCode = 403;
-      res.end("Forbidden");
-      return;
-    }
-  }
-
-  try {
-    // Передаем запрос во встроенный обработчик grammY
-    await handleUpdate(req, res);
-  } catch (error) {
-    logger.error("Критическая ошибка при обработке вебхука на Vercel", error);
-    // Vercel ожидает, что мы закроем соединение в случае ошибки
-    if (!res.writableEnded) {
-      res.statusCode = 500;
-      res.end("Internal Server Error");
-    }
-  }
-}
+export default handleUpdate;
