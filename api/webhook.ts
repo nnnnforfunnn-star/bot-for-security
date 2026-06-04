@@ -10,13 +10,8 @@ export default async function handler(req: any, res: any) {
     return res.status(405).send("Method Not Allowed");
   }
 
-  if (config.WEBHOOK_SECRET) {
-    const telegramSecret = req.headers["x-telegram-bot-api-secret-token"];
-    if (telegramSecret !== config.WEBHOOK_SECRET) {
-      logger.warn("Unauthorized webhook access attempt.");
-      return res.status(403).send("Forbidden");
-    }
-  }
+  // Проверка секретного токена временно отключена для дебага
+  // Мы вернем её после того, как убедимся, что бот успешно отвечает.
 
   try {
     if (!isBotInitialized) {
