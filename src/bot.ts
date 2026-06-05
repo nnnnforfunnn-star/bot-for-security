@@ -76,7 +76,14 @@ bot.command("filter", filterCommand);
 bot.command("stop", stopFilterCommand);
 bot.command("filters", filtersListCommand);
 
-// 7. Iris-like RP and Fun Commands
+// 7. Notes (Snippets)
+import { saveNoteCommand, getNoteCommand, clearNoteCommand, notesListCommand } from "./handlers/notesHandler.js";
+bot.command("save", saveNoteCommand);
+bot.command("get", (ctx) => getNoteCommand(ctx, false));
+bot.command("clear", clearNoteCommand);
+bot.command("notes", notesListCommand);
+
+// 8. Iris-like RP and Fun Commands
 import { 
   handleRpCommand, randomCommand, infaCommand, chooseCommand, 
   yesNoCommand, whoCommand, sayCommand, rouletteCommand 
@@ -87,9 +94,16 @@ import {
   shipCommand, weatherCommand 
 } from "./handlers/socialHandler.js";
 
-// Text listeners for RP Actions
+// Text listeners for RP Actions and Notes
 bot.on("message:text", async (ctx, next) => {
   const text = ctx.message.text.toLowerCase().trim();
+  
+  if (text.startsWith("#")) {
+    await getNoteCommand(ctx, true);
+    // don't return here so normal message processing happens too, or maybe return?
+    // usually notes should not stop message processing
+  }
+
   // RP Actions Check
   if (ctx.message.reply_to_message) {
     const actionWords = ["обнять", "поцеловать", "ударить", "укусить", "убить", "дать пять", "погладить", "пнуть", "расстрелять"];

@@ -8,6 +8,8 @@ export interface GroupConfig {
   antiSwearEnabled: boolean;
   muteDurationMinutes: number;
   warnLimit: number;
+  warnAction: "mute" | "ban" | "kick";
+  antiChannel: boolean;
   
   // Locks Module
   locks: {
@@ -27,6 +29,7 @@ export interface GroupConfig {
     enabled: boolean;
     messages: number;
     seconds: number;
+    action: "mute" | "ban" | "kick" | "delete";
   };
   
   // Welcome & Goodbye
@@ -51,6 +54,8 @@ export const DEFAULT_CONFIG: GroupConfig = {
   antiSwearEnabled: true,
   muteDurationMinutes: 120,
   warnLimit: 3,
+  warnAction: "mute",
+  antiChannel: false,
   
   locks: {
     links: false,
@@ -67,7 +72,8 @@ export const DEFAULT_CONFIG: GroupConfig = {
   antiflood: {
     enabled: false,
     messages: 5,
-    seconds: 5
+    seconds: 5,
+    action: "mute"
   },
   
   welcome: {
