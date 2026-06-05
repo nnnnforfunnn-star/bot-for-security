@@ -124,7 +124,12 @@ export async function antifloodCommand(ctx: Context) {
   if (isNaN(msgs) || isNaN(secs)) return;
   
   const config = await getGroupConfig(ctx.chat.id);
-  config.antiflood = { enabled: true, messages: msgs, seconds: secs };
+  config.antiflood = { 
+    enabled: true, 
+    messages: msgs, 
+    seconds: secs, 
+    action: config.antiflood?.action || "mute" 
+  };
   await updateGroupConfig(ctx.chat.id, { antiflood: config.antiflood });
   await ctx.reply(`✅ Антифлуд иштетилди: ${secs} секунд ичинде ${msgs} билдирүү лимити коюлду.`);
 }
