@@ -154,12 +154,28 @@ export async function messageHandler(ctx: Context, next: NextFunction): Promise<
       shouldDelete = true; warnReason = "Башка каналдан репост кылуу бөгөттөлгөн.";
     } else if (config.locks?.media && (ctx.message.photo || ctx.message.video || ctx.message.document)) {
       shouldDelete = true; warnReason = "Медиа жөнөтүү бөгөттөлгөн.";
+    } else if (config.locks?.photo && ctx.message.photo) {
+      shouldDelete = true; warnReason = "Сүрөт жөнөтүү бөгөттөлгөн.";
+    } else if (config.locks?.video && ctx.message.video) {
+      shouldDelete = true; warnReason = "Видео жөнөтүү бөгөттөлгөн.";
+    } else if (config.locks?.audio && ctx.message.audio) {
+      shouldDelete = true; warnReason = "Аудио жөнөтүү бөгөттөлгөн.";
+    } else if (config.locks?.document && ctx.message.document) {
+      shouldDelete = true; warnReason = "Файл/Документ жөнөтүү бөгөттөлгөн.";
     } else if (config.locks?.stickers && ctx.message.sticker) {
       shouldDelete = true; warnReason = "Стикерлер бөгөттөлгөн.";
     } else if (config.locks?.gifs && ctx.message.animation) {
       shouldDelete = true; warnReason = "GIF анимациялар бөгөттөлгөн.";
-    } else if (config.locks?.voices && (ctx.message.voice || ctx.message.video_note)) {
-      shouldDelete = true; warnReason = "Үн жана видео билдирүүлөр бөгөттөлгөн.";
+    } else if (config.locks?.voices && ctx.message.voice) {
+      shouldDelete = true; warnReason = "Үн билдирүүлөр бөгөттөлгөн.";
+    } else if (config.locks?.videonote && ctx.message.video_note) {
+      shouldDelete = true; warnReason = "Кружоктор бөгөттөлгөн.";
+    } else if (config.locks?.games && ctx.message.game) {
+      shouldDelete = true; warnReason = "Оюндар бөгөттөлгөн.";
+    } else if (config.locks?.commands && text?.startsWith("/")) {
+      shouldDelete = true; warnReason = "Буйруктар бөгөттөлгөн.";
+    } else if (config.locks?.text && text && !ctx.message.photo && !ctx.message.video && !ctx.message.document && !ctx.message.voice && !ctx.message.video_note && !ctx.message.animation) {
+      shouldDelete = true; warnReason = "Жөнөкөй текст жазуу бөгөттөлгөн.";
     } else if (config.locks?.arabic && text && /[\u0600-\u06FF]/.test(text)) {
       shouldDelete = true; warnReason = "Араб ариби бөгөттөлгөн.";
     }
@@ -211,7 +227,18 @@ export async function messageHandler(ctx: Context, next: NextFunction): Promise<
     const utcHour = new Date().getUTCHours();
     const bishkekHour = (utcHour + 6) % 24;
     const hasMediaOrLink = ctx.message.photo || ctx.message.video || ctx.message.document || ctx.message.entities?.some(e => e.type === "url" || e.type === "text_link" || e.type === "mention");
-    if (bishkekHour >= 0 && bishkekHour < 7 && hasMediaOrLink) {
+    
+    const start = config.nightModeStart;
+    const end = config.nightModeEnd;
+    
+    let isNight = false;
+    if (start < end) {
+      isNight = bishkekHour >= start && bishkekHour < end;
+    } else {
+      isNight = bishkekHour >= start || bishkekHour < end;
+    }
+
+    if (isNight && hasMediaOrLink) {
       shouldDelete = true; warnReason = "Түнкү дозор: Шилтеме/Медиа жөнөтүүгө болбойт.";
     }
   }

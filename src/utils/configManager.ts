@@ -2,7 +2,13 @@ import { db } from "./db.js";
 
 export interface GroupConfig {
   captchaEnabled: boolean;
+  captchaMode: "button" | "math" | "text";
+  captchaTime: number;
+  captchaKick: boolean;
+  cleanWelcome: boolean;
   nightModeEnabled: boolean;
+  nightModeStart: number;
+  nightModeEnd: number;
   quarantineEnabled: boolean;
   karmaEnabled: boolean;
   antiSwearEnabled: boolean;
@@ -13,14 +19,22 @@ export interface GroupConfig {
   
   // Locks Module
   locks: {
+    text: boolean;
     links: boolean;
     forwards: boolean;
     bots: boolean;
+    photo: boolean;
+    video: boolean;
+    audio: boolean;
+    document: boolean;
+    videonote: boolean;
     media: boolean;
     stickers: boolean;
     gifs: boolean;
     voices: boolean;
     arabic: boolean;
+    commands: boolean;
+    games: boolean;
     porn: boolean;
   };
   
@@ -47,8 +61,14 @@ export interface GroupConfig {
 }
 
 export const DEFAULT_CONFIG: GroupConfig = {
-  captchaEnabled: true,
+  captchaEnabled: false,
+  captchaMode: "button",
+  captchaTime: 120,
+  captchaKick: false,
+  cleanWelcome: false,
   nightModeEnabled: false,
+  nightModeStart: 0,
+  nightModeEnd: 7,
   quarantineEnabled: true,
   karmaEnabled: true,
   antiSwearEnabled: true,
@@ -58,14 +78,22 @@ export const DEFAULT_CONFIG: GroupConfig = {
   antiChannel: false,
   
   locks: {
+    text: false,
     links: false,
     forwards: false,
     bots: true,
+    photo: false,
+    video: false,
+    audio: false,
+    document: false,
+    videonote: false,
     media: false,
     stickers: false,
     gifs: false,
     voices: false,
     arabic: true,
+    commands: false,
+    games: false,
     porn: true
   },
   

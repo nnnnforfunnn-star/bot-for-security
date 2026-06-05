@@ -74,6 +74,22 @@
           <div class="setting-info"><h3>Капча (Анти-бот)</h3></div>
           <label class="switch"><input type="checkbox" id="captchaEnabled"><span class="slider"></span></label>
         </div>
+        <div class="input-group">
+          <label>Капча түрү</label>
+          <select id="captchaMode">
+            <option value="button">Баскыч (Button)</option>
+            <option value="math">Математика</option>
+            <option value="text">Текст (Символдор)</option>
+          </select>
+        </div>
+        <div class="setting-row">
+          <div class="setting-info"><h3>Капчадан өтпөсө Кик кылуу</h3></div>
+          <label class="switch"><input type="checkbox" id="captchaKick"><span class="slider"></span></label>
+        </div>
+        <div class="setting-row">
+          <div class="setting-info"><h3>Таза Саламдашуу (Эскисин өчүрүү)</h3></div>
+          <label class="switch"><input type="checkbox" id="cleanWelcome"><span class="slider"></span></label>
+        </div>
         <div class="setting-row">
           <div class="setting-info"><h3>Анти-Сөгүнүү</h3></div>
           <label class="switch"><input type="checkbox" id="antiSwearEnabled"><span class="slider"></span></label>
@@ -85,18 +101,36 @@
       </div>
 
       <div class="section">
+        <div class="section-title">🌙 Түнкү дозор (Night Mode)</div>
+        <div class="setting-row">
+          <div class="setting-info"><h3>Иштетүү</h3><p>Түнкүсүн медиа/шилтемеге тыюу</p></div>
+          <label class="switch"><input type="checkbox" id="nightModeEnabled"><span class="slider"></span></label>
+        </div>
+        <div style="display:flex; gap:10px;">
+          <div class="input-group" style="flex:1"><label>Башталышы (Саат)</label><input type="number" id="nightModeStart" min="0" max="23"></div>
+          <div class="input-group" style="flex:1"><label>Бүтүшү (Саат)</label><input type="number" id="nightModeEnd" min="0" max="23"></div>
+        </div>
+      </div>
+
+      <div class="section">
         <div class="section-title">🔒 Бөгөттөөлөр (Locks)</div>
-        <div class="setting-row">
-          <div class="setting-info"><h3>Шилтемелер (Links)</h3></div>
-          <label class="switch"><input type="checkbox" id="lock_links"><span class="slider"></span></label>
-        </div>
-        <div class="setting-row">
-          <div class="setting-info"><h3>Медиа (Сүрөт/Видео)</h3></div>
-          <label class="switch"><input type="checkbox" id="lock_media"><span class="slider"></span></label>
-        </div>
-        <div class="setting-row">
-          <div class="setting-info"><h3>Араб тамгалары</h3></div>
-          <label class="switch"><input type="checkbox" id="lock_arabic"><span class="slider"></span></label>
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+          <label class="switch-row"><input type="checkbox" id="lock_text"><span> Текст</span></label>
+          <label class="switch-row"><input type="checkbox" id="lock_links"><span> Шилтеме</span></label>
+          <label class="switch-row"><input type="checkbox" id="lock_photo"><span> Сүрөт</span></label>
+          <label class="switch-row"><input type="checkbox" id="lock_video"><span> Видео</span></label>
+          <label class="switch-row"><input type="checkbox" id="lock_audio"><span> Музыка</span></label>
+          <label class="switch-row"><input type="checkbox" id="lock_voices"><span> Үн/Голос</span></label>
+          <label class="switch-row"><input type="checkbox" id="lock_videonote"><span> Кружок</span></label>
+          <label class="switch-row"><input type="checkbox" id="lock_document"><span> Файл</span></label>
+          <label class="switch-row"><input type="checkbox" id="lock_stickers"><span> Стикер</span></label>
+          <label class="switch-row"><input type="checkbox" id="lock_gifs"><span> GIF</span></label>
+          <label class="switch-row"><input type="checkbox" id="lock_bots"><span> Боттор</span></label>
+          <label class="switch-row"><input type="checkbox" id="lock_commands"><span> /Команда</span></label>
+          <label class="switch-row"><input type="checkbox" id="lock_games"><span> Оюн</span></label>
+          <label class="switch-row"><input type="checkbox" id="lock_forwards"><span> Репост</span></label>
+          <label class="switch-row"><input type="checkbox" id="lock_arabic"><span> Арабча</span></label>
+          <label class="switch-row"><input type="checkbox" id="lock_porn"><span> NSFW</span></label>
         </div>
       </div>
 
@@ -107,7 +141,11 @@
           <input type="number" id="warnLimit" min="1" max="10">
         </div>
         <div class="input-group">
-          <label>Жаза</label>
+          <label>Муттун узактыгы (мүнөт)</label>
+          <input type="number" id="muteDurationMinutes">
+        </div>
+        <div class="input-group">
+          <label>Лимит толгондо Жаза</label>
           <select id="warnAction">
             <option value="warn">Эскертүү</option>
             <option value="delete">Өчүрүү гана</option>
@@ -144,6 +182,11 @@
           <label class="switch"><input type="checkbox" id="welcome_enabled"><span class="slider"></span></label>
         </div>
         <div class="input-group"><label>Текст ({name})</label><textarea id="welcome_text" rows="2"></textarea></div>
+        <div class="setting-row">
+          <div class="setting-info"><h3>Коштошуу</h3></div>
+          <label class="switch"><input type="checkbox" id="goodbye_enabled"><span class="slider"></span></label>
+        </div>
+        <div class="input-group"><label>Коштошуу тексти ({name})</label><textarea id="goodbye_text" rows="2"></textarea></div>
         <div class="input-group"><label>Эрежелер (/rules)</label><textarea id="rulesText" rows="3"></textarea></div>
       </div>
     </div>
@@ -234,19 +277,51 @@
     function renderMain() {
       const cfg = appData.config;
       document.getElementById('captchaEnabled').checked = cfg.captchaEnabled || false;
+      document.getElementById('captchaMode').value = cfg.captchaMode || 'math';
+      document.getElementById('captchaKick').checked = cfg.captchaKick || false;
+      document.getElementById('cleanWelcome').checked = cfg.cleanWelcome || false;
       document.getElementById('antiSwearEnabled').checked = cfg.antiSwearEnabled || false;
       document.getElementById('antiChannel').checked = cfg.antiChannel || false;
-      document.getElementById('lock_links').checked = cfg.locks?.links || false;
-      document.getElementById('lock_media').checked = cfg.locks?.media || false;
-      document.getElementById('lock_arabic').checked = cfg.locks?.arabic || false;
+      document.getElementById('nightModeEnabled').checked = cfg.nightModeEnabled || false;
+      document.getElementById('nightModeStart').value = cfg.nightModeStart || 0;
+      document.getElementById('nightModeEnd').value = cfg.nightModeEnd || 7;
+      
+      const locks = cfg.locks || {};
+      document.getElementById('lock_text').checked = locks.text || false;
+      document.getElementById('lock_links').checked = locks.links || false;
+      document.getElementById('lock_photo').checked = locks.photo || false;
+      document.getElementById('lock_video').checked = locks.video || false;
+      document.getElementById('lock_audio').checked = locks.audio || false;
+      document.getElementById('lock_voices').checked = locks.voices || false;
+      document.getElementById('lock_videonote').checked = locks.videonote || false;
+      document.getElementById('lock_document').checked = locks.document || false;
+      document.getElementById('lock_stickers').checked = locks.stickers || false;
+      document.getElementById('lock_gifs').checked = locks.gifs || false;
+      document.getElementById('lock_bots').checked = locks.bots || false;
+      document.getElementById('lock_commands').checked = locks.commands || false;
+      document.getElementById('lock_games').checked = locks.games || false;
+      document.getElementById('lock_forwards').checked = locks.forwards || false;
+      document.getElementById('lock_arabic').checked = locks.arabic || false;
+      document.getElementById('lock_porn').checked = locks.porn || false;
+
       document.getElementById('warnLimit').value = cfg.warnLimit || 3;
+      document.getElementById('muteDurationMinutes').value = cfg.muteDurationMinutes || 120;
       document.getElementById('warnAction').value = cfg.warnAction || 'mute';
-      document.getElementById('antiflood_enabled').checked = cfg.antiflood?.enabled || false;
-      document.getElementById('antiflood_messages').value = cfg.antiflood?.messages || 5;
-      document.getElementById('antiflood_seconds').value = cfg.antiflood?.seconds || 5;
-      document.getElementById('antiflood_action').value = cfg.antiflood?.action || 'mute';
-      document.getElementById('welcome_enabled').checked = cfg.welcome?.enabled || false;
-      document.getElementById('welcome_text').value = cfg.welcome?.text || '';
+      
+      const flood = cfg.antiflood || {};
+      document.getElementById('antiflood_enabled').checked = flood.enabled || false;
+      document.getElementById('antiflood_messages').value = flood.messages || 5;
+      document.getElementById('antiflood_seconds').value = flood.seconds || 5;
+      document.getElementById('antiflood_action').value = flood.action || 'mute';
+      
+      const welcome = cfg.welcome || {};
+      document.getElementById('welcome_enabled').checked = welcome.enabled || false;
+      document.getElementById('welcome_text').value = welcome.text || '';
+
+      const goodbye = cfg.goodbye || {};
+      document.getElementById('goodbye_enabled').checked = goodbye.enabled || false;
+      document.getElementById('goodbye_text').value = goodbye.text || '';
+
       document.getElementById('rulesText').value = cfg.rulesText || '';
     }
 
@@ -297,15 +372,37 @@
     async function saveAll() {
       const btn = document.getElementById('saveBtn'); btn.innerText = 'Сакталууда...'; btn.disabled = true;
       appData.config.captchaEnabled = document.getElementById('captchaEnabled').checked;
+      appData.config.captchaMode = document.getElementById('captchaMode').value;
+      appData.config.captchaKick = document.getElementById('captchaKick').checked;
+      appData.config.cleanWelcome = document.getElementById('cleanWelcome').checked;
       appData.config.antiSwearEnabled = document.getElementById('antiSwearEnabled').checked;
       appData.config.antiChannel = document.getElementById('antiChannel').checked;
+      
+      appData.config.nightModeEnabled = document.getElementById('nightModeEnabled').checked;
+      appData.config.nightModeStart = parseInt(document.getElementById('nightModeStart').value) || 0;
+      appData.config.nightModeEnd = parseInt(document.getElementById('nightModeEnd').value) || 7;
+
       appData.config.warnLimit = parseInt(document.getElementById('warnLimit').value) || 3;
+      appData.config.muteDurationMinutes = parseInt(document.getElementById('muteDurationMinutes').value) || 120;
       appData.config.warnAction = document.getElementById('warnAction').value;
       
       if(!appData.config.locks) appData.config.locks = {};
+      appData.config.locks.text = document.getElementById('lock_text').checked;
       appData.config.locks.links = document.getElementById('lock_links').checked;
-      appData.config.locks.media = document.getElementById('lock_media').checked;
+      appData.config.locks.photo = document.getElementById('lock_photo').checked;
+      appData.config.locks.video = document.getElementById('lock_video').checked;
+      appData.config.locks.audio = document.getElementById('lock_audio').checked;
+      appData.config.locks.voices = document.getElementById('lock_voices').checked;
+      appData.config.locks.videonote = document.getElementById('lock_videonote').checked;
+      appData.config.locks.document = document.getElementById('lock_document').checked;
+      appData.config.locks.stickers = document.getElementById('lock_stickers').checked;
+      appData.config.locks.gifs = document.getElementById('lock_gifs').checked;
+      appData.config.locks.bots = document.getElementById('lock_bots').checked;
+      appData.config.locks.commands = document.getElementById('lock_commands').checked;
+      appData.config.locks.games = document.getElementById('lock_games').checked;
+      appData.config.locks.forwards = document.getElementById('lock_forwards').checked;
       appData.config.locks.arabic = document.getElementById('lock_arabic').checked;
+      appData.config.locks.porn = document.getElementById('lock_porn').checked;
 
       if(!appData.config.antiflood) appData.config.antiflood = {};
       appData.config.antiflood.enabled = document.getElementById('antiflood_enabled').checked;
@@ -316,6 +413,11 @@
       if(!appData.config.welcome) appData.config.welcome = {};
       appData.config.welcome.enabled = document.getElementById('welcome_enabled').checked;
       appData.config.welcome.text = document.getElementById('welcome_text').value;
+
+      if(!appData.config.goodbye) appData.config.goodbye = {};
+      appData.config.goodbye.enabled = document.getElementById('goodbye_enabled').checked;
+      appData.config.goodbye.text = document.getElementById('goodbye_text').value;
+
       appData.config.rulesText = document.getElementById('rulesText').value;
 
       try {
