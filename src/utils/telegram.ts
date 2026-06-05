@@ -40,6 +40,33 @@ export async function isUserAdmin(ctx: Context, userId?: number): Promise<boolea
   }
 }
 
+/**
+ * Проверка прав администратора из ЛС бота (для Deep Linking)
+ */
+export async function isUserAdminInChat(api: Api, chatId: string | number, userId: number): Promise<boolean> {
+  const cacheKey = `${chatId}_${userId}`;
+  const cached = adminCache.get(cacheKey);
+
+  if (cached && cached.expiresAt > Date.now()) {
+    return cached.isAdmin;
+  }
+
+  try {
+    const member = await api.getChatMember(chatId, userId);
+    const isAdmin = member.status === "administrator" || member.status === "creator";
+
+    adminCache.set(cacheKey, {
+      isAdmin,
+      expiresAt: Date.now() + ADMIN_CACHE_TTL_MS,
+    });
+
+    return isAdmin;
+  } catch (error) {
+    logger.warn(`Не удалось проверить права администратора из ЛС для ${userId} в чате ${chatId}`, { error });
+    return false;
+  }
+}
+
 
 /**
  * Безопасное групповое удаление сообщений с учетом лимитов Telegram API.

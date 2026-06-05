@@ -5,7 +5,10 @@ import { globalErrorHandler } from "./middlewares/errorHandler.js";
 import { rateLimiter } from "./middlewares/rateLimiter.js";
 import { joinHandler, captchaCallbackHandler } from "./handlers/joinHandler.js";
 import { messageHandler } from "./handlers/messageHandler.js";
-import { adminPanelCommand, adminPanelCallback } from "./handlers/adminPanel.js";
+import { adminPanelCommand, adminPanelCallback, sendAdminPanel } from "./handlers/adminPanel.js";
+import { bataCommand, topUrmatCommand } from "./handlers/funHandler.js";
+import { filterCommand, stopFilterCommand, filtersListCommand } from "./handlers/filterHandler.js";
+import { isUserAdminInChat } from "./utils/telegram.js";
 import {
   handleMuteCommand,
   handleUnmuteCommand,
@@ -13,30 +16,51 @@ import {
   handleUnbanCommand,
 } from "./handlers/commandHandler.js";
 
-// Проверка наличия токена
 if (!config.BOT_TOKEN) {
   throw new Error("BOT_TOKEN не установлен в переменных окружения!");
 }
 
-// Создаем экземпляр бота с дефолтным контекстом
 export const bot = new Bot(config.BOT_TOKEN);
 
-// 1. Глобальный обработчик ошибок
 bot.catch(globalErrorHandler);
-
-// 2. Лимитирование запросов
 bot.use(rateLimiter);
 
-// 3. Регистрация модераторских команд
+// Модераторские команды
 bot.command("mute", handleMuteCommand);
 bot.command("unmute", handleUnmuteCommand);
 bot.command("ban", handleBanCommand);
 bot.command("unban", handleUnbanCommand);
+
+// Настройки и Админ-панель
 bot.command("settings", adminPanelCommand);
 
-// Приветствие в ЛС на кыргызском
+// Fun & Filters
+bot.command("bata", bataCommand);
+bot.command("top", topUrmatCommand);
+bot.command("filter", filterCommand);
+bot.command("stop", stopFilterCommand);
+bot.command("filters", filtersListCommand);
+
+// Старт и обработка Deep Links (Панель управления в ЛС)
 bot.command("start", async (ctx) => {
   if (ctx.chat.type === "private") {
+    const payload = ctx.match;
+    
+    if (payload && payload.startsWith("settings_")) {
+      const chatIdStr = payload.replace("settings_", "");
+      const chatId = parseInt(chatIdStr, 10);
+      
+      if (!isNaN(chatId)) {
+        const isAdmin = await isUserAdminInChat(ctx.api, chatId, ctx.from.id);
+        if (isAdmin) {
+          await sendAdminPanel(ctx, chatId, false);
+        } else {
+          await ctx.reply("Кечиресиз, сиз ал тайпада администратор эмессиз!");
+        }
+        return;
+      }
+    }
+
     await ctx.reply(
       "🛡️ Ассалому алейкум! Мен **Коопсузбек**мин — тайпаңыздын тазалыгын жана коопсуздугун сактаган кыргызча модератор.\n\n" +
       "Мени өзүңүздүн тайпаңызга кошуп, администратор кылыңыз. Мен спамдарды, ботторду жана уят сөздөрдү автоматтык түрдө өчүрөм.\n\n" +
@@ -46,14 +70,10 @@ bot.command("start", async (ctx) => {
   }
 });
 
-// 4. Обработка событий вступления новых участников в чат (капча)
+// Обработчики
 bot.on("chat_member", joinHandler);
-
-// 5. Обработка кликов по инлайн кнопкам (Панель и Капча)
 bot.on("callback_query:data", adminPanelCallback);
 bot.on("callback_query:data", captchaCallbackHandler);
-
-// 6. Фильтрация всех остальных сообщений (спам, ссылки, карма, мат)
 bot.on("message", messageHandler);
 bot.on("edited_message", messageHandler);
 

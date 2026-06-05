@@ -7,6 +7,8 @@ export interface GroupConfig {
   karmaEnabled: boolean;
   antiSwearEnabled: boolean;
   muteDurationMinutes: number;
+  warnLimit: number;
+  welcomeMessage: string;
 }
 
 export const DEFAULT_CONFIG: GroupConfig = {
@@ -15,7 +17,9 @@ export const DEFAULT_CONFIG: GroupConfig = {
   quarantineEnabled: true,
   karmaEnabled: true,
   antiSwearEnabled: true,
-  muteDurationMinutes: 120 // 2 часа по умолчанию
+  muteDurationMinutes: 120, // 2 часа по умолчанию
+  warnLimit: 3, // 3 страйка до бана
+  welcomeMessage: "👋 Кош келдиңиз, {name}!"
 };
 
 export async function getGroupConfig(chatId: number): Promise<GroupConfig> {

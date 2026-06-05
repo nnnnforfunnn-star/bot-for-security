@@ -22,7 +22,6 @@ export const db = {
       if (redis) return await redis.get<T>(key);
       return memCache.get(key) || null;
     } catch (e) {
-      logger.error(`DB Get Error [${key}]`, e);
       return null;
     }
   },
@@ -30,17 +29,12 @@ export const db = {
   async set(key: string, value: any, ttlSeconds?: number): Promise<void> {
     try {
       if (redis) {
-        if (ttlSeconds) {
-          await redis.set(key, value, { ex: ttlSeconds });
-        } else {
-          await redis.set(key, value);
-        }
+        if (ttlSeconds) await redis.set(key, value, { ex: ttlSeconds });
+        else await redis.set(key, value);
       } else {
         memCache.set(key, value);
       }
-    } catch (e) {
-      logger.error(`DB Set Error [${key}]`, e);
-    }
+    } catch (e) {}
   },
   
   async incr(key: string): Promise<number> {
@@ -49,18 +43,49 @@ export const db = {
       const val = (memCache.get(key) || 0) + 1;
       memCache.set(key, val);
       return val;
-    } catch (e) {
-      logger.error(`DB Incr Error [${key}]`, e);
-      return 0;
-    }
+    } catch (e) { return 0; }
   },
 
   async del(key: string): Promise<void> {
     try {
       if (redis) await redis.del(key);
       else memCache.delete(key);
-    } catch (e) {
-      logger.error(`DB Del Error [${key}]`, e);
-    }
+    } catch (e) {}
+  },
+
+  // --- Новые методы для Рейтингов (Сый-Урмат Top) ---
+  async zincrby(key: string, increment: number, member: string | number): Promise<number> {
+    try {
+      if (redis) return await redis.zincrby(key, increment, member.toString());
+      return 0;
+    } catch (e) { return 0; }
+  },
+
+  async zrevrange(key: string, start: number, stop: number, opts?: { withScores?: boolean }): Promise<any[]> {
+    try {
+      if (redis) return await redis.zrevrange(key, start, stop, opts);
+      return [];
+    } catch (e) { return []; }
+  },
+
+  // --- Новые методы для Автоответов (Filters) ---
+  async hset(key: string, field: string, value: string): Promise<void> {
+    try {
+      if (redis) await redis.hset(key, { [field]: value });
+    } catch (e) {}
+  },
+
+  async hgetall(key: string): Promise<Record<string, string> | null> {
+    try {
+      if (redis) return await redis.hgetall<Record<string, string>>(key);
+      return null;
+    } catch (e) { return null; }
+  },
+
+  async hdel(key: string, field: string): Promise<void> {
+    try {
+      if (redis) await redis.hdel(key, field);
+    } catch (e) {}
   }
 };
+
