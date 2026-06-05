@@ -76,6 +76,49 @@ bot.command("filter", filterCommand);
 bot.command("stop", stopFilterCommand);
 bot.command("filters", filtersListCommand);
 
+// 7. Iris-like RP and Fun Commands
+import { 
+  handleRpCommand, randomCommand, infaCommand, chooseCommand, 
+  yesNoCommand, whoCommand, sayCommand, rouletteCommand 
+} from "./handlers/rpHandler.js";
+import { 
+  setNickCommand, removeNickCommand, nickCommand, 
+  setDevizCommand, removeDevizCommand, profileCommand, 
+  shipCommand, weatherCommand 
+} from "./handlers/socialHandler.js";
+
+// Text listeners for RP Actions
+bot.on("message:text", async (ctx, next) => {
+  const text = ctx.message.text.toLowerCase().trim();
+  // RP Actions Check
+  if (ctx.message.reply_to_message) {
+    const actionWords = ["обнять", "поцеловать", "ударить", "укусить", "убить", "дать пять", "погладить", "пнуть", "расстрелять"];
+    for (const w of actionWords) {
+      if (text.startsWith(w)) return handleRpCommand(ctx);
+    }
+  }
+  
+  // Custom Triggers without slash
+  if (text.startsWith("рандом")) return randomCommand(ctx);
+  if (text.startsWith("!инфа") || text.startsWith("инфа")) return infaCommand(ctx);
+  if (text.startsWith("!выбери") || text.startsWith("выбери")) return chooseCommand(ctx);
+  if (text.startsWith("!данет") || text.startsWith("данет")) return yesNoCommand(ctx);
+  if (text.startsWith("!кто") || text.startsWith("кто ")) return whoCommand(ctx);
+  if (text.startsWith("!скажи") || text.startsWith("скажи ")) return sayCommand(ctx);
+  if (text === "рулетка" || text === "!рулетка" || text === "!русская рулетка") return rouletteCommand(ctx);
+  
+  if (text.startsWith("+ник")) return setNickCommand(ctx);
+  if (text === "-ник") return removeNickCommand(ctx);
+  if (text === "ник") return nickCommand(ctx);
+  if (text.startsWith("+девиз")) return setDevizCommand(ctx);
+  if (text === "-девиз") return removeDevizCommand(ctx);
+  if (text === "профиль" || text === "кто я" || text === "кто ты") return profileCommand(ctx);
+  if (text === "шипперим" || text === "пейринг") return shipCommand(ctx);
+  if (text.startsWith("!погода") || text.startsWith("погода")) return weatherCommand(ctx);
+  
+  await next();
+});
+
 // Помощь
 bot.command("help", helpCommand);
 
