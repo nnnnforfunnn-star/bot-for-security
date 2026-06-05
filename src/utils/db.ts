@@ -13,8 +13,39 @@ if (url && token) {
   logger.warn("Redis URL/Token не найдены! Используется временная память (Сбросится при перезапуске). Для постоянной памяти добавьте Upstash Redis в Vercel.");
 }
 
-// Резервная память для локального тестирования
-const memCache = new Map<string, any>();
+// Резервная память для локального тестирования или VPS (сохраняется в JSON файл)
+import fs from "fs";
+import path from "path";
+
+const DB_FILE = path.resolve(process.cwd(), "database.json");
+let memCache = new Map<string, any>();
+
+// Инициализация локальной базы (чтение из файла)
+function loadLocalDB() {
+  try {
+    if (fs.existsSync(DB_FILE)) {
+      const data = fs.readFileSync(DB_FILE, "utf-8");
+      const parsed = JSON.parse(data);
+      for (const key of Object.keys(parsed)) {
+        memCache.set(key, parsed[key]);
+      }
+    }
+  } catch (e) {
+    logger.warn("Не удалось прочитать database.json");
+  }
+}
+
+// Сохранение локальной базы (запись в файл)
+function saveLocalDB() {
+  try {
+    const obj = Object.fromEntries(memCache);
+    fs.writeFileSync(DB_FILE, JSON.stringify(obj, null, 2), "utf-8");
+  } catch (e) {}
+}
+
+if (!redis) {
+  loadLocalDB();
+}
 
 export const db = {
   async get<T>(key: string): Promise<T | null> {
@@ -33,6 +64,7 @@ export const db = {
         else await redis.set(key, value);
       } else {
         memCache.set(key, value);
+        saveLocalDB();
       }
     } catch (e) {}
   },
@@ -42,6 +74,7 @@ export const db = {
       if (redis) return await redis.incr(key);
       const val = (memCache.get(key) || 0) + 1;
       memCache.set(key, val);
+      saveLocalDB();
       return val;
     } catch (e) { return 0; }
   },
@@ -49,7 +82,10 @@ export const db = {
   async del(key: string): Promise<void> {
     try {
       if (redis) await redis.del(key);
-      else memCache.delete(key);
+      else {
+        memCache.delete(key);
+        saveLocalDB();
+      }
     } catch (e) {}
   },
 
@@ -59,38 +95,55 @@ export const db = {
     } catch (e) {}
   },
 
-  // --- Новые методы для Рейтингов (Сый-Урмат Top) ---
   async zincrby(key: string, increment: number, member: string | number): Promise<number> {
     try {
       if (redis) return await redis.zincrby(key, increment, member.toString());
-      return 0;
+      const zkey = `${key}:${member}`;
+      const val = (memCache.get(zkey) || 0) + increment;
+      memCache.set(zkey, val);
+      saveLocalDB();
+      return val;
     } catch (e) { return 0; }
   },
 
   async zrange(key: string, start: number, stop: number, opts?: { withScores?: boolean, rev?: boolean }): Promise<any[]> {
     try {
       if (redis) return await redis.zrange(key, start, stop, opts);
-      return [];
+      return []; // Сложно реализовать без redis
     } catch (e) { return []; }
   },
 
-  // --- Новые методы для Автоответов (Filters) ---
   async hset(key: string, field: string, value: string): Promise<void> {
     try {
-      if (redis) await redis.hset(key, { [field]: value });
+      if (redis) {
+        await redis.hset(key, { [field]: value });
+      } else {
+        const hash = memCache.get(key) || {};
+        hash[field] = value;
+        memCache.set(key, hash);
+        saveLocalDB();
+      }
     } catch (e) {}
   },
 
   async hgetall(key: string): Promise<Record<string, string> | null> {
     try {
       if (redis) return await redis.hgetall<Record<string, string>>(key);
-      return null;
+      return memCache.get(key) || null;
     } catch (e) { return null; }
   },
 
   async hdel(key: string, field: string): Promise<void> {
     try {
       if (redis) await redis.hdel(key, field);
+      else {
+        const hash = memCache.get(key);
+        if (hash) {
+          delete hash[field];
+          memCache.set(key, hash);
+          saveLocalDB();
+        }
+      }
     } catch (e) {}
   }
 };
