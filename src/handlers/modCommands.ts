@@ -101,6 +101,7 @@ export async function warnsCommand(ctx: Context) {
 
 export async function idCommand(ctx: Context) {
   const reply = ctx.message?.reply_to_message;
+  if (!ctx.chat || ctx.chat.type === "private") return;
   let text = `🆔 **Сиздин ID:** \`${ctx.from?.id}\`\n`;
   if (ctx.chat.type !== "private") {
     text += `🆔 **Тайпа ID:** \`${ctx.chat.id}\`\n`;

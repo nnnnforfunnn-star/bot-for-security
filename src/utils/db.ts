@@ -53,6 +53,12 @@ export const db = {
     } catch (e) {}
   },
 
+  async expire(key: string, ttlSeconds: number): Promise<void> {
+    try {
+      if (redis) await redis.expire(key, ttlSeconds);
+    } catch (e) {}
+  },
+
   // --- Новые методы для Рейтингов (Сый-Урмат Top) ---
   async zincrby(key: string, increment: number, member: string | number): Promise<number> {
     try {
