@@ -172,9 +172,24 @@ export async function messageHandler(ctx: Context, next: NextFunction): Promise<
       if (blacklist) {
         for (const word of Object.keys(blacklist)) {
           if (lowerText.includes(word)) {
-            shouldDelete = true;
-            warnReason = `Кара тизмедеги сөз колдонулду: ${word}`;
-            break;
+            await ctx.deleteMessage().catch(() => {});
+            const action = blacklist[word] || "warn";
+            if (action === "delete") {
+              // already deleted
+            } else if (action === "mute") {
+              await muteUser(ctx.api, chatId, userId, 60 * 60); // 1h mute
+              await ctx.reply(`🔇 [${name}](tg://user?id=${userId}) кара тизмедеги сөз үчүн жазуу укугунан ажыратылды.`, { parse_mode: "Markdown" });
+            } else if (action === "kick") {
+              await ctx.api.banChatMember(chatId, userId).catch(() => {});
+              await ctx.api.unbanChatMember(chatId, userId).catch(() => {});
+              await ctx.reply(`👢 [${name}](tg://user?id=${userId}) кара тизмедеги сөз үчүн чыгарылды.`, { parse_mode: "Markdown" });
+            } else if (action === "ban") {
+              await banUser(ctx.api, chatId, userId);
+              await ctx.reply(`🚫 [${name}](tg://user?id=${userId}) кара тизмедеги сөз үчүн биротоло бөгөттөлдү.`, { parse_mode: "Markdown" });
+            } else {
+              await handleWarn(ctx, userId, chatId, name, `Кара тизмедеги сөз: ${word}`, config.muteDurationMinutes, config.warnLimit, config.warnAction);
+            }
+            return; // stop further checks
           }
         }
       }

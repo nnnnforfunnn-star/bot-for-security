@@ -2,6 +2,7 @@ import { getGroupConfig, updateGroupConfig } from "../src/utils/configManager.js
 import { validateWebAppData, getUserFromInitData } from "../src/utils/telegramAuth.js";
 import { isUserAdminInChat } from "../src/utils/telegram.js";
 import { bot } from "../src/bot.js";
+import { db } from "../src/utils/db.js";
 
 let isBotInitialized = false;
 
@@ -28,7 +29,6 @@ export default async function handler(req: any, res: any) {
 
     const initData = authHeader.split(" ")[1];
     
-    // Validate initData
     if (!validateWebAppData(initData)) {
       return res.status(401).json({ error: "Unauthorized: Invalid Telegram Web App data" });
     }
@@ -43,13 +43,11 @@ export default async function handler(req: any, res: any) {
       return res.status(400).json({ error: "Bad Request: Missing or invalid chatId" });
     }
 
-    // Initialize bot if needed for the Telegram API
     if (!isBotInitialized) {
       await bot.init();
       isBotInitialized = true;
     }
 
-    // Verify admin status
     const isAdmin = await isUserAdminInChat(bot.api, chatId, user.id);
     if (!isAdmin) {
       return res.status(403).json({ error: "Forbidden: You are not an administrator in this chat" });
@@ -57,12 +55,33 @@ export default async function handler(req: any, res: any) {
 
     if (req.method === "GET") {
       const config = await getGroupConfig(chatId);
-      return res.status(200).json(config);
+      const blacklist = (await db.hgetall(`chat:${chatId}:blacklist`)) || {};
+      const filters = (await db.hgetall(`chat:${chatId}:filters`)) || {};
+      const notes = (await db.hgetall(`chat:${chatId}:notes`)) || {};
+      return res.status(200).json({ config, blacklist, filters, notes });
     } 
     
     if (req.method === "POST") {
-      const updates = req.body;
-      const updatedConfig = await updateGroupConfig(chatId, updates);
+      const { config, blacklist, filters, notes } = req.body;
+      
+      let updatedConfig = {};
+      if (config) {
+        updatedConfig = await updateGroupConfig(chatId, config);
+      }
+
+      // Helper function to sync hashes
+      const syncHash = async (hashName: string, data: Record<string, string>) => {
+        if (!data) return;
+        await db.del(hashName);
+        for (const [k, v] of Object.entries(data)) {
+          if (k.trim()) await db.hset(hashName, k.trim().toLowerCase(), v);
+        }
+      };
+
+      await syncHash(`chat:${chatId}:blacklist`, blacklist);
+      await syncHash(`chat:${chatId}:filters`, filters);
+      await syncHash(`chat:${chatId}:notes`, notes);
+
       return res.status(200).json({ success: true, config: updatedConfig });
     }
 

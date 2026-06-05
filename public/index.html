@@ -7,385 +7,327 @@
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <style>
     :root {
-      --bg-dark: #0f172a;
-      --card-bg: rgba(30, 41, 59, 0.7);
-      --card-border: rgba(255, 255, 255, 0.1);
-      --primary: #3b82f6;
-      --primary-hover: #2563eb;
-      --text-main: #f8fafc;
-      --text-muted: #94a3b8;
-      --success: #10b981;
-      --danger: #ef4444;
+      --bg-dark: #0f172a; --card-bg: rgba(30, 41, 59, 0.7); --card-border: rgba(255, 255, 255, 0.1);
+      --primary: #3b82f6; --text-main: #f8fafc; --text-muted: #94a3b8; --success: #10b981; --danger: #ef4444;
     }
-
-    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', -apple-system, sans-serif; }
-
-    body {
-      background: var(--bg-dark);
-      color: var(--text-main);
-      padding: 16px;
-      overflow-x: hidden;
-      min-height: 100vh;
-      background-image: radial-gradient(circle at top right, rgba(59, 130, 246, 0.15), transparent 400px),
-                        radial-gradient(circle at bottom left, rgba(16, 185, 129, 0.1), transparent 400px);
-    }
-
-    .header {
-      text-align: center;
-      margin-bottom: 24px;
-      animation: fadeInDown 0.5s ease;
-    }
-    .header h1 { font-size: 24px; font-weight: 700; background: linear-gradient(to right, #60a5fa, #34d399); -webkit-background-clip: text; color: transparent; }
-    .header p { font-size: 14px; color: var(--text-muted); margin-top: 4px; }
-
-    .loader {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 200px;
-      flex-direction: column;
-    }
-    .spinner {
-      width: 40px; height: 40px; border: 4px solid rgba(255,255,255,0.1);
-      border-top-color: var(--primary); border-radius: 50%;
-      animation: spin 1s linear infinite; margin-bottom: 12px;
-    }
-
-    .section {
-      background: var(--card-bg);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      border: 1px solid var(--card-border);
-      border-radius: 16px;
-      padding: 20px;
-      margin-bottom: 20px;
-      animation: fadeIn 0.5s ease;
-    }
-
-    .section-title { font-size: 18px; font-weight: 600; margin-bottom: 16px; display: flex; align-items: center; gap: 8px;}
-
-    .setting-row {
-      display: flex; justify-content: space-between; align-items: center; padding: 12px 0;
-      border-bottom: 1px solid rgba(255,255,255,0.05);
-    }
-    .setting-row:last-child { border-bottom: none; }
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+    body { background: var(--bg-dark); color: var(--text-main); padding: 16px; min-height: 100vh; padding-bottom: 80px; }
+    .header { text-align: center; margin-bottom: 20px; }
+    .header h1 { font-size: 22px; background: linear-gradient(to right, #60a5fa, #34d399); -webkit-background-clip: text; color: transparent; }
     
-    .setting-info h3 { font-size: 15px; font-weight: 500; }
-    .setting-info p { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+    .tabs { display: flex; overflow-x: auto; gap: 8px; margin-bottom: 20px; padding-bottom: 4px; }
+    .tab { padding: 8px 16px; background: rgba(255,255,255,0.05); border-radius: 20px; white-space: nowrap; font-size: 14px; cursor: pointer; transition: 0.3s; }
+    .tab.active { background: var(--primary); color: white; font-weight: 500; }
+    .tab-content { display: none; animation: fadeIn 0.3s ease; }
+    .tab-content.active { display: block; }
 
-    /* Custom Toggle Switch */
-    .switch {
-      position: relative; display: inline-block; width: 48px; height: 26px; flex-shrink: 0;
-    }
+    .section { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 16px; padding: 16px; margin-bottom: 16px; }
+    .section-title { font-size: 16px; font-weight: 600; margin-bottom: 12px; }
+    .setting-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+    .setting-info h3 { font-size: 14px; font-weight: 500; }
+    .setting-info p { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+    
+    .switch { position: relative; display: inline-block; width: 44px; height: 24px; flex-shrink: 0; }
     .switch input { opacity: 0; width: 0; height: 0; }
-    .slider {
-      position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
-      background-color: rgba(255,255,255,0.1); transition: .3s; border-radius: 34px;
-    }
-    .slider:before {
-      position: absolute; content: ""; height: 20px; width: 20px; left: 3px; bottom: 3px;
-      background-color: white; transition: .3s; border-radius: 50%; box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-    }
+    .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(255,255,255,0.1); border-radius: 34px; transition: .3s; }
+    .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; border-radius: 50%; transition: .3s; }
     input:checked + .slider { background-color: var(--success); }
-    input:checked + .slider:before { transform: translateX(22px); }
+    input:checked + .slider:before { transform: translateX(20px); }
 
     .input-group { margin-top: 12px; }
-    .input-group label { display: block; font-size: 13px; margin-bottom: 6px; color: var(--text-muted); }
-    .input-group input, .input-group textarea, .input-group select {
-      width: 100%; background: rgba(0,0,0,0.2); border: 1px solid var(--card-border);
-      color: white; padding: 10px 14px; border-radius: 10px; font-size: 14px; outline: none; transition: 0.3s;
-    }
-    .input-group input:focus, .input-group textarea:focus, .input-group select:focus {
-      border-color: var(--primary);
-    }
+    .input-group label { display: block; font-size: 12px; margin-bottom: 4px; color: var(--text-muted); }
+    .input-group input, .input-group textarea, .input-group select { width: 100%; background: rgba(0,0,0,0.3); border: 1px solid var(--card-border); color: white; padding: 10px; border-radius: 8px; font-size: 14px; outline: none; }
+    .input-group input:focus { border-color: var(--primary); }
 
-    .save-btn {
-      background: var(--primary); color: white; border: none; width: 100%; padding: 14px;
-      border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; transition: 0.3s;
-      position: sticky; bottom: 16px; box-shadow: 0 4px 14px rgba(59, 130, 246, 0.4);
-    }
-    .save-btn:active { transform: scale(0.98); }
+    .list-item { display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.2); padding: 10px; border-radius: 8px; margin-top: 8px; }
+    .list-item-text { font-size: 13px; }
+    .delete-btn { background: var(--danger); color: white; border: none; padding: 6px 10px; border-radius: 6px; font-size: 12px; cursor: pointer; }
+    .add-btn { background: var(--success); color: white; border: none; padding: 10px; border-radius: 8px; width: 100%; margin-top: 10px; cursor: pointer; }
 
-    .toast {
-      position: fixed; top: 20px; left: 50%; transform: translateX(-50%) translateY(-100px);
-      background: var(--success); color: white; padding: 12px 24px; border-radius: 30px;
-      font-weight: 500; font-size: 14px; opacity: 0; transition: 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-      z-index: 100; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
-    }
+    .save-btn { background: var(--primary); color: white; border: none; width: calc(100% - 32px); padding: 14px; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; position: fixed; bottom: 16px; left: 16px; box-shadow: 0 4px 14px rgba(59, 130, 246, 0.4); z-index: 10;}
+    .toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%) translateY(-100px); background: var(--success); color: white; padding: 10px 20px; border-radius: 30px; font-size: 13px; opacity: 0; transition: 0.4s; z-index: 100; }
     .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
-    .toast.error { background: var(--danger); box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4); }
-
-    @keyframes spin { 100% { transform: rotate(360deg); } }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-    @keyframes fadeInDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
   </style>
 </head>
 <body>
 
   <div id="toast" class="toast">Сакталды!</div>
+  <div class="header"><h1>Коопсузбек</h1><p style="font-size: 12px; color: var(--text-muted);">Толук Башкаруу Панели</p></div>
 
-  <div class="header">
-    <h1>Коопсузбек</h1>
-    <p>Тайпаны башкаруу панели</p>
-  </div>
-
-  <div id="loader" class="loader">
-    <div class="spinner"></div>
-    <p style="color: var(--text-muted); font-size: 14px;">Жүктөлүүдө...</p>
-  </div>
+  <div id="loader" style="text-align: center; margin-top: 50px;">Жүктөлүүдө...</div>
 
   <div id="content" style="display: none;">
-    <!-- Негизги Орнотуулар -->
-    <div class="section">
-      <div class="section-title">🛡️ Негизги Орнотуулар</div>
-      
-      <div class="setting-row">
-        <div class="setting-info">
-          <h3>Капча (Анти-бот)</h3>
-          <p>Жаңы киргендерге математикалык тест</p>
+    
+    <div class="tabs">
+      <div class="tab active" onclick="openTab('tab-main')">⚙️ Башкы</div>
+      <div class="tab" onclick="openTab('tab-black')">🚫 Кара тизме</div>
+      <div class="tab" onclick="openTab('tab-filters')">🤖 Автожооптор</div>
+      <div class="tab" onclick="openTab('tab-notes')">📝 Белгилер</div>
+    </div>
+
+    <!-- ТАБ: БАШКЫ -->
+    <div id="tab-main" class="tab-content active">
+      <div class="section">
+        <div class="section-title">🛡️ Негизги Орнотуулар</div>
+        <div class="setting-row">
+          <div class="setting-info"><h3>Капча (Анти-бот)</h3></div>
+          <label class="switch"><input type="checkbox" id="captchaEnabled"><span class="slider"></span></label>
         </div>
-        <label class="switch"><input type="checkbox" id="captchaEnabled"><span class="slider"></span></label>
+        <div class="setting-row">
+          <div class="setting-info"><h3>Анти-Сөгүнүү</h3></div>
+          <label class="switch"><input type="checkbox" id="antiSwearEnabled"><span class="slider"></span></label>
+        </div>
+        <div class="setting-row">
+          <div class="setting-info"><h3>Анти-Канал (Бан)</h3></div>
+          <label class="switch"><input type="checkbox" id="antiChannel"><span class="slider"></span></label>
+        </div>
       </div>
 
-      <div class="setting-row">
-        <div class="setting-info">
-          <h3>Анти-Сөгүнүү</h3>
-          <p>Уят сөздөрдү автоматтык түрдө өчүрүү</p>
+      <div class="section">
+        <div class="section-title">🔒 Бөгөттөөлөр (Locks)</div>
+        <div class="setting-row">
+          <div class="setting-info"><h3>Шилтемелер (Links)</h3></div>
+          <label class="switch"><input type="checkbox" id="lock_links"><span class="slider"></span></label>
         </div>
-        <label class="switch"><input type="checkbox" id="antiSwearEnabled"><span class="slider"></span></label>
+        <div class="setting-row">
+          <div class="setting-info"><h3>Медиа (Сүрөт/Видео)</h3></div>
+          <label class="switch"><input type="checkbox" id="lock_media"><span class="slider"></span></label>
+        </div>
+        <div class="setting-row">
+          <div class="setting-info"><h3>Араб тамгалары</h3></div>
+          <label class="switch"><input type="checkbox" id="lock_arabic"><span class="slider"></span></label>
+        </div>
       </div>
 
-      <div class="setting-row">
-        <div class="setting-info">
-          <h3>Сый-Урмат (Карма)</h3>
-          <p>"Рахмат" жана "+" аркылуу рейтинг</p>
+      <div class="section">
+        <div class="section-title">⚖️ Жазалоо (Варндар)</div>
+        <div class="input-group">
+          <label>Лимит</label>
+          <input type="number" id="warnLimit" min="1" max="10">
         </div>
-        <label class="switch"><input type="checkbox" id="karmaEnabled"><span class="slider"></span></label>
+        <div class="input-group">
+          <label>Жаза</label>
+          <select id="warnAction">
+            <option value="warn">Эскертүү</option>
+            <option value="delete">Өчүрүү гана</option>
+            <option value="mute">Мут (Жазуудан ажыратуу)</option>
+            <option value="kick">Кик (Чыгаруу)</option>
+            <option value="ban">Бан (Бөгөттөө)</option>
+          </select>
+        </div>
       </div>
       
-      <div class="setting-row">
-        <div class="setting-info">
-          <h3>Каналдардан жазуу</h3>
-          <p>Каналдын атынан жазгандарды бан кылуу</p>
+      <div class="section">
+        <div class="section-title">🌊 Антифлуд</div>
+        <div class="setting-row">
+          <div class="setting-info"><h3>Антифлудту иштетүү</h3></div>
+          <label class="switch"><input type="checkbox" id="antiflood_enabled"><span class="slider"></span></label>
         </div>
-        <label class="switch"><input type="checkbox" id="antiChannel"><span class="slider"></span></label>
+        <div class="input-group"><label>Билдирүүлөр саны</label><input type="number" id="antiflood_messages"></div>
+        <div class="input-group"><label>Убакыт (сек)</label><input type="number" id="antiflood_seconds"></div>
+        <div class="input-group">
+          <label>Жаза</label>
+          <select id="antiflood_action">
+            <option value="delete">Өчүрүү</option>
+            <option value="mute">Мут</option>
+            <option value="kick">Кик</option>
+            <option value="ban">Бан</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">Тексттер</div>
+        <div class="setting-row">
+          <div class="setting-info"><h3>Саламдашуу</h3></div>
+          <label class="switch"><input type="checkbox" id="welcome_enabled"><span class="slider"></span></label>
+        </div>
+        <div class="input-group"><label>Текст ({name})</label><textarea id="welcome_text" rows="2"></textarea></div>
+        <div class="input-group"><label>Эрежелер (/rules)</label><textarea id="rulesText" rows="3"></textarea></div>
       </div>
     </div>
 
-    <!-- Модерация -->
-    <div class="section">
-      <div class="section-title">⚖️ Жазалоо Системасы</div>
-      
-      <div class="input-group">
-        <label>Страйк (Эскертүү) лимити (мис: 3)</label>
-        <input type="number" id="warnLimit" min="1" max="10">
-      </div>
-      
-      <div class="input-group" style="margin-top: 16px;">
-        <label>Эскертүү лимити толгондо эмне кылуу керек?</label>
-        <select id="warnAction">
-          <option value="mute">Жазуу укугунан ажыратуу (Мут)</option>
-          <option value="kick">Тайпадан чыгаруу (Кик)</option>
-          <option value="ban">Биротоло бөгөттөө (Бан)</option>
-        </select>
-      </div>
-    </div>
-
-    <!-- Бөгөттөө (Locks) -->
-    <div class="section">
-      <div class="section-title">🔒 Бөгөттөө (Locks)</div>
-      
-      <div class="setting-row">
-        <div class="setting-info"><h3>Шилтемелер (Links)</h3></div>
-        <label class="switch"><input type="checkbox" id="lock_links"><span class="slider"></span></label>
-      </div>
-      <div class="setting-row">
-        <div class="setting-info"><h3>Медиа (Сүрөт/Видео)</h3></div>
-        <label class="switch"><input type="checkbox" id="lock_media"><span class="slider"></span></label>
-      </div>
-      <div class="setting-row">
-        <div class="setting-info"><h3>Үн (Голосовой/Кружок)</h3></div>
-        <label class="switch"><input type="checkbox" id="lock_voices"><span class="slider"></span></label>
-      </div>
-      <div class="setting-row">
-        <div class="setting-info"><h3>Араб тамгалары</h3></div>
-        <label class="switch"><input type="checkbox" id="lock_arabic"><span class="slider"></span></label>
-      </div>
-    </div>
-
-    <!-- Антифлуд -->
-    <div class="section">
-      <div class="section-title">🌊 Антифлуд</div>
-      <div class="setting-row">
-        <div class="setting-info">
-          <h3>Антифлудту иштетүү</h3>
-          <p>Спамдан жана тез-тез жазуудан коргоо</p>
+    <!-- ТАБ: КАРА ТИЗМЕ -->
+    <div id="tab-black" class="tab-content">
+      <div class="section">
+        <div class="section-title">🚫 Кара тизмеге сөз кошуу</div>
+        <div class="input-group"><label>Сөз</label><input type="text" id="bl_word"></div>
+        <div class="input-group">
+          <label>Жаза</label>
+          <select id="bl_action">
+            <option value="warn">Эскертүү</option>
+            <option value="delete">Өчүрүү гана</option>
+            <option value="mute">Мут</option>
+            <option value="kick">Кик</option>
+            <option value="ban">Бан</option>
+          </select>
         </div>
-        <label class="switch"><input type="checkbox" id="antiflood_enabled"><span class="slider"></span></label>
+        <button class="add-btn" onclick="addBlacklist()">Кошуу</button>
       </div>
-      <div class="input-group">
-        <label>Лимит (Билдирүүлөр саны)</label>
-        <input type="number" id="antiflood_messages" min="2" max="20">
-      </div>
-      <div class="input-group">
-        <label>Убакыт (Секунд ичинде)</label>
-        <input type="number" id="antiflood_seconds" min="1" max="60">
-      </div>
-      <div class="input-group">
-        <label>Флуд кылган адамды жазалоо</label>
-        <select id="antiflood_action">
-          <option value="delete">Билдирүүнү гана өчүрүү</option>
-          <option value="mute">Жазуу укугунан ажыратуу (Мут)</option>
-          <option value="kick">Тайпадан чыгаруу (Кик)</option>
-          <option value="ban">Биротоло бөгөттөө (Бан)</option>
-        </select>
+      <div class="section" id="bl_list">
+        <!-- Тизме бул жерде болот -->
       </div>
     </div>
 
-    <!-- Тексттер -->
-    <div class="section">
-      <div class="section-title">📝 Тексттер жана Саламдашуу</div>
-      <div class="setting-row">
-        <div class="setting-info">
-          <h3>Саламдашууну иштетүү</h3>
-        </div>
-        <label class="switch"><input type="checkbox" id="welcome_enabled"><span class="slider"></span></label>
+    <!-- ТАБ: АВТОЖООПТОР -->
+    <div id="tab-filters" class="tab-content">
+      <div class="section">
+        <div class="section-title">🤖 Автожооп (Filter) кошуу</div>
+        <div class="input-group"><label>Сөз (триггер)</label><input type="text" id="fl_word"></div>
+        <div class="input-group"><label>Боттун жообу</label><input type="text" id="fl_reply"></div>
+        <button class="add-btn" onclick="addFilter()">Кошуу</button>
       </div>
-      <div class="input-group">
-        <label>Саламдашуу тексти ({name} колдонуңуз)</label>
-        <textarea id="welcome_text" rows="3"></textarea>
-      </div>
-      
-      <div class="input-group" style="margin-top: 16px;">
-        <label>Тайпанын Эрежелери (/rules)</label>
-        <textarea id="rulesText" rows="4"></textarea>
-      </div>
+      <div class="section" id="fl_list"></div>
     </div>
 
-    <button id="saveBtn" class="save-btn">Өзгөртүүлөрдү Сактоо</button>
+    <!-- ТАБ: БЕЛГИЛЕР (NOTES) -->
+    <div id="tab-notes" class="tab-content">
+      <div class="section">
+        <div class="section-title">📝 Белги (Note) кошуу</div>
+        <p style="font-size:12px; color:var(--text-muted); margin-bottom:10px;">Бул белгини чатта #аталышы же /get аркылуу чакырса болот.</p>
+        <div class="input-group"><label>Аталышы</label><input type="text" id="nt_name"></div>
+        <div class="input-group"><label>Текст</label><textarea id="nt_text" rows="3"></textarea></div>
+        <button class="add-btn" onclick="addNote()">Сактоо</button>
+      </div>
+      <div class="section" id="nt_list"></div>
+    </div>
+
+    <button id="saveBtn" class="save-btn" onclick="saveAll()">Өзгөртүүлөрдү Сактоо</button>
   </div>
 
   <script>
     const tg = window.Telegram.WebApp;
-    tg.expand(); // Expand to full height
-
+    tg.expand();
     const urlParams = new URLSearchParams(window.location.search);
     const chatId = urlParams.get('chatId');
     const initData = tg.initData;
     const apiUrl = '/api/config?chatId=' + chatId;
 
-    let currentConfig = {};
+    let appData = { config: {}, blacklist: {}, filters: {}, notes: {} };
 
-    function showToast(message, isError = false) {
-      const t = document.getElementById('toast');
-      t.innerText = message;
-      if (isError) t.classList.add('error');
-      else t.classList.remove('error');
-      t.classList.add('show');
-      setTimeout(() => t.classList.remove('show'), 3000);
+    function showToast(msg) {
+      const t = document.getElementById('toast'); t.innerText = msg;
+      t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 3000);
     }
 
-    async function fetchConfig() {
-      if (!chatId || !initData) {
-        document.getElementById('loader').innerHTML = '<p style="color: var(--danger)">Ката: Уруксат берилген жок!</p>';
-        return;
-      }
+    function openTab(id) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+      event.currentTarget.classList.add('active');
+    }
+
+    async function fetchData() {
+      if (!chatId || !initData) return;
       try {
-        const res = await fetch(apiUrl, {
-          method: 'GET',
-          headers: { 'Authorization': 'tma ' + initData }
-        });
-        if (!res.ok) throw new Error(await res.text());
-        currentConfig = await res.json();
-        populateUI(currentConfig);
+        const res = await fetch(apiUrl, { headers: { 'Authorization': 'tma ' + initData }});
+        appData = await res.json();
+        renderMain(); renderLists();
         document.getElementById('loader').style.display = 'none';
         document.getElementById('content').style.display = 'block';
       } catch (e) {
-        document.getElementById('loader').innerHTML = `<p style="color: var(--danger)">Жүктөөдө ката кетти: ${e.message}</p>`;
+        document.getElementById('loader').innerText = "Ката кетти: " + e.message;
       }
     }
 
-    function populateUI(cfg) {
+    function renderMain() {
+      const cfg = appData.config;
       document.getElementById('captchaEnabled').checked = cfg.captchaEnabled || false;
       document.getElementById('antiSwearEnabled').checked = cfg.antiSwearEnabled || false;
-      document.getElementById('karmaEnabled').checked = cfg.karmaEnabled || false;
       document.getElementById('antiChannel').checked = cfg.antiChannel || false;
-      document.getElementById('warnLimit').value = cfg.warnLimit || 3;
-      document.getElementById('warnAction').value = cfg.warnAction || 'mute';
-
       document.getElementById('lock_links').checked = cfg.locks?.links || false;
       document.getElementById('lock_media').checked = cfg.locks?.media || false;
-      document.getElementById('lock_voices').checked = cfg.locks?.voices || false;
       document.getElementById('lock_arabic').checked = cfg.locks?.arabic || false;
-
+      document.getElementById('warnLimit').value = cfg.warnLimit || 3;
+      document.getElementById('warnAction').value = cfg.warnAction || 'mute';
       document.getElementById('antiflood_enabled').checked = cfg.antiflood?.enabled || false;
       document.getElementById('antiflood_messages').value = cfg.antiflood?.messages || 5;
       document.getElementById('antiflood_seconds').value = cfg.antiflood?.seconds || 5;
       document.getElementById('antiflood_action').value = cfg.antiflood?.action || 'mute';
-
       document.getElementById('welcome_enabled').checked = cfg.welcome?.enabled || false;
       document.getElementById('welcome_text').value = cfg.welcome?.text || '';
       document.getElementById('rulesText').value = cfg.rulesText || '';
     }
 
-    async function saveConfig() {
-      const btn = document.getElementById('saveBtn');
-      btn.innerText = 'Сакталууда...';
-      btn.disabled = true;
+    function renderLists() {
+      // Blacklist
+      const blHtml = Object.entries(appData.blacklist).map(([k, v]) => `
+        <div class="list-item">
+          <div><div class="list-item-text"><b>${k}</b></div><div style="font-size:10px;color:#94a3b8">Жаза: ${v}</div></div>
+          <button class="delete-btn" onclick="deleteItem('blacklist', '${k}')">Өчүрүү</button>
+        </div>`).join('');
+      document.getElementById('bl_list').innerHTML = blHtml || "<p style='font-size:12px;color:#94a3b8'>Тизме бош</p>";
 
-      const newConfig = {
-        captchaEnabled: document.getElementById('captchaEnabled').checked,
-        antiSwearEnabled: document.getElementById('antiSwearEnabled').checked,
-        karmaEnabled: document.getElementById('karmaEnabled').checked,
-        antiChannel: document.getElementById('antiChannel').checked,
-        warnLimit: parseInt(document.getElementById('warnLimit').value) || 3,
-        warnAction: document.getElementById('warnAction').value,
-        locks: {
-          ...currentConfig.locks,
-          links: document.getElementById('lock_links').checked,
-          media: document.getElementById('lock_media').checked,
-          voices: document.getElementById('lock_voices').checked,
-          arabic: document.getElementById('lock_arabic').checked,
-        },
-        antiflood: {
-          enabled: document.getElementById('antiflood_enabled').checked,
-          messages: parseInt(document.getElementById('antiflood_messages').value) || 5,
-          seconds: parseInt(document.getElementById('antiflood_seconds').value) || 5,
-          action: document.getElementById('antiflood_action').value,
-        },
-        welcome: {
-          enabled: document.getElementById('welcome_enabled').checked,
-          text: document.getElementById('welcome_text').value,
-        },
-        rulesText: document.getElementById('rulesText').value
-      };
+      // Filters
+      const flHtml = Object.entries(appData.filters).map(([k, v]) => `
+        <div class="list-item">
+          <div><div class="list-item-text"><b>${k}</b></div><div style="font-size:10px;color:#94a3b8">${v.substring(0, 20)}...</div></div>
+          <button class="delete-btn" onclick="deleteItem('filters', '${k}')">Өчүрүү</button>
+        </div>`).join('');
+      document.getElementById('fl_list').innerHTML = flHtml || "<p style='font-size:12px;color:#94a3b8'>Тизме бош</p>";
+
+      // Notes
+      const ntHtml = Object.entries(appData.notes).map(([k, v]) => `
+        <div class="list-item">
+          <div><div class="list-item-text"><b>#${k}</b></div><div style="font-size:10px;color:#94a3b8">${v.substring(0, 20)}...</div></div>
+          <button class="delete-btn" onclick="deleteItem('notes', '${k}')">Өчүрүү</button>
+        </div>`).join('');
+      document.getElementById('nt_list').innerHTML = ntHtml || "<p style='font-size:12px;color:#94a3b8'>Тизме бош</p>";
+    }
+
+    function deleteItem(type, key) { delete appData[type][key]; renderLists(); }
+
+    function addBlacklist() {
+      const w = document.getElementById('bl_word').value.trim().toLowerCase();
+      const a = document.getElementById('bl_action').value;
+      if (w) { appData.blacklist[w] = a; document.getElementById('bl_word').value = ''; renderLists(); }
+    }
+    function addFilter() {
+      const w = document.getElementById('fl_word').value.trim().toLowerCase();
+      const r = document.getElementById('fl_reply').value.trim();
+      if (w && r) { appData.filters[w] = r; document.getElementById('fl_word').value = ''; document.getElementById('fl_reply').value = ''; renderLists(); }
+    }
+    function addNote() {
+      const n = document.getElementById('nt_name').value.trim().toLowerCase();
+      const t = document.getElementById('nt_text').value.trim();
+      if (n && t) { appData.notes[n] = t; document.getElementById('nt_name').value = ''; document.getElementById('nt_text').value = ''; renderLists(); }
+    }
+
+    async function saveAll() {
+      const btn = document.getElementById('saveBtn'); btn.innerText = 'Сакталууда...'; btn.disabled = true;
+      appData.config.captchaEnabled = document.getElementById('captchaEnabled').checked;
+      appData.config.antiSwearEnabled = document.getElementById('antiSwearEnabled').checked;
+      appData.config.antiChannel = document.getElementById('antiChannel').checked;
+      appData.config.warnLimit = parseInt(document.getElementById('warnLimit').value) || 3;
+      appData.config.warnAction = document.getElementById('warnAction').value;
+      
+      if(!appData.config.locks) appData.config.locks = {};
+      appData.config.locks.links = document.getElementById('lock_links').checked;
+      appData.config.locks.media = document.getElementById('lock_media').checked;
+      appData.config.locks.arabic = document.getElementById('lock_arabic').checked;
+
+      if(!appData.config.antiflood) appData.config.antiflood = {};
+      appData.config.antiflood.enabled = document.getElementById('antiflood_enabled').checked;
+      appData.config.antiflood.messages = parseInt(document.getElementById('antiflood_messages').value) || 5;
+      appData.config.antiflood.seconds = parseInt(document.getElementById('antiflood_seconds').value) || 5;
+      appData.config.antiflood.action = document.getElementById('antiflood_action').value;
+
+      if(!appData.config.welcome) appData.config.welcome = {};
+      appData.config.welcome.enabled = document.getElementById('welcome_enabled').checked;
+      appData.config.welcome.text = document.getElementById('welcome_text').value;
+      appData.config.rulesText = document.getElementById('rulesText').value;
 
       try {
-        const res = await fetch(apiUrl, {
-          method: 'POST',
-          headers: { 
-            'Authorization': 'tma ' + initData,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(newConfig)
-        });
-        if (!res.ok) throw new Error('Failed to save');
+        await fetch(apiUrl, { method: 'POST', headers: { 'Authorization': 'tma ' + initData, 'Content-Type': 'application/json' }, body: JSON.stringify(appData) });
         showToast('Ийгиликтүү сакталды!');
         tg.HapticFeedback.notificationOccurred("success");
-      } catch (e) {
-        showToast('Ката кетти!', true);
-        tg.HapticFeedback.notificationOccurred("error");
-      } finally {
-        btn.innerText = 'Өзгөртүүлөрдү Сактоо';
-        btn.disabled = false;
+      } catch (e) {} finally {
+        btn.innerText = 'Өзгөртүүлөрдү Сактоо'; btn.disabled = false;
       }
     }
 
-    document.getElementById('saveBtn').addEventListener('click', saveConfig);
-
-    // Initial load
-    tg.ready();
-    fetchConfig();
+    tg.ready(); fetchData();
   </script>
 </body>
 </html>
