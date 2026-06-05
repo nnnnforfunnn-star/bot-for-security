@@ -55,7 +55,7 @@ export async function sendAdminPanel(ctx: Context, chatId: number, editMessage =
   let groupName = "Тайпа";
   try {
     const chat = await ctx.api.getChat(chatId);
-    if ('title' in chat) groupName = chat.title;
+    if ('title' in chat && chat.title) groupName = chat.title;
   } catch (e) {}
 
   const text = `⚙️ **Коопсузбек - Башкаруу Панели**\n\nТайпа: **${groupName}**\nБул жерден коопсуздук жөндөөлөрүн өзгөртө аласыз. Ар бир баскычты басып, функцияны күйгүзүп же өчүрүңүз.`;
@@ -87,7 +87,7 @@ export async function adminPanelCallback(ctx: Context, next: NextFunction) {
   let chatId: number;
   let field = "";
   if (action === "tg") {
-    field = parts[2];
+    field = parts[2] || "";
     chatId = parseInt(parts[3], 10);
   } else if (action === "close" || action === "noop") {
     chatId = parseInt(parts[2] || "0", 10);

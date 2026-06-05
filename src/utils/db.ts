@@ -61,9 +61,9 @@ export const db = {
     } catch (e) { return 0; }
   },
 
-  async zrevrange(key: string, start: number, stop: number, opts?: { withScores?: boolean }): Promise<any[]> {
+  async zrange(key: string, start: number, stop: number, opts?: { withScores?: boolean, rev?: boolean }): Promise<any[]> {
     try {
-      if (redis) return await redis.zrevrange(key, start, stop, opts);
+      if (redis) return await redis.zrange(key, start, stop, opts);
       return [];
     } catch (e) { return []; }
   },

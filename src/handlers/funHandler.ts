@@ -35,7 +35,7 @@ export async function topUrmatCommand(ctx: Context) {
   const key = `chat:${chatId}:urmat_leaderboard`;
   
   try {
-    const topUsers = await db.zrevrange(key, 0, 9, { withScores: true });
+    const topUsers = await db.zrange(key, 0, 9, { withScores: true, rev: true });
     
     if (!topUsers || topUsers.length === 0) {
       await ctx.reply("Тайпада азырынча «Сый-Урмат» алгандар жок. Бири-бириңиздерге «Рахмат» айтып баштаңыз!");
