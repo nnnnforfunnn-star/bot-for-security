@@ -20,8 +20,12 @@ function getEnv(key: string, required = false): string {
 }
 
 export const config: Config = {
-  BOT_TOKEN: getEnv("BOT_TOKEN", true),
+  BOT_TOKEN: process.env.BOT_TOKEN || "",
   NODE_ENV: getEnv("NODE_ENV") || "development",
-  WEBHOOK_URL: getEnv("WEBHOOK_URL"),
-  WEBHOOK_SECRET: getEnv("WEBHOOK_SECRET"),
+  KV_URL: process.env.KV_URL || "",
+  KV_REST_API_URL: process.env.KV_REST_API_URL || "",
+  KV_REST_API_TOKEN: process.env.KV_REST_API_TOKEN || "",
+  WEBHOOK_URL: process.env.WEBHOOK_URL || "",
+  WEBHOOK_SECRET: process.env.WEBHOOK_SECRET || "",
+  APP_URL: process.env.APP_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "https://bot-for-security.vercel.app")
 };

@@ -2,7 +2,7 @@
   "buildCommand": null,
   "framework": null,
   "functions": {
-    "api/webhook.ts": {
+    "api/**/*.ts": {
       "memory": 256,
       "maxDuration": 10
     }

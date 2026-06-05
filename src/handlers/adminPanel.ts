@@ -26,15 +26,19 @@ export async function adminPanelCommand(ctx: Context) {
   await ctx.reply(`Урматтуу админ, тайпанын коопсуздугу үчүн жөндөөлөр жеке кат (PM) аркылуу гана өзгөртүлөт. Төмөнкү баскычты басыңыз:`, { reply_markup: keyboard });
 }
 
+import { config as botConfig } from "../config.js";
+
 /**
  * Отправка или обновление сообщения с панелью в ЛС
  */
 export async function sendAdminPanel(ctx: Context, chatId: number, editMessage = false, page: string = "main") {
   const config = await getGroupConfig(chatId);
   const kb = new InlineKeyboard();
+  const webAppUrl = `${botConfig.APP_URL}/index.html?chatId=${chatId}`;
 
   if (page === "main") {
-    kb.text(`🔒 Бөгөттөөлөр (Locks)`, `adm:pg:locks:${chatId}`).row()
+    kb.webApp(`🌐 WEB ПАНЕЛЬ (ЖАҢЫ)`, webAppUrl).row()
+      .text(`🔒 Бөгөттөөлөр (Locks)`, `adm:pg:locks:${chatId}`).row()
       .text(`🤖 Антифлуд & Саламдашуу`, `adm:pg:auto:${chatId}`).row()
       .text(`⚙️ Негизги Жөндөөлөр`, `adm:pg:basic:${chatId}`).row()
       .text(`❌ Жабуу`, `adm:close:${chatId}`);
