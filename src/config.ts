@@ -7,8 +7,11 @@ export interface Config {
   BOT_TOKEN: string;
   NODE_ENV: string;
   WEBHOOK_URL?: string;
-  // Секретный токен для верификации запросов от Telegram (рекомендуется Telegram API)
   WEBHOOK_SECRET?: string;
+  KV_URL?: string;
+  KV_REST_API_URL?: string;
+  KV_REST_API_TOKEN?: string;
+  APP_URL?: string;
 }
 
 function getEnv(key: string, required = false): string {
