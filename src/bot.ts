@@ -10,6 +10,12 @@ import { bataCommand, topUrmatCommand } from "./handlers/funHandler.js";
 import { filterCommand, stopFilterCommand, filtersListCommand } from "./handlers/filterHandler.js";
 import { helpCommand, helpCallback } from "./handlers/helpHandler.js";
 import { kickCommand, pinCommand, unpinCommand, warnCommand, unwarnCommand, warnsCommand, idCommand } from "./handlers/modCommands.js";
+import { lockCommand, unlockCommand, locksListCommand } from "./handlers/locksHandler.js";
+import { 
+  delCommand, purgeCommand, setRulesCommand, rulesCommand, 
+  titleCommand, meCommand, reportCommand, antifloodCommand, 
+  blacklistCommand, unblacklistCommand, welcomeConfigCommand 
+} from "./handlers/adminCommands.js";
 import { isUserAdminInChat } from "./utils/telegram.js";
 import {
   handleMuteCommand,
@@ -27,7 +33,7 @@ export const bot = new Bot(config.BOT_TOKEN);
 bot.catch(globalErrorHandler);
 bot.use(rateLimiter);
 
-// Модераторские команды
+// 1. Модераторские команды
 bot.command("mute", handleMuteCommand);
 bot.command("unmute", handleUnmuteCommand);
 bot.command("ban", handleBanCommand);
@@ -39,11 +45,31 @@ bot.command("warn", warnCommand);
 bot.command("unwarn", unwarnCommand);
 bot.command("warns", warnsCommand);
 bot.command("id", idCommand);
+bot.command("del", delCommand);
+bot.command("purge", purgeCommand);
+bot.command("report", reportCommand);
 
-// Настройки и Админ-панель
+// 2. Бөгөттөө (Locks)
+bot.command("lock", lockCommand);
+bot.command("unlock", unlockCommand);
+bot.command("locks", locksListCommand);
+
+// 3. Антифлуд & Кара тизме
+bot.command("antiflood", antifloodCommand);
+bot.command("blacklist", blacklistCommand);
+bot.command("unblacklist", unblacklistCommand);
+
+// 4. Саламдашуу & Эрежелер & Карма
+bot.command("welcome", welcomeConfigCommand);
+bot.command("rules", rulesCommand);
+bot.command("setrules", setRulesCommand);
+bot.command("title", titleCommand);
+bot.command("me", meCommand);
+
+// 5. Настройки и Админ-панель
 bot.command("settings", adminPanelCommand);
 
-// Fun & Filters
+// 6. Fun & Filters
 bot.command("bata", bataCommand);
 bot.command("top", topUrmatCommand);
 bot.command("filter", filterCommand);

@@ -29,28 +29,41 @@ export async function adminPanelCommand(ctx: Context) {
 /**
  * Отправка или обновление сообщения с панелью в ЛС
  */
-export async function sendAdminPanel(ctx: Context, chatId: number, editMessage = false) {
+export async function sendAdminPanel(ctx: Context, chatId: number, editMessage = false, page: string = "main") {
   const config = await getGroupConfig(chatId);
-  
-  // Сокращаем ключи в callback_data, так как лимит 64 байта
-  const keyboard = new InlineKeyboard()
-    .text(`Капча: ${config.captchaEnabled ? "✅" : "❌"}`, `adm:tg:captchaEnabled:${chatId}`)
-    .text(`Түнкү дозор: ${config.nightModeEnabled ? "✅" : "❌"}`, `adm:tg:nightModeEnabled:${chatId}`)
-    .row()
-    .text(`24с Карантин: ${config.quarantineEnabled ? "✅" : "❌"}`, `adm:tg:quarantineEnabled:${chatId}`)
-    .text(`Анти-Мат: ${config.antiSwearEnabled ? "✅" : "❌"}`, `adm:tg:antiSwearEnabled:${chatId}`)
-    .row()
-    .text(`Сый-Урмат: ${config.karmaEnabled ? "✅" : "❌"}`, `adm:tg:karmaEnabled:${chatId}`)
-    .row()
-    .text(`Эскертүүлөр лимити (Warns): ${config.warnLimit}`, `adm:noop`)
-    .text(`+1`, `adm:awarn:${chatId}`)
-    .text(`-1`, `adm:swarn:${chatId}`)
-    .row()
-    .text(`Мут убактысы (мүнөт): ${config.muteDurationMinutes}`, `adm:noop`)
-    .text(`+30`, `adm:amute:${chatId}`)
-    .text(`-30`, `adm:smute:${chatId}`)
-    .row()
-    .text(`❌ Жабуу`, `adm:close:${chatId}`);
+  const kb = new InlineKeyboard();
+
+  if (page === "main") {
+    kb.text(`🔒 Бөгөттөөлөр (Locks)`, `adm:pg:locks:${chatId}`).row()
+      .text(`🤖 Антифлуд & Саламдашуу`, `adm:pg:auto:${chatId}`).row()
+      .text(`⚙️ Негизги Жөндөөлөр`, `adm:pg:basic:${chatId}`).row()
+      .text(`❌ Жабуу`, `adm:close:${chatId}`);
+  } else if (page === "locks") {
+    kb.text(`Шилтеме: ${config.locks.links ? "❌" : "✅"}`, `adm:lk:links:${chatId}`)
+      .text(`Репост: ${config.locks.forwards ? "❌" : "✅"}`, `adm:lk:forwards:${chatId}`).row()
+      .text(`Боттор: ${config.locks.bots ? "❌" : "✅"}`, `adm:lk:bots:${chatId}`)
+      .text(`Медиа: ${config.locks.media ? "❌" : "✅"}`, `adm:lk:media:${chatId}`).row()
+      .text(`Стикер: ${config.locks.stickers ? "❌" : "✅"}`, `adm:lk:stickers:${chatId}`)
+      .text(`GIF: ${config.locks.gifs ? "❌" : "✅"}`, `adm:lk:gifs:${chatId}`).row()
+      .text(`Үн/Видео: ${config.locks.voices ? "❌" : "✅"}`, `adm:lk:voices:${chatId}`)
+      .text(`Араб: ${config.locks.arabic ? "❌" : "✅"}`, `adm:lk:arabic:${chatId}`).row()
+      .text(`NSFW/Уят: ${config.locks.porn ? "❌" : "✅"}`, `adm:lk:porn:${chatId}`).row()
+      .text(`🔙 Артка`, `adm:pg:main:${chatId}`);
+  } else if (page === "auto") {
+    kb.text(`Антифлуд: ${config.antiflood.enabled ? "✅" : "❌"}`, `adm:af:toggle:${chatId}`).row()
+      .text(`Саламдашуу: ${config.welcome.enabled ? "✅" : "❌"}`, `adm:wc:toggle:${chatId}`).row()
+      .text(`Капча: ${config.captchaEnabled ? "✅" : "❌"}`, `adm:tg:captchaEnabled:${chatId}`).row()
+      .text(`🔙 Артка`, `adm:pg:main:${chatId}`);
+  } else if (page === "basic") {
+    kb.text(`Түнкү дозор: ${config.nightModeEnabled ? "✅" : "❌"}`, `adm:tg:nightModeEnabled:${chatId}`)
+      .text(`24с Карантин: ${config.quarantineEnabled ? "✅" : "❌"}`, `adm:tg:quarantineEnabled:${chatId}`).row()
+      .text(`Анти-Мат: ${config.antiSwearEnabled ? "✅" : "❌"}`, `adm:tg:antiSwearEnabled:${chatId}`)
+      .text(`Сый-Урмат: ${config.karmaEnabled ? "✅" : "❌"}`, `adm:tg:karmaEnabled:${chatId}`).row()
+      .text(`Эскертүүлөр лимити (Warns): ${config.warnLimit}`, `adm:noop`).row()
+      .text(`+1`, `adm:awarn:${chatId}`)
+      .text(`-1`, `adm:swarn:${chatId}`).row()
+      .text(`🔙 Артка`, `adm:pg:main:${chatId}`);
+  }
 
   let groupName = "Тайпа";
   try {
@@ -58,35 +71,36 @@ export async function sendAdminPanel(ctx: Context, chatId: number, editMessage =
     if ('title' in chat && chat.title) groupName = chat.title;
   } catch (e) {}
 
-  const text = `⚙️ **Коопсузбек - Башкаруу Панели**\n\nТайпа: **${groupName}**\nБул жерден коопсуздук жөндөөлөрүн өзгөртө аласыз. Ар бир баскычты басып, функцияны күйгүзүп же өчүрүңүз.`;
+  let title = "Башкаруу Панели";
+  if (page === "locks") title = "🔒 Бөгөттөөлөр (Locks)";
+  if (page === "auto") title = "🤖 Антифлуд & Саламдашуу";
+  if (page === "basic") title = "⚙️ Негизги Жөндөөлөр";
+
+  const text = `⚙️ **Коопсузбек - ${title}**\n\nТайпа: **${groupName}**\nБул жерден коопсуздук жөндөөлөрүн өзгөртө аласыз.`;
 
   try {
     if (editMessage) {
-      await ctx.editMessageText(text, { reply_markup: keyboard, parse_mode: "Markdown" });
+      await ctx.editMessageText(text, { reply_markup: kb, parse_mode: "Markdown" });
     } else {
-      await ctx.reply(text, { reply_markup: keyboard, parse_mode: "Markdown" });
+      await ctx.reply(text, { reply_markup: kb, parse_mode: "Markdown" });
     }
   } catch (error) {
     logger.error("Ошибка при отправке панели управления", error);
   }
 }
 
-/**
- * Обработчик нажатий на кнопки в панели управления (работает в ЛС)
- */
 export async function adminPanelCallback(ctx: Context, next: NextFunction) {
   const query = ctx.callbackQuery;
   if (!query || !query.data || !query.data.startsWith("adm:")) {
     return next();
   }
 
-  // data = adm:action:fieldOrChatId:chatId
   const parts = query.data.split(":");
   const action = parts[1];
   
   let chatId: number;
   let field = "";
-  if (action === "tg") {
+  if (action === "tg" || action === "pg" || action === "lk" || action === "af" || action === "wc") {
     field = parts[2] || "";
     chatId = parseInt(parts[3], 10);
   } else if (action === "close" || action === "noop") {
@@ -97,7 +111,6 @@ export async function adminPanelCallback(ctx: Context, next: NextFunction) {
 
   if (isNaN(chatId)) return next();
 
-  // Проверяем, является ли юзер админом в этой конкретной группе!
   const isAdmin = await isUserAdminInChat(ctx.api, chatId, query.from.id);
   if (!isAdmin) {
     await ctx.answerCallbackQuery({ text: "Сиз бул тайпада админ эмессиз!", show_alert: true });
@@ -106,32 +119,41 @@ export async function adminPanelCallback(ctx: Context, next: NextFunction) {
 
   const config = await getGroupConfig(chatId);
 
-  if (action === "tg") {
+  if (action === "pg") {
+    await sendAdminPanel(ctx, chatId, true, field);
+    await ctx.answerCallbackQuery();
+  } else if (action === "tg") {
     // @ts-ignore
     const newValue = !config[field];
     await updateGroupConfig(chatId, { [field]: newValue });
     await ctx.answerCallbackQuery("Өзгөртүлдү ✅");
-    await sendAdminPanel(ctx, chatId, true);
-  } else if (action === "amute") {
-    const newVal = config.muteDurationMinutes + 30;
-    await updateGroupConfig(chatId, { muteDurationMinutes: newVal });
-    await ctx.answerCallbackQuery("Убакыт кошулду");
-    await sendAdminPanel(ctx, chatId, true);
-  } else if (action === "smute") {
-    const newVal = Math.max(10, config.muteDurationMinutes - 30);
-    await updateGroupConfig(chatId, { muteDurationMinutes: newVal });
-    await ctx.answerCallbackQuery("Убакыт азайтылды");
-    await sendAdminPanel(ctx, chatId, true);
+    await sendAdminPanel(ctx, chatId, true, "basic");
+  } else if (action === "lk") {
+    // @ts-ignore
+    config.locks[field] = !config.locks[field];
+    await updateGroupConfig(chatId, { locks: config.locks });
+    await ctx.answerCallbackQuery("Бөгөттөө өзгөртүлдү ✅");
+    await sendAdminPanel(ctx, chatId, true, "locks");
+  } else if (action === "af") {
+    config.antiflood.enabled = !config.antiflood.enabled;
+    await updateGroupConfig(chatId, { antiflood: config.antiflood });
+    await ctx.answerCallbackQuery("Антифлуд өзгөртүлдү ✅");
+    await sendAdminPanel(ctx, chatId, true, "auto");
+  } else if (action === "wc") {
+    config.welcome.enabled = !config.welcome.enabled;
+    await updateGroupConfig(chatId, { welcome: config.welcome });
+    await ctx.answerCallbackQuery("Саламдашуу өзгөртүлдү ✅");
+    await sendAdminPanel(ctx, chatId, true, "auto");
   } else if (action === "awarn") {
-    const newVal = Math.min(10, config.warnLimit + 1); // Максимум 10
+    const newVal = Math.min(10, config.warnLimit + 1);
     await updateGroupConfig(chatId, { warnLimit: newVal });
     await ctx.answerCallbackQuery("Эскертүү лимити көбөйдү");
-    await sendAdminPanel(ctx, chatId, true);
+    await sendAdminPanel(ctx, chatId, true, "basic");
   } else if (action === "swarn") {
-    const newVal = Math.max(1, config.warnLimit - 1); // Минимум 1
+    const newVal = Math.max(1, config.warnLimit - 1);
     await updateGroupConfig(chatId, { warnLimit: newVal });
     await ctx.answerCallbackQuery("Эскертүү лимити азайды");
-    await sendAdminPanel(ctx, chatId, true);
+    await sendAdminPanel(ctx, chatId, true, "basic");
   } else if (action === "close") {
     if (query.message) {
       await ctx.api.deleteMessage(query.message.chat.id, query.message.message_id).catch(() => {});
