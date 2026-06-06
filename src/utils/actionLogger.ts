@@ -9,7 +9,8 @@ export async function logAction(
   userId: number,
   name: string,
   action: string,
-  reason: string
+  reason: string,
+  adminName: string = "Бот"
 ) {
   try {
     const timestamp = Date.now();
@@ -18,6 +19,7 @@ export async function logAction(
       name,
       action,
       reason,
+      adminName,
       timestamp
     };
     

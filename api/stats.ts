@@ -65,7 +65,11 @@ export default async function handler(req: any, res: any) {
       const today = new Date().toISOString().split("T")[0];
       const msgsToday = await db.get<number>(`chat:${chatId}:stats:messages_by_date:${today}`) || 0;
 
-      // 3. Top Users & Members
+      // Top Users Array
+      const topUsersAllTimeRaw = await db.zrange(`chat:${chatId}:stats:top_users`, 0, 10, { rev: true, withScores: true });
+      const topUsersTodayRaw = await db.zrange(`chat:${chatId}:stats:top_users:${today}`, 0, 10, { rev: true, withScores: true });
+
+      // 3. Members List
       const userIds = await db.smembers(`chat:${chatId}:users`);
       const usersInfo = [];
       
@@ -86,7 +90,9 @@ export default async function handler(req: any, res: any) {
       return res.status(200).json({ 
         logs, 
         stats: { msgCount, bansCount, mutesCount, msgsToday },
-        users: usersInfo
+        users: usersInfo,
+        topUsersAll: topUsersAllTimeRaw,
+        topUsersToday: topUsersTodayRaw
       });
     }
 

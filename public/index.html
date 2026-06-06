@@ -7,22 +7,32 @@
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <style>
     :root {
-      --bg-dark: #0f172a; --card-bg: rgba(30, 41, 59, 0.7); --card-border: rgba(255, 255, 255, 0.1);
-      --primary: #3b82f6; --text-main: #f8fafc; --text-muted: #94a3b8; --success: #10b981; --danger: #ef4444;
-      --warn: #f59e0b;
+      --bg-dark: #0f172a; --sidebar-bg: #1e293b; --card-bg: rgba(30, 41, 59, 0.7); 
+      --card-border: rgba(255, 255, 255, 0.1); --primary: #3b82f6; --text-main: #f8fafc; 
+      --text-muted: #94a3b8; --success: #10b981; --danger: #ef4444; --warn: #f59e0b;
     }
     * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
-    body { background: var(--bg-dark); color: var(--text-main); padding: 16px; min-height: 100vh; padding-bottom: 80px; }
-    .header { text-align: center; margin-bottom: 20px; }
-    .header h1 { font-size: 24px; background: linear-gradient(to right, #60a5fa, #34d399); -webkit-background-clip: text; color: transparent; font-weight: 800; }
+    body { background: var(--bg-dark); color: var(--text-main); min-height: 100vh; overflow-x: hidden; }
+
+    /* Layout structure */
+    .app-container { display: flex; height: 100vh; overflow: hidden; }
     
-    .tabs { display: flex; overflow-x: auto; gap: 8px; margin-bottom: 20px; padding-bottom: 4px; }
-    .tabs::-webkit-scrollbar { height: 0px; }
-    .tab { padding: 8px 16px; background: rgba(255,255,255,0.05); border-radius: 20px; white-space: nowrap; font-size: 14px; cursor: pointer; transition: 0.3s; }
-    .tab.active { background: var(--primary); color: white; font-weight: 500; }
+    /* Sidebar */
+    .sidebar { width: 220px; background: var(--sidebar-bg); flex-shrink: 0; display: flex; flex-direction: column; border-right: 1px solid var(--card-border); z-index: 10; }
+    .sidebar-header { padding: 20px 16px; text-align: center; border-bottom: 1px solid var(--card-border); }
+    .sidebar-header h1 { font-size: 20px; background: linear-gradient(to right, #60a5fa, #34d399); -webkit-background-clip: text; color: transparent; font-weight: 800; }
+    .sidebar-header p { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+    .nav-items { flex-grow: 1; padding: 16px 8px; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; }
+    .nav-item { padding: 12px 16px; border-radius: 12px; cursor: pointer; display: flex; align-items: center; gap: 12px; font-size: 14px; font-weight: 500; transition: 0.2s; color: var(--text-muted); }
+    .nav-item:hover { background: rgba(255,255,255,0.05); color: var(--text-main); }
+    .nav-item.active { background: var(--primary); color: white; }
+
+    /* Content Area */
+    .content-area { flex-grow: 1; padding: 20px; overflow-y: auto; padding-bottom: 80px; position: relative; }
     .tab-content { display: none; animation: fadeIn 0.3s ease; }
     .tab-content.active { display: block; }
 
+    /* Sections */
     .section { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 16px; padding: 16px; margin-bottom: 16px; }
     .section-title { font-size: 16px; font-weight: 600; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
     
@@ -30,6 +40,7 @@
     .setting-info h3 { font-size: 14px; font-weight: 500; }
     .setting-info p { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
     
+    /* Toggle Switch */
     .switch { position: relative; display: inline-block; width: 44px; height: 24px; flex-shrink: 0; }
     .switch input { opacity: 0; width: 0; height: 0; }
     .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(255,255,255,0.1); border-radius: 34px; transition: .3s; }
@@ -37,6 +48,7 @@
     input:checked + .slider { background-color: var(--success); }
     input:checked + .slider:before { transform: translateX(20px); }
 
+    /* Inputs */
     .input-group { margin-top: 12px; }
     .input-group label { display: block; font-size: 12px; margin-bottom: 4px; color: var(--text-muted); }
     .input-group input, .input-group textarea, .input-group select { width: 100%; background: rgba(0,0,0,0.3); border: 1px solid var(--card-border); color: white; padding: 10px; border-radius: 8px; font-size: 14px; outline: none; transition: 0.2s;}
@@ -45,270 +57,302 @@
     .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 
     /* Stats Cards */
-    .stat-card { background: rgba(0,0,0,0.3); padding: 15px; border-radius: 12px; text-align: center; border: 1px solid var(--card-border); }
+    .stat-card { background: rgba(0,0,0,0.3); padding: 15px; border-radius: 12px; text-align: center; border: 1px solid var(--card-border); cursor: pointer; transition: 0.2s; position: relative; overflow: hidden; }
+    .stat-card:hover { border-color: var(--primary); transform: translateY(-2px); }
     .stat-card .value { font-size: 24px; font-weight: bold; margin-bottom: 4px; color: var(--primary); }
     .stat-card .label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
-    
+
     /* Lists */
     .list-item { display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.2); padding: 12px; border-radius: 12px; margin-top: 8px; border: 1px solid transparent;}
-    .list-item-text { font-size: 14px; margin-bottom: 4px;}
     
     /* Action Buttons */
     .action-btn { background: rgba(255,255,255,0.1); color: white; border: none; padding: 6px 10px; border-radius: 6px; font-size: 11px; cursor: pointer; transition: 0.2s;}
     .action-btn:hover { background: rgba(255,255,255,0.2); }
     .action-btn.danger { background: rgba(239, 68, 68, 0.2); color: #fca5a5; }
-    .action-btn.danger:hover { background: rgba(239, 68, 68, 0.4); }
     .action-btn.warn { background: rgba(245, 158, 11, 0.2); color: #fcd34d; }
-    .action-btn.warn:hover { background: rgba(245, 158, 11, 0.4); }
 
     .delete-btn { background: var(--danger); color: white; border: none; padding: 6px 10px; border-radius: 6px; font-size: 12px; cursor: pointer; }
     .add-btn { background: var(--success); color: white; border: none; padding: 12px; border-radius: 10px; width: 100%; margin-top: 14px; cursor: pointer; font-weight: 600;}
 
-    .save-btn { background: var(--primary); color: white; border: none; width: calc(100% - 32px); padding: 14px; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; position: fixed; bottom: 16px; left: 16px; box-shadow: 0 4px 14px rgba(59, 130, 246, 0.4); z-index: 10;}
-    
-    .toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%) translateY(-100px); background: var(--success); color: white; padding: 10px 20px; border-radius: 30px; font-size: 13px; opacity: 0; transition: 0.4s; z-index: 100; font-weight: 500; box-shadow: 0 4px 12px rgba(0,0,0,0.5);}
-    .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+    /* Modals */
+    .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 1000; display: none; justify-content: center; align-items: center; opacity: 0; transition: 0.3s; padding: 20px;}
+    .modal-overlay.show { display: flex; opacity: 1; }
+    .modal-content { background: var(--sidebar-bg); width: 100%; max-width: 500px; border-radius: 16px; border: 1px solid var(--card-border); max-height: 80vh; display: flex; flex-direction: column; transform: translateY(20px); transition: 0.3s; }
+    .modal-overlay.show .modal-content { transform: translateY(0); }
+    .modal-header { padding: 16px; border-bottom: 1px solid var(--card-border); display: flex; justify-content: space-between; align-items: center; }
+    .modal-header h2 { font-size: 18px; }
+    .modal-close { background: none; border: none; color: var(--text-muted); font-size: 24px; cursor: pointer; }
+    .modal-body { padding: 16px; overflow-y: auto; flex-grow: 1; }
 
-    /* Log Entry styling */
-    .log-entry { font-size: 12px; padding: 10px; background: rgba(0,0,0,0.3); border-radius: 8px; margin-top: 8px; border-left: 3px solid var(--primary); }
+    .save-btn { background: var(--primary); color: white; border: none; width: calc(100% - 32px); padding: 14px; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; position: fixed; bottom: 16px; right: 16px; max-width: 400px; box-shadow: 0 4px 14px rgba(59, 130, 246, 0.4); z-index: 100;}
+    
+    .toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%) translateY(-100px); background: var(--success); color: white; padding: 10px 20px; border-radius: 30px; font-size: 13px; opacity: 0; transition: 0.4s; z-index: 2000; font-weight: 500; box-shadow: 0 4px 12px rgba(0,0,0,0.5);}
+    .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+    
+    .log-entry { font-size: 12px; padding: 12px; background: rgba(0,0,0,0.3); border-radius: 8px; margin-top: 8px; border-left: 3px solid var(--primary); display: flex; flex-direction: column; gap: 4px;}
     .log-entry.danger { border-left-color: var(--danger); }
     .log-entry.warn { border-left-color: var(--warn); }
-    .log-header { display: flex; justify-content: space-between; margin-bottom: 4px; color: var(--text-muted); font-size: 10px;}
     
-    /* Users Grid */
-    .user-card { background: rgba(0,0,0,0.2); padding: 12px; border-radius: 12px; margin-bottom: 10px; }
+    .user-card { background: rgba(0,0,0,0.2); padding: 12px; border-radius: 12px; margin-bottom: 10px; border: 1px solid var(--card-border);}
     .user-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-    .user-name { font-weight: 600; font-size: 14px; }
-    .user-stats { font-size: 11px; color: var(--text-muted); display: flex; gap: 10px; margin-bottom: 12px; }
-    .user-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+    .user-name { font-weight: 600; font-size: 14px; color: var(--primary); }
+
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .app-container { flex-direction: column; }
+      .sidebar { width: 100%; height: auto; border-right: none; border-bottom: 1px solid var(--card-border); flex-direction: row; align-items: center; padding: 10px; z-index: 20;}
+      .sidebar-header { display: none; }
+      .nav-items { flex-direction: row; padding: 0; overflow-x: auto; gap: 8px; margin-bottom: 0;}
+      .nav-item { padding: 8px 12px; font-size: 13px; white-space: nowrap; }
+      .content-area { padding: 15px; padding-bottom: 80px;}
+      .save-btn { left: 16px; max-width: none; }
+    }
   </style>
 </head>
 <body>
 
   <div id="toast" class="toast">Сакталды!</div>
-  <div class="header">
-    <h1>Коопсузбек</h1>
-    <p style="font-size: 12px; color: var(--text-muted);">Толук Башкаруу Панели</p>
+
+  <div class="app-container">
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+      <div class="sidebar-header">
+        <h1>Коопсузбек</h1>
+        <p>Толук Башкаруу Панели</p>
+      </div>
+      <div class="nav-items">
+        <div class="nav-item active" onclick="openTab('tab-main', this)">⚙️ Башкы</div>
+        <div class="nav-item" onclick="openTab('tab-stats', this)">📊 Аналитика</div>
+        <div class="nav-item" onclick="openTab('tab-users', this)">👥 Катышуучулар</div>
+        <div class="nav-item" onclick="openTab('tab-black', this)">🚫 Кара тизме</div>
+        <div class="nav-item" onclick="openTab('tab-filters', this)">🤖 Автожооптор</div>
+        <div class="nav-item" onclick="openTab('tab-notes', this)">📝 Белгилер</div>
+      </div>
+    </div>
+
+    <!-- CONTENT AREA -->
+    <div class="content-area">
+      <div id="loader" style="text-align: center; margin-top: 50px; font-size: 14px; color: var(--text-muted);">Маалыматтар жүктөлүүдө...</div>
+      
+      <div id="content" style="display: none;">
+        
+        <!-- ТАБ: БАШКЫ -->
+        <div id="tab-main" class="tab-content active">
+          <div class="section">
+            <div class="section-title">🛡️ Негизги Орнотуулар</div>
+            <div class="setting-row">
+              <div class="setting-info"><h3>Капча (Анти-бот)</h3></div>
+              <label class="switch"><input type="checkbox" id="captchaEnabled"><span class="slider"></span></label>
+            </div>
+            <div class="input-group">
+              <label>Капча түрү</label>
+              <select id="captchaMode">
+                <option value="button">Баскыч (Button)</option>
+                <option value="math">Математика</option>
+                <option value="text">Текст (Символдор)</option>
+              </select>
+            </div>
+            <div class="setting-row">
+              <div class="setting-info"><h3>Капчадан өтпөсө Кик кылуу</h3></div>
+              <label class="switch"><input type="checkbox" id="captchaKick"><span class="slider"></span></label>
+            </div>
+            <div class="setting-row">
+              <div class="setting-info"><h3>Таза Саламдашуу</h3></div>
+              <label class="switch"><input type="checkbox" id="cleanWelcome"><span class="slider"></span></label>
+            </div>
+            <div class="setting-row">
+              <div class="setting-info"><h3>Анти-Сөгүнүү</h3></div>
+              <label class="switch"><input type="checkbox" id="antiSwearEnabled"><span class="slider"></span></label>
+            </div>
+            <div class="setting-row">
+              <div class="setting-info"><h3>Анти-Канал (Бан)</h3></div>
+              <label class="switch"><input type="checkbox" id="antiChannel"><span class="slider"></span></label>
+            </div>
+          </div>
+
+          <div class="section">
+            <div class="section-title">🌙 Түнкү дозор (Night Mode)</div>
+            <div class="setting-row">
+              <div class="setting-info"><h3>Иштетүү</h3></div>
+              <label class="switch"><input type="checkbox" id="nightModeEnabled"><span class="slider"></span></label>
+            </div>
+            <div class="grid-2">
+              <div class="input-group"><label>Башталышы (Саат)</label><input type="number" id="nightModeStart" min="0" max="23"></div>
+              <div class="input-group"><label>Бүтүшү (Саат)</label><input type="number" id="nightModeEnd" min="0" max="23"></div>
+            </div>
+          </div>
+
+          <div class="section">
+            <div class="section-title">🔒 Бөгөттөөлөр (Locks)</div>
+            <div class="grid-2">
+              <label class="switch-row"><input type="checkbox" id="lock_text"><span> Текст</span></label>
+              <label class="switch-row"><input type="checkbox" id="lock_links"><span> Шилтеме</span></label>
+              <label class="switch-row"><input type="checkbox" id="lock_photo"><span> Сүрөт</span></label>
+              <label class="switch-row"><input type="checkbox" id="lock_video"><span> Видео</span></label>
+              <label class="switch-row"><input type="checkbox" id="lock_audio"><span> Музыка</span></label>
+              <label class="switch-row"><input type="checkbox" id="lock_voices"><span> Үн/Голос</span></label>
+              <label class="switch-row"><input type="checkbox" id="lock_videonote"><span> Кружок</span></label>
+              <label class="switch-row"><input type="checkbox" id="lock_document"><span> Файл</span></label>
+              <label class="switch-row"><input type="checkbox" id="lock_stickers"><span> Стикер</span></label>
+              <label class="switch-row"><input type="checkbox" id="lock_gifs"><span> GIF</span></label>
+              <label class="switch-row"><input type="checkbox" id="lock_bots"><span> Боттор</span></label>
+              <label class="switch-row"><input type="checkbox" id="lock_commands"><span> /Команда</span></label>
+              <label class="switch-row"><input type="checkbox" id="lock_games"><span> Оюн</span></label>
+              <label class="switch-row"><input type="checkbox" id="lock_forwards"><span> Репост</span></label>
+              <label class="switch-row"><input type="checkbox" id="lock_arabic"><span> Арабча</span></label>
+              <label class="switch-row"><input type="checkbox" id="lock_porn"><span> NSFW</span></label>
+            </div>
+          </div>
+
+          <div class="section">
+            <div class="section-title">⚖️ Жазалоо (Варндар)</div>
+            <div class="input-group"><label>Лимит</label><input type="number" id="warnLimit" min="1" max="10"></div>
+            <div class="input-group"><label>Муттун узактыгы (мүнөт)</label><input type="number" id="muteDurationMinutes"></div>
+            <div class="input-group">
+              <label>Лимит толгондо Жаза</label>
+              <select id="warnAction">
+                <option value="warn">Эскертүү</option>
+                <option value="delete">Өчүрүү гана</option>
+                <option value="mute">Мут (Жазуудан ажыратуу)</option>
+                <option value="kick">Кик (Чыгаруу)</option>
+                <option value="ban">Бан (Бөгөттөө)</option>
+              </select>
+            </div>
+          </div>
+          
+          <div class="section">
+            <div class="section-title">🌊 Антифлуд</div>
+            <div class="setting-row">
+              <div class="setting-info"><h3>Антифлудту иштетүү</h3></div>
+              <label class="switch"><input type="checkbox" id="antiflood_enabled"><span class="slider"></span></label>
+            </div>
+            <div class="grid-2">
+              <div class="input-group"><label>Билдирүүлөр саны</label><input type="number" id="antiflood_messages"></div>
+              <div class="input-group"><label>Убакыт (сек)</label><input type="number" id="antiflood_seconds"></div>
+            </div>
+            <div class="input-group">
+              <label>Жаза</label>
+              <select id="antiflood_action">
+                <option value="delete">Өчүрүү</option>
+                <option value="mute">Мут</option>
+                <option value="kick">Кик</option>
+                <option value="ban">Бан</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="section">
+            <div class="section-title">💬 Тексттер</div>
+            <div class="setting-row"><div class="setting-info"><h3>Саламдашуу</h3></div><label class="switch"><input type="checkbox" id="welcome_enabled"><span class="slider"></span></label></div>
+            <div class="input-group"><label>Текст ({name})</label><textarea id="welcome_text" rows="2"></textarea></div>
+            <div class="setting-row"><div class="setting-info"><h3>Коштошуу</h3></div><label class="switch"><input type="checkbox" id="goodbye_enabled"><span class="slider"></span></label></div>
+            <div class="input-group"><label>Коштошуу тексти ({name})</label><textarea id="goodbye_text" rows="2"></textarea></div>
+            <div class="input-group"><label>Эрежелер (/rules)</label><textarea id="rulesText" rows="3"></textarea></div>
+          </div>
+        </div>
+
+        <!-- ТАБ: АНАЛИТИКА -->
+        <div id="tab-stats" class="tab-content">
+          <div class="section">
+            <div class="section-title">📈 Толук Статистика</div>
+            <p style="font-size:12px; color:var(--text-muted); margin-bottom:15px;">Толук маалыматты көрүү үчүн карточканы басыңыз.</p>
+            <div class="grid-2" style="margin-bottom: 10px;">
+              <div class="stat-card" onclick="openModal('total')">
+                <div class="value" id="stat_total">0</div>
+                <div class="label">Жалпы СМС</div>
+              </div>
+              <div class="stat-card" onclick="openModal('today')">
+                <div class="value" id="stat_today">0</div>
+                <div class="label">Бүгүнкү СМС</div>
+              </div>
+              <div class="stat-card" style="border-color: rgba(239, 68, 68, 0.3);" onclick="openModal('bans')">
+                <div class="value" style="color: var(--danger);" id="stat_bans">0</div>
+                <div class="label">Бандар (Басыңыз)</div>
+              </div>
+              <div class="stat-card" style="border-color: rgba(245, 158, 11, 0.3);" onclick="openModal('mutes')">
+                <div class="value" style="color: var(--warn);" id="stat_mutes">0</div>
+                <div class="label">Муттар (Басыңыз)</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="section">
+            <div class="section-title">🕵️ Аракеттер Журналы (Audit Log)</div>
+            <p style="font-size:12px; color:var(--text-muted); margin-bottom:10px;">Боттун акыркы 50 аракети көрсөтүлөт.</p>
+            <div id="logs_container"></div>
+          </div>
+        </div>
+
+        <!-- ТАБ: КАТЫШУУЧУЛАР -->
+        <div id="tab-users" class="tab-content">
+          <div class="section">
+            <div class="section-title">👥 Катышуучуларды Башкаруу</div>
+            <p style="font-size:12px; color:var(--text-muted); margin-bottom:15px;">Тайпадагы акыркы активдүү катышуучулар (Сый-Урмат боюнча).</p>
+            <div id="users_container"></div>
+          </div>
+        </div>
+
+        <!-- ТАБ: КАРА ТИЗМЕ -->
+        <div id="tab-black" class="tab-content">
+          <div class="section">
+            <div class="section-title">🚫 Кара тизмеге сөз кошуу</div>
+            <div class="input-group"><label>Сөз</label><input type="text" id="bl_word"></div>
+            <div class="input-group">
+              <label>Жаза</label>
+              <select id="bl_action">
+                <option value="warn">Эскертүү</option>
+                <option value="delete">Өчүрүү гана</option>
+                <option value="mute">Мут</option>
+                <option value="kick">Кик</option>
+                <option value="ban">Бан</option>
+              </select>
+            </div>
+            <button class="add-btn" onclick="addBlacklist()">Кошуу</button>
+          </div>
+          <div class="section" id="bl_list"></div>
+        </div>
+
+        <!-- ТАБ: АВТОЖООПТОР -->
+        <div id="tab-filters" class="tab-content">
+          <div class="section">
+            <div class="section-title">🤖 Автожооп (Filter) кошуу</div>
+            <div class="input-group"><label>Сөз (триггер)</label><input type="text" id="fl_word"></div>
+            <div class="input-group"><label>Боттун жообу</label><input type="text" id="fl_reply"></div>
+            <button class="add-btn" onclick="addFilter()">Кошуу</button>
+          </div>
+          <div class="section" id="fl_list"></div>
+        </div>
+
+        <!-- ТАБ: БЕЛГИЛЕР (NOTES) -->
+        <div id="tab-notes" class="tab-content">
+          <div class="section">
+            <div class="section-title">📝 Белги (Note) кошуу</div>
+            <p style="font-size:12px; color:var(--text-muted); margin-bottom:10px;">Бул белгини чатта #аталышы аркылуу чакырса болот.</p>
+            <div class="input-group"><label>Аталышы</label><input type="text" id="nt_name"></div>
+            <div class="input-group"><label>Текст</label><textarea id="nt_text" rows="3"></textarea></div>
+            <button class="add-btn" onclick="addNote()">Сактоо</button>
+          </div>
+          <div class="section" id="nt_list"></div>
+        </div>
+
+        <button id="saveBtn" class="save-btn" onclick="saveAll()">Өзгөртүүлөрдү Сактоо</button>
+      </div>
+    </div>
   </div>
 
-  <div id="loader" style="text-align: center; margin-top: 50px;">Маалыматтар жүктөлүүдө...</div>
-
-  <div id="content" style="display: none;">
-    
-    <!-- TABS NAVIGATION -->
-    <div class="tabs">
-      <div class="tab active" onclick="openTab('tab-main')">⚙️ Башкы</div>
-      <div class="tab" onclick="openTab('tab-stats')">📊 Аналитика</div>
-      <div class="tab" onclick="openTab('tab-users')">👥 Катышуучулар</div>
-      <div class="tab" onclick="openTab('tab-black')">🚫 Кара тизме</div>
-      <div class="tab" onclick="openTab('tab-filters')">🤖 Автожооптор</div>
-      <div class="tab" onclick="openTab('tab-notes')">📝 Белгилер</div>
-    </div>
-
-    <!-- ТАБ: БАШКЫ -->
-    <div id="tab-main" class="tab-content active">
-      <div class="section">
-        <div class="section-title">🛡️ Негизги Орнотуулар</div>
-        <div class="setting-row">
-          <div class="setting-info"><h3>Капча (Анти-бот)</h3></div>
-          <label class="switch"><input type="checkbox" id="captchaEnabled"><span class="slider"></span></label>
-        </div>
-        <div class="input-group">
-          <label>Капча түрү</label>
-          <select id="captchaMode">
-            <option value="button">Баскыч (Button)</option>
-            <option value="math">Математика</option>
-            <option value="text">Текст (Символдор)</option>
-          </select>
-        </div>
-        <div class="setting-row">
-          <div class="setting-info"><h3>Капчадан өтпөсө Кик кылуу</h3></div>
-          <label class="switch"><input type="checkbox" id="captchaKick"><span class="slider"></span></label>
-        </div>
-        <div class="setting-row">
-          <div class="setting-info"><h3>Таза Саламдашуу (Эскисин өчүрүү)</h3></div>
-          <label class="switch"><input type="checkbox" id="cleanWelcome"><span class="slider"></span></label>
-        </div>
-        <div class="setting-row">
-          <div class="setting-info"><h3>Анти-Сөгүнүү</h3></div>
-          <label class="switch"><input type="checkbox" id="antiSwearEnabled"><span class="slider"></span></label>
-        </div>
-        <div class="setting-row">
-          <div class="setting-info"><h3>Анти-Канал (Бан)</h3></div>
-          <label class="switch"><input type="checkbox" id="antiChannel"><span class="slider"></span></label>
-        </div>
+  <!-- Modal Component for Detailed Stats -->
+  <div id="statsModal" class="modal-overlay" onclick="closeModal(event)">
+    <div class="modal-content" onclick="event.stopPropagation()">
+      <div class="modal-header">
+        <h2 id="modalTitle">Толук Маалымат</h2>
+        <button class="modal-close" onclick="closeModal(true)">&times;</button>
       </div>
-
-      <div class="section">
-        <div class="section-title">🌙 Түнкү дозор (Night Mode)</div>
-        <div class="setting-row">
-          <div class="setting-info"><h3>Иштетүү</h3><p>Түнкүсүн медиа/шилтемеге тыюу</p></div>
-          <label class="switch"><input type="checkbox" id="nightModeEnabled"><span class="slider"></span></label>
-        </div>
-        <div class="grid-2">
-          <div class="input-group"><label>Башталышы (Саат)</label><input type="number" id="nightModeStart" min="0" max="23"></div>
-          <div class="input-group"><label>Бүтүшү (Саат)</label><input type="number" id="nightModeEnd" min="0" max="23"></div>
-        </div>
-      </div>
-
-      <div class="section">
-        <div class="section-title">🔒 Бөгөттөөлөр (Locks)</div>
-        <div class="grid-2">
-          <label class="switch-row"><input type="checkbox" id="lock_text"><span> Текст</span></label>
-          <label class="switch-row"><input type="checkbox" id="lock_links"><span> Шилтеме</span></label>
-          <label class="switch-row"><input type="checkbox" id="lock_photo"><span> Сүрөт</span></label>
-          <label class="switch-row"><input type="checkbox" id="lock_video"><span> Видео</span></label>
-          <label class="switch-row"><input type="checkbox" id="lock_audio"><span> Музыка</span></label>
-          <label class="switch-row"><input type="checkbox" id="lock_voices"><span> Үн/Голос</span></label>
-          <label class="switch-row"><input type="checkbox" id="lock_videonote"><span> Кружок</span></label>
-          <label class="switch-row"><input type="checkbox" id="lock_document"><span> Файл</span></label>
-          <label class="switch-row"><input type="checkbox" id="lock_stickers"><span> Стикер</span></label>
-          <label class="switch-row"><input type="checkbox" id="lock_gifs"><span> GIF</span></label>
-          <label class="switch-row"><input type="checkbox" id="lock_bots"><span> Боттор</span></label>
-          <label class="switch-row"><input type="checkbox" id="lock_commands"><span> /Команда</span></label>
-          <label class="switch-row"><input type="checkbox" id="lock_games"><span> Оюн</span></label>
-          <label class="switch-row"><input type="checkbox" id="lock_forwards"><span> Репост</span></label>
-          <label class="switch-row"><input type="checkbox" id="lock_arabic"><span> Арабча</span></label>
-          <label class="switch-row"><input type="checkbox" id="lock_porn"><span> NSFW</span></label>
-        </div>
-      </div>
-
-      <div class="section">
-        <div class="section-title">⚖️ Жазалоо (Варндар)</div>
-        <div class="input-group"><label>Лимит</label><input type="number" id="warnLimit" min="1" max="10"></div>
-        <div class="input-group"><label>Муттун узактыгы (мүнөт)</label><input type="number" id="muteDurationMinutes"></div>
-        <div class="input-group">
-          <label>Лимит толгондо Жаза</label>
-          <select id="warnAction">
-            <option value="warn">Эскертүү</option>
-            <option value="delete">Өчүрүү гана</option>
-            <option value="mute">Мут (Жазуудан ажыратуу)</option>
-            <option value="kick">Кик (Чыгаруу)</option>
-            <option value="ban">Бан (Бөгөттөө)</option>
-          </select>
-        </div>
-      </div>
-      
-      <div class="section">
-        <div class="section-title">🌊 Антифлуд</div>
-        <div class="setting-row">
-          <div class="setting-info"><h3>Антифлудту иштетүү</h3></div>
-          <label class="switch"><input type="checkbox" id="antiflood_enabled"><span class="slider"></span></label>
-        </div>
-        <div class="grid-2">
-          <div class="input-group"><label>Билдирүүлөр саны</label><input type="number" id="antiflood_messages"></div>
-          <div class="input-group"><label>Убакыт (сек)</label><input type="number" id="antiflood_seconds"></div>
-        </div>
-        <div class="input-group">
-          <label>Жаза</label>
-          <select id="antiflood_action">
-            <option value="delete">Өчүрүү</option>
-            <option value="mute">Мут</option>
-            <option value="kick">Кик</option>
-            <option value="ban">Бан</option>
-          </select>
-        </div>
-      </div>
-
-      <div class="section">
-        <div class="section-title">Тексттер</div>
-        <div class="setting-row"><div class="setting-info"><h3>Саламдашуу</h3></div><label class="switch"><input type="checkbox" id="welcome_enabled"><span class="slider"></span></label></div>
-        <div class="input-group"><label>Текст ({name})</label><textarea id="welcome_text" rows="2"></textarea></div>
-        <div class="setting-row"><div class="setting-info"><h3>Коштошуу</h3></div><label class="switch"><input type="checkbox" id="goodbye_enabled"><span class="slider"></span></label></div>
-        <div class="input-group"><label>Коштошуу тексти ({name})</label><textarea id="goodbye_text" rows="2"></textarea></div>
-        <div class="input-group"><label>Эрежелер (/rules)</label><textarea id="rulesText" rows="3"></textarea></div>
+      <div class="modal-body" id="modalBody">
+        <!-- Dynamically injected -->
       </div>
     </div>
-
-    <!-- ТАБ: АНАЛИТИКА -->
-    <div id="tab-stats" class="tab-content">
-      <div class="section">
-        <div class="section-title">📈 Тайпанын Статистикасы</div>
-        <div class="grid-2" style="margin-bottom: 10px;">
-          <div class="stat-card">
-            <div class="value" id="stat_total">0</div>
-            <div class="label">Жалпы СМС</div>
-          </div>
-          <div class="stat-card">
-            <div class="value" id="stat_today">0</div>
-            <div class="label">Бүгүнкү СМС</div>
-          </div>
-          <div class="stat-card" style="border-color: rgba(239, 68, 68, 0.3);">
-            <div class="value" style="color: var(--danger);" id="stat_bans">0</div>
-            <div class="label">Бандар</div>
-          </div>
-          <div class="stat-card" style="border-color: rgba(245, 158, 11, 0.3);">
-            <div class="value" style="color: var(--warn);" id="stat_mutes">0</div>
-            <div class="label">Муттар</div>
-          </div>
-        </div>
-      </div>
-
-      <div class="section">
-        <div class="section-title">🕵️ Аракеттер Журналы (Audit Log)</div>
-        <p style="font-size:12px; color:var(--text-muted); margin-bottom:10px;">Боттун акыркы 50 аракети көрсөтүлөт.</p>
-        <div id="logs_container" style="max-height: 400px; overflow-y: auto; padding-right: 4px;">
-          <!-- Logs go here -->
-        </div>
-      </div>
-    </div>
-
-    <!-- ТАБ: КАТЫШУУЧУЛАР -->
-    <div id="tab-users" class="tab-content">
-      <div class="section">
-        <div class="section-title">👥 Колдонуучуларды Башкаруу</div>
-        <p style="font-size:12px; color:var(--text-muted); margin-bottom:15px;">Тайпадагы акыркы активдүү катышуучулар.</p>
-        <div id="users_container">
-          <!-- Users go here -->
-        </div>
-      </div>
-    </div>
-
-    <!-- ТАБ: КАРА ТИЗМЕ -->
-    <div id="tab-black" class="tab-content">
-      <div class="section">
-        <div class="section-title">🚫 Кара тизмеге сөз кошуу</div>
-        <div class="input-group"><label>Сөз</label><input type="text" id="bl_word"></div>
-        <div class="input-group">
-          <label>Жаза</label>
-          <select id="bl_action">
-            <option value="warn">Эскертүү</option>
-            <option value="delete">Өчүрүү гана</option>
-            <option value="mute">Мут</option>
-            <option value="kick">Кик</option>
-            <option value="ban">Бан</option>
-          </select>
-        </div>
-        <button class="add-btn" onclick="addBlacklist()">Кошуу</button>
-      </div>
-      <div class="section" id="bl_list"></div>
-    </div>
-
-    <!-- ТАБ: АВТОЖООПТОР -->
-    <div id="tab-filters" class="tab-content">
-      <div class="section">
-        <div class="section-title">🤖 Автожооп (Filter) кошуу</div>
-        <div class="input-group"><label>Сөз (триггер)</label><input type="text" id="fl_word"></div>
-        <div class="input-group"><label>Боттун жообу</label><input type="text" id="fl_reply"></div>
-        <button class="add-btn" onclick="addFilter()">Кошуу</button>
-      </div>
-      <div class="section" id="fl_list"></div>
-    </div>
-
-    <!-- ТАБ: БЕЛГИЛЕР (NOTES) -->
-    <div id="tab-notes" class="tab-content">
-      <div class="section">
-        <div class="section-title">📝 Белги (Note) кошуу</div>
-        <p style="font-size:12px; color:var(--text-muted); margin-bottom:10px;">Бул белгини чатта #аталышы же /get аркылуу чакырса болот.</p>
-        <div class="input-group"><label>Аталышы</label><input type="text" id="nt_name"></div>
-        <div class="input-group"><label>Текст</label><textarea id="nt_text" rows="3"></textarea></div>
-        <button class="add-btn" onclick="addNote()">Сактоо</button>
-      </div>
-      <div class="section" id="nt_list"></div>
-    </div>
-
-    <button id="saveBtn" class="save-btn" onclick="saveAll()">Өзгөртүүлөрдү Сактоо</button>
   </div>
 
   <script>
@@ -322,7 +366,8 @@
     const actionUrl = '/api/action?chatId=' + chatId;
 
     let appData = { config: {}, blacklist: {}, filters: {}, notes: {} };
-    let statsData = { logs: [], stats: {}, users: [] };
+    let statsData = { logs: [], stats: {}, users: [], topUsersAll: [], topUsersToday: [] };
+    let usersMap = {}; // userId -> user info helper
 
     function showToast(msg, type='success') {
       const t = document.getElementById('toast'); 
@@ -332,26 +377,90 @@
       setTimeout(() => t.classList.remove('show'), 3000);
     }
 
-    function openTab(id) {
+    function openTab(id, elem) {
       document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-      document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
       document.getElementById(id).classList.add('active');
-      event.currentTarget.classList.add('active');
+      elem.classList.add('active');
+    }
+
+    // Modal logic
+    function openModal(type) {
+      const modal = document.getElementById('statsModal');
+      const title = document.getElementById('modalTitle');
+      const body = document.getElementById('modalBody');
+      
+      let content = "";
+      
+      if (type === 'total') {
+        title.innerText = "Топ Активдүү (Жалпы)";
+        content = parseTopUsers(statsData.topUsersAll);
+      } else if (type === 'today') {
+        title.innerText = "Бүгүн Активдүү";
+        content = parseTopUsers(statsData.topUsersToday);
+      } else if (type === 'bans') {
+        title.innerText = "Берилген Бандардын тизмеси";
+        content = parseLogsByType("Бан");
+      } else if (type === 'mutes') {
+        title.innerText = "Берилген Муттардын тизмеси";
+        content = parseLogsByType("Мут");
+      }
+
+      body.innerHTML = content || "<p style='color:var(--text-muted); font-size:13px; text-align:center; padding: 20px;'>Маалымат табылган жок.</p>";
+      modal.classList.add('show');
+    }
+
+    function closeModal(force=false) {
+      if(force || event.target.classList.contains('modal-overlay')) {
+        document.getElementById('statsModal').classList.remove('show');
+      }
+    }
+
+    function parseTopUsers(arr) {
+      if(!arr || arr.length === 0) return "";
+      let html = "";
+      // arr is [id1, score1, id2, score2] if returned flat from redis
+      for(let i=0; i<arr.length; i+=2) {
+        const uid = arr[i];
+        const score = arr[i+1];
+        const user = usersMap[uid] || { name: "Белгисиз", username: "" };
+        html += `<div class="user-card" style="display:flex; justify-content:space-between;">
+          <span style="font-size:14px;">${user.name}</span>
+          <b style="color:var(--primary);">${score} смс</b>
+        </div>`;
+      }
+      return html;
+    }
+
+    function parseLogsByType(actionType) {
+      const filtered = statsData.logs.filter(l => l.action.includes(actionType));
+      if(filtered.length === 0) return "";
+      return filtered.map(log => {
+        const date = new Date(log.timestamp).toLocaleString("ru-RU", {day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'});
+        return `<div class="log-entry ${actionType==='Бан'?'danger':'warn'}">
+          <div style="font-size:10px; color:var(--text-muted); display:flex; justify-content:space-between;">
+            <span>${date}</span>
+            <span>Ким берди: <b>${log.adminName || "Система"}</b></span>
+          </div>
+          <div style="margin-top:4px;">👤 <b>${log.name}</b> (${log.userId})</div>
+          <div style="margin-top:2px; font-style:italic;">📝 ${log.reason}</div>
+        </div>`;
+      }).join('');
     }
 
     async function fetchData() {
       if (!chatId || !initData) return;
       try {
-        // Fetch Config
         const res = await fetch(apiUrl, { headers: { 'Authorization': 'tma ' + initData }});
-        if(!res.ok) throw new Error("Кечиресиз, сизде уруксат жок.");
+        if(!res.ok) throw new Error("Уруксат жок. Сиз старший админ болушуңуз керек.");
         appData = await res.json();
         renderMain(); renderLists();
 
-        // Fetch Stats
         const resStats = await fetch(statsUrl, { headers: { 'Authorization': 'tma ' + initData }});
         if(resStats.ok) {
           statsData = await resStats.json();
+          // build users map for quick lookup
+          statsData.users.forEach(u => usersMap[u.id] = u);
           renderStatsAndUsers();
         }
 
@@ -363,37 +472,37 @@
     }
 
     function renderStatsAndUsers() {
-      // Stats
       document.getElementById('stat_total').innerText = statsData.stats.msgCount || 0;
       document.getElementById('stat_today').innerText = statsData.stats.msgsToday || 0;
       document.getElementById('stat_bans').innerText = statsData.stats.bansCount || 0;
       document.getElementById('stat_mutes').innerText = statsData.stats.mutesCount || 0;
 
-      // Logs
       const logsHtml = statsData.logs.map(log => {
         let typeClass = "";
         if(log.action.includes("Бан") || log.action.includes("Кик")) typeClass = "danger";
-        if(log.action.includes("Мут") || log.action.includes("Эскертүү")) typeClass = "warn";
+        if(log.action.includes("Мут") || log.action.includes("Эскертүү") || log.action.includes("Warn")) typeClass = "warn";
         const date = new Date(log.timestamp).toLocaleString("ru-RU", {day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'});
         return `<div class="log-entry ${typeClass}">
           <div class="log-header"><span>${date}</span> <b>${log.action}</b></div>
-          <div>👤 ${log.name}</div>
-          <div style="color:var(--text-muted); margin-top:2px;">📝 ${log.reason}</div>
+          <div style="display:flex; justify-content:space-between;">
+            <span>👤 ${log.name}</span>
+            <span style="color:var(--text-muted);">👮‍♂️ ${log.adminName || "Бот"}</span>
+          </div>
+          <div style="color:var(--text-muted); margin-top:4px;">📝 ${log.reason}</div>
         </div>`;
       }).join('');
       document.getElementById('logs_container').innerHTML = logsHtml || "<div style='color:var(--text-muted); font-size:12px;'>Журнал бош.</div>";
 
-      // Users
       const usersHtml = statsData.users.sort((a,b)=> b.urmat - a.urmat).map(u => `
         <div class="user-card">
           <div class="user-header">
             <span class="user-name">${u.name} ${u.username ? '(@'+u.username+')' : ''}</span>
           </div>
-          <div class="user-stats">
+          <div style="font-size: 11px; color: var(--text-muted); display: flex; gap: 10px; margin-bottom: 12px;">
             <span>⚠️ Варн: ${u.warns}</span>
             <span>🌟 Сый-Урмат: ${u.urmat}</span>
           </div>
-          <div class="user-actions">
+          <div style="display: flex; gap: 6px; flex-wrap: wrap;">
             <button class="action-btn warn" onclick="doAction('mute', ${u.id})">Мут (24с)</button>
             <button class="action-btn danger" onclick="doAction('kick', ${u.id})">Кик</button>
             <button class="action-btn danger" onclick="doAction('ban', ${u.id})">Бан</button>
@@ -401,7 +510,7 @@
           </div>
         </div>
       `).join('');
-      document.getElementById('users_container').innerHTML = usersHtml || "<div style='color:var(--text-muted); font-size:12px;'>Катышуучулар табылган жок.</div>";
+      document.getElementById('users_container').innerHTML = usersHtml || "<div style='color:var(--text-muted); font-size:12px;'>Катышуучулар табылган жок (Жаңы билдирүүлөр күтүлүүдө).</div>";
     }
 
     async function doAction(actionName, targetUserId) {
@@ -415,16 +524,13 @@
         if(res.ok) {
           showToast("Аракет аткарылды!", 'success');
           tg.HapticFeedback.notificationOccurred("success");
+          fetchData(); // reload stats
         } else {
           showToast("Ката кетти", 'error');
-          tg.HapticFeedback.notificationOccurred("error");
         }
-      } catch (e) {
-        showToast("Ката кетти", 'error');
-      }
+      } catch (e) { showToast("Ката кетти", 'error'); }
     }
 
-    // [The rest of the rendering/saving logic remains the same]
     function renderMain() {
       const cfg = appData.config;
       document.getElementById('captchaEnabled').checked = cfg.captchaEnabled || false;
@@ -466,21 +572,21 @@
     function renderLists() {
       const blHtml = Object.entries(appData.blacklist).map(([k, v]) => `
         <div class="list-item">
-          <div><div class="list-item-text"><b>${k}</b></div><div style="font-size:10px;color:#94a3b8">Жаза: ${v}</div></div>
+          <div><div style="font-size: 14px; margin-bottom: 4px;"><b>${k}</b></div><div style="font-size:10px;color:#94a3b8">Жаза: ${v}</div></div>
           <button class="delete-btn" onclick="deleteItem('blacklist', '${k}')">Өчүрүү</button>
         </div>`).join('');
       document.getElementById('bl_list').innerHTML = blHtml || "<p style='font-size:12px;color:#94a3b8'>Тизме бош</p>";
 
       const flHtml = Object.entries(appData.filters).map(([k, v]) => `
         <div class="list-item">
-          <div><div class="list-item-text"><b>${k}</b></div><div style="font-size:10px;color:#94a3b8">${v.substring(0, 20)}...</div></div>
+          <div><div style="font-size: 14px; margin-bottom: 4px;"><b>${k}</b></div><div style="font-size:10px;color:#94a3b8">${v.substring(0, 20)}...</div></div>
           <button class="delete-btn" onclick="deleteItem('filters', '${k}')">Өчүрүү</button>
         </div>`).join('');
       document.getElementById('fl_list').innerHTML = flHtml || "<p style='font-size:12px;color:#94a3b8'>Тизме бош</p>";
 
       const ntHtml = Object.entries(appData.notes).map(([k, v]) => `
         <div class="list-item">
-          <div><div class="list-item-text"><b>#${k}</b></div><div style="font-size:10px;color:#94a3b8">${v.substring(0, 20)}...</div></div>
+          <div><div style="font-size: 14px; margin-bottom: 4px;"><b>#${k}</b></div><div style="font-size:10px;color:#94a3b8">${v.substring(0, 20)}...</div></div>
           <button class="delete-btn" onclick="deleteItem('notes', '${k}')">Өчүрүү</button>
         </div>`).join('');
       document.getElementById('nt_list').innerHTML = ntHtml || "<p style='font-size:12px;color:#94a3b8'>Тизме бош</p>";
