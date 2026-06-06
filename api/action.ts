@@ -62,20 +62,29 @@ export default async function handler(req: any, res: any) {
     switch (action) {
       case "ban":
         await banUser(bot.api, chatId, targetUserId);
-        await logAction(bot.api, chatId, targetUserId, targetName, "Бан", reason || "Web Panel аркылуу");
+        await logAction(bot.api, chatId, targetUserId, targetName, "Бан", reason || "Web Panel аркылуу", user.first_name || "Админ");
         break;
       case "mute":
-        await muteUser(bot.api, chatId, targetUserId, 24 * 60 * 60); // 24h
-        await logAction(bot.api, chatId, targetUserId, targetName, "Мут", reason || "Web Panel аркылуу (24с)");
+        await muteUser(bot.api, chatId, targetUserId, 24 * 60 * 60);
+        await logAction(bot.api, chatId, targetUserId, targetName, "Мут", reason || "Web Panel аркылуу (24с)", user.first_name || "Админ");
+        break;
+      case "unmute":
+        await bot.api.restrictChatMember(chatId, targetUserId, {
+          can_send_messages: true, can_send_audios: true, can_send_documents: true,
+          can_send_photos: true, can_send_videos: true, can_send_video_notes: true,
+          can_send_voice_notes: true, can_send_polls: true, can_send_other_messages: true,
+          can_add_web_page_previews: true,
+        });
+        await logAction(bot.api, chatId, targetUserId, targetName, "Анмут", reason || "Web Panel аркылуу", user.first_name || "Админ");
         break;
       case "kick":
         await bot.api.banChatMember(chatId, targetUserId).catch(() => {});
         await bot.api.unbanChatMember(chatId, targetUserId).catch(() => {});
-        await logAction(bot.api, chatId, targetUserId, targetName, "Кик", reason || "Web Panel аркылуу");
+        await logAction(bot.api, chatId, targetUserId, targetName, "Кик", reason || "Web Panel аркылуу", user.first_name || "Админ");
         break;
       case "unban":
         await bot.api.unbanChatMember(chatId, targetUserId, { only_if_banned: true }).catch(() => {});
-        await logAction(bot.api, chatId, targetUserId, targetName, "Разбан", reason || "Web Panel аркылуу");
+        await logAction(bot.api, chatId, targetUserId, targetName, "Разбан", reason || "Web Panel аркылуу", user.first_name || "Админ");
         break;
       default:
         return res.status(400).json({ error: "Unknown action" });

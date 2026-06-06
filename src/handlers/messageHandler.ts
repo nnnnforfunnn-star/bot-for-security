@@ -1,18 +1,12 @@
 import { Context, NextFunction } from "grammy";
 import { logger } from "../utils/logger.js";
-import { isUserAdmin, muteUser, banUser } from "../utils/telegram.js";
+import { isUserAdmin, muteUser, banUser, unbanUser } from "../utils/telegram.js";
 import { getGroupConfig } from "../utils/configManager.js";
 import { db } from "../utils/db.js";
 import { logAction } from "../utils/actionLogger.js";
 
 // Регулярное выражение для поиска арабской вязи и иероглифов
 const ARABIC_HIEROGLYPH_REGEX = /[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF\u4E00-\u9FFF\u3400-\u4DBF\u20000-\u2A6DF]/;
-
-// Список спам-слов (можно пополнять)
-const SPAM_KEYWORDS = ["казино", "ставка", "крипта", "биткоин", "заработок", "акча", "киреше", "1xbet", "melbet"];
-
-// Фильтр мата на русском и кыргызском (базовые корни)
-const KYRGYZ_SWEAR_REGEX = /(коток|жалеп|канчык|сука|бля|нахуй|пиздец|еба|хуй|чмо|сик|амжалак|ам)/i;
 
 // Слова-триггеры для системы Кармы (Сый-Урмат)
 const KARMA_WORDS = ["рахмат", "рхм", "ыраазымын", "чоң рахмат", "спс", "спасибо"];
@@ -110,6 +104,21 @@ export async function messageHandler(ctx: Context, next: NextFunction): Promise<
         await ctx.api.unbanChatMember(chatId, targetUserId).catch(() => {});
         await logAction(ctx.api, chatId, targetUserId, targetMsg.from?.first_name || "Колдонуучу", "Кик", "Админдин буйругу (Manual)", ctx.from.first_name);
         await ctx.reply(`👢 ${targetMsg.from?.first_name} чаттан чыгарылды (Кик).`);
+        return;
+      } else if (lowerText === "разбан" || lowerText === "unban") {
+        await unbanUser(ctx.api, chatId, targetUserId);
+        await logAction(ctx.api, chatId, targetUserId, targetMsg.from?.first_name || "Колдонуучу", "Разбан", "Админдин буйругу (Manual)", ctx.from.first_name);
+        await ctx.reply(`✅ [${targetMsg.from?.first_name}](tg://user?id=${targetUserId}) бөгөттөн чыгарылды (Разбан).`, { parse_mode: "Markdown" });
+        return;
+      } else if (lowerText === "анмут" || lowerText === "unmute") {
+        await ctx.api.restrictChatMember(chatId, targetUserId, {
+          can_send_messages: true, can_send_audios: true, can_send_documents: true,
+          can_send_photos: true, can_send_videos: true, can_send_video_notes: true,
+          can_send_voice_notes: true, can_send_polls: true, can_send_other_messages: true,
+          can_add_web_page_previews: true,
+        });
+        await logAction(ctx.api, chatId, targetUserId, targetMsg.from?.first_name || "Колдонуучу", "Анмут", "Админдин буйругу (Manual)", ctx.from.first_name);
+        await ctx.reply(`🔊 [${targetMsg.from?.first_name}](tg://user?id=${targetUserId}) жазуу укугу кайтарылды (Анмут).`, { parse_mode: "Markdown" });
         return;
       } else if (lowerText === "эскертүү" || lowerText === "warn") {
         const config = await getGroupConfig(chatId);
@@ -279,12 +288,20 @@ export async function messageHandler(ctx: Context, next: NextFunction): Promise<
     }
   }
 
+  // Swear filter now uses the configurable swear list from DB
   if (!shouldDelete && config.antiSwearEnabled && text) {
-    const swearWords = KYRGYZ_SWEAR_REGEX.source.replace("(", "(?:").replace(")", ")");
-    const strictSwearRegex = new RegExp(`\\b${swearWords}\\b`, 'i');
-    if (strictSwearRegex.test(lowerText) || KYRGYZ_SWEAR_REGEX.test(lowerText)) {
-      shouldDelete = true; warnReason = "Сөгүнүү же адепсиз сөздөр.";
-    }
+    try {
+      const swearList = await db.smembers(`chat:${chatId}:swearwords`);
+      if (swearList && swearList.length > 0) {
+        for (const sw of swearList) {
+          if (lowerText.includes(sw.toLowerCase())) {
+            shouldDelete = true;
+            warnReason = `Сөгүнүү же адепсиз сөз: ${sw}`;
+            break;
+          }
+        }
+      }
+    } catch (e) {}
   }
 
   if (shouldDelete) {

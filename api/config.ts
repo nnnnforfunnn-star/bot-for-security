@@ -58,11 +58,12 @@ export default async function handler(req: any, res: any) {
       const blacklist = (await db.hgetall(`chat:${chatId}:blacklist`)) || {};
       const filters = (await db.hgetall(`chat:${chatId}:filters`)) || {};
       const notes = (await db.hgetall(`chat:${chatId}:notes`)) || {};
-      return res.status(200).json({ config, blacklist, filters, notes });
+      const swearwords = await db.smembers(`chat:${chatId}:swearwords`) || [];
+      return res.status(200).json({ config, blacklist, filters, notes, swearwords });
     } 
     
     if (req.method === "POST") {
-      const { config, blacklist, filters, notes } = req.body;
+      const { config, blacklist, filters, notes, swearwords } = req.body;
       
       let updatedConfig = {};
       if (config) {
@@ -81,6 +82,14 @@ export default async function handler(req: any, res: any) {
       await syncHash(`chat:${chatId}:blacklist`, blacklist);
       await syncHash(`chat:${chatId}:filters`, filters);
       await syncHash(`chat:${chatId}:notes`, notes);
+
+      // Sync swear words (Set, not Hash)
+      if (swearwords && Array.isArray(swearwords)) {
+        await db.del(`chat:${chatId}:swearwords`);
+        for (const word of swearwords) {
+          if (word && word.trim()) await db.sadd(`chat:${chatId}:swearwords`, word.trim().toLowerCase());
+        }
+      }
 
       return res.status(200).json({ success: true, config: updatedConfig });
     }
