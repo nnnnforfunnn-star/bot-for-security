@@ -1,4 +1,4 @@
-import { Bot } from "grammy";
+import { Bot, InlineKeyboard } from "grammy";
 import { config } from "./config.js";
 import { logger } from "./utils/logger.js";
 import { globalErrorHandler } from "./middlewares/errorHandler.js";
@@ -156,11 +156,25 @@ bot.command("start", async (ctx) => {
       }
     }
 
+    const keyboard = new InlineKeyboard()
+      .url("➕ Тайпага кошуу (Добавить в группу)", `https://t.me/${ctx.me.username}?startgroup=true`).row()
+      .url("🆘 Тех. Колдоо (Поддержка)", "https://t.me/noneaibek").row()
+      .text("📖 Буйруктар (Команды)", "help_main").row()
+      .url("🌐 Канал (Жаңылыктар)", "https://t.me/noneaibek"); // You can change this to your actual news channel if needed.
+
     await ctx.reply(
-      "🛡️ Ассалому алейкум! Мен **Коопсузбек**мин — тайпаңыздын тазалыгын жана коопсуздугун сактаган кыргызча модератор.\n\n" +
-      "Мени өзүңүздүн тайпаңызга кошуп, администратор кылыңыз. Мен спамдарды, ботторду жана уят сөздөрдү автоматтык түрдө өчүрөм.\n\n" +
-      "Тайпада /settings буйругун жазып, мени толук башкара аласыз.\nБуйруктардын тизмесин көрүү үчүн /help басыңыз.",
-      { parse_mode: "Markdown" }
+      `👋 Салам, <b>${ctx.from?.first_name || 'досум'}</b>!\n\n` +
+      `🛡 <b>Коопсузбек</b> — тайпаңызды коргоо жана башкаруу үчүн түзүлгөн эң күчтүү, заманбап кыргызча модератор-бот.\n\n` +
+      `<b>Эмне кыла алам?</b>\n` +
+      `🔸 <i>Спам, шилтеме, жаман сөздөрдү авто-өчүрүү</i>\n` +
+      `🔸 <i>Капча, Анти-бот жана Ночной дозор</i>\n` +
+      `🔸 <i>Уникалдуу Web-Панель аркылуу башкаруу</i>\n` +
+      `🔸 <i>Карма, Автожооптор жана Заметкалар</i>\n\n` +
+      `🚀 Мени тайпаңызга кошуп, администратор укугун бериңиз да, <code>/settings</code> буйругу менен баарын өзүңүзгө ылайыктап алыңыз!`,
+      { 
+        parse_mode: "HTML",
+        reply_markup: keyboard
+      }
     );
   }
 });
