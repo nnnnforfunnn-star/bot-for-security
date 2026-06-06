@@ -1,26 +1,52 @@
-import { Redis } from "@upstash/redis";
+import { Redis as UpstashRedis } from "@upstash/redis";
+import { createClient } from "redis";
 import { logger } from "./logger.js";
-
-// Используем переменные окружения Vercel Upstash Redis (или старые от KV)
-const url = process.env.UPSTASH_REDIS_REST_URL || process.env.KV_REST_API_URL;
-const token = process.env.UPSTASH_REDIS_REST_TOKEN || process.env.KV_REST_API_TOKEN;
-
-let redis: Redis | null = null;
-if (url && token) {
-  redis = new Redis({ url, token });
-  logger.info("Успешно подключена база данных Redis (Vercel KV).");
-} else {
-  logger.warn("Redis URL/Token не найдены! Используется временная память (Сбросится при перезапуске). Для постоянной памяти добавьте Upstash Redis в Vercel.");
-}
-
-// Резервная память для локального тестирования или VPS (сохраняется в JSON файл)
 import fs from "fs";
 import path from "path";
 
+// 1. Поддержка TCP Redis (через обычный redis:// URL)
+let redisTCPClient: any = null;
+
+async function getRedisTCPClient() {
+  if (!process.env.REDIS_URL) return null;
+  try {
+    if (!redisTCPClient) {
+      redisTCPClient = createClient({
+        url: process.env.REDIS_URL,
+        socket: {
+          reconnectStrategy: (retries) => Math.min(retries * 50, 500),
+          connectTimeout: 5000
+        }
+      });
+      redisTCPClient.on("error", (err: any) => {
+        logger.error("Redis TCP Client Error", err);
+      });
+    }
+    if (!redisTCPClient.isOpen) {
+      await redisTCPClient.connect();
+      logger.info("Успешно подключена база данных Redis по TCP.");
+    }
+    return redisTCPClient;
+  } catch (err) {
+    logger.error("Ошибка при подключении к Redis TCP", err);
+    return null;
+  }
+}
+
+// 2. Поддержка REST Redis (Upstash)
+const upstashUrl = process.env.UPSTASH_REDIS_REST_URL || process.env.KV_REST_API_URL;
+const upstashToken = process.env.UPSTASH_REDIS_REST_TOKEN || process.env.KV_REST_API_TOKEN;
+
+let upstashClient: UpstashRedis | null = null;
+if (upstashUrl && upstashToken) {
+  upstashClient = new UpstashRedis({ url: upstashUrl, token: upstashToken });
+  logger.info("Успешно подключена база данных Redis по HTTP REST (Upstash).");
+}
+
+// 3. Локальная база (Резервная память)
 const DB_FILE = path.resolve(process.cwd(), "database.json");
 let memCache = new Map<string, any>();
 
-// Инициализация локальной базы (чтение из файла)
 function loadLocalDB() {
   try {
     if (fs.existsSync(DB_FILE)) {
@@ -35,7 +61,6 @@ function loadLocalDB() {
   }
 }
 
-// Сохранение локальной базы (запись в файл)
 function saveLocalDB() {
   try {
     const obj = Object.fromEntries(memCache);
@@ -43,14 +68,25 @@ function saveLocalDB() {
   } catch (e) {}
 }
 
-if (!redis) {
+if (!process.env.REDIS_URL && !upstashClient) {
   loadLocalDB();
+  logger.warn("Redis не настроен! Используется временная память (database.json).");
 }
 
 export const db = {
   async get<T>(key: string): Promise<T | null> {
     try {
-      if (redis) return await redis.get<T>(key);
+      const tcp = await getRedisTCPClient();
+      if (tcp) {
+        const val = await tcp.get(key);
+        if (val === null) return null;
+        try {
+          return JSON.parse(val) as T;
+        } catch {
+          return val as unknown as T;
+        }
+      }
+      if (upstashClient) return await upstashClient.get<T>(key);
       return memCache.get(key) || null;
     } catch (e) {
       return null;
@@ -59,19 +95,31 @@ export const db = {
   
   async set(key: string, value: any, ttlSeconds?: number): Promise<void> {
     try {
-      if (redis) {
-        if (ttlSeconds) await redis.set(key, value, { ex: ttlSeconds });
-        else await redis.set(key, value);
-      } else {
-        memCache.set(key, value);
-        saveLocalDB();
+      const tcp = await getRedisTCPClient();
+      const strVal = typeof value === "string" ? value : JSON.stringify(value);
+      if (tcp) {
+        if (ttlSeconds) {
+          await tcp.set(key, strVal, { EX: ttlSeconds });
+        } else {
+          await tcp.set(key, strVal);
+        }
+        return;
       }
+      if (upstashClient) {
+        if (ttlSeconds) await upstashClient.set(key, value, { ex: ttlSeconds });
+        else await upstashClient.set(key, value);
+        return;
+      }
+      memCache.set(key, value);
+      saveLocalDB();
     } catch (e) {}
   },
   
   async incr(key: string): Promise<number> {
     try {
-      if (redis) return await redis.incr(key);
+      const tcp = await getRedisTCPClient();
+      if (tcp) return await tcp.incr(key);
+      if (upstashClient) return await upstashClient.incr(key);
       const val = (memCache.get(key) || 0) + 1;
       memCache.set(key, val);
       saveLocalDB();
@@ -81,23 +129,42 @@ export const db = {
 
   async del(key: string): Promise<void> {
     try {
-      if (redis) await redis.del(key);
-      else {
-        memCache.delete(key);
-        saveLocalDB();
+      const tcp = await getRedisTCPClient();
+      if (tcp) {
+        await tcp.del(key);
+        return;
       }
+      if (upstashClient) {
+        await upstashClient.del(key);
+        return;
+      }
+      memCache.delete(key);
+      saveLocalDB();
     } catch (e) {}
   },
 
   async expire(key: string, ttlSeconds: number): Promise<void> {
     try {
-      if (redis) await redis.expire(key, ttlSeconds);
+      const tcp = await getRedisTCPClient();
+      if (tcp) {
+        await tcp.expire(key, ttlSeconds);
+        return;
+      }
+      if (upstashClient) {
+        await upstashClient.expire(key, ttlSeconds);
+        return;
+      }
     } catch (e) {}
   },
 
   async zincrby(key: string, increment: number, member: string | number): Promise<number> {
     try {
-      if (redis) return await redis.zincrby(key, increment, member.toString());
+      const tcp = await getRedisTCPClient();
+      if (tcp) {
+        const res = await tcp.zIncrBy(key, increment, member.toString());
+        return parseFloat(res);
+      }
+      if (upstashClient) return await upstashClient.zincrby(key, increment, member.toString());
       const zkey = `${key}:${member}`;
       const val = (memCache.get(zkey) || 0) + increment;
       memCache.set(zkey, val);
@@ -108,41 +175,67 @@ export const db = {
 
   async zrange(key: string, start: number, stop: number, opts?: { withScores?: boolean, rev?: boolean }): Promise<any[]> {
     try {
-      if (redis) return await redis.zrange(key, start, stop, opts);
-      return []; // Сложно реализовать без redis
+      const tcp = await getRedisTCPClient();
+      if (tcp) {
+        if (opts?.withScores) {
+          const res = await tcp.zRangeWithScores(key, start, stop, { REV: opts?.rev });
+          return res.flatMap((item: any) => [item.value, item.score]);
+        } else {
+          return await tcp.zRange(key, start, stop, { REV: opts?.rev });
+        }
+      }
+      if (upstashClient) return await upstashClient.zrange(key, start, stop, opts);
+      return [];
     } catch (e) { return []; }
   },
 
   async hset(key: string, field: string, value: string): Promise<void> {
     try {
-      if (redis) {
-        await redis.hset(key, { [field]: value });
-      } else {
-        const hash = memCache.get(key) || {};
-        hash[field] = value;
-        memCache.set(key, hash);
-        saveLocalDB();
+      const tcp = await getRedisTCPClient();
+      if (tcp) {
+        await tcp.hSet(key, field, value);
+        return;
       }
+      if (upstashClient) {
+        await upstashClient.hset(key, { [field]: value });
+        return;
+      }
+      const hash = memCache.get(key) || {};
+      hash[field] = value;
+      memCache.set(key, hash);
+      saveLocalDB();
     } catch (e) {}
   },
 
   async hgetall(key: string): Promise<Record<string, string> | null> {
     try {
-      if (redis) return await redis.hgetall<Record<string, string>>(key);
+      const tcp = await getRedisTCPClient();
+      if (tcp) {
+        const res = await tcp.hGetAll(key);
+        if (!res || Object.keys(res).length === 0) return null;
+        return res;
+      }
+      if (upstashClient) return await upstashClient.hgetall<Record<string, string>>(key);
       return memCache.get(key) || null;
     } catch (e) { return null; }
   },
 
   async hdel(key: string, field: string): Promise<void> {
     try {
-      if (redis) await redis.hdel(key, field);
-      else {
-        const hash = memCache.get(key);
-        if (hash) {
-          delete hash[field];
-          memCache.set(key, hash);
-          saveLocalDB();
-        }
+      const tcp = await getRedisTCPClient();
+      if (tcp) {
+        await tcp.hDel(key, field);
+        return;
+      }
+      if (upstashClient) {
+        await upstashClient.hdel(key, field);
+        return;
+      }
+      const hash = memCache.get(key);
+      if (hash) {
+        delete hash[field];
+        memCache.set(key, hash);
+        saveLocalDB();
       }
     } catch (e) {}
   },
@@ -150,22 +243,30 @@ export const db = {
   async lpush(key: string, value: any): Promise<void> {
     try {
       const strVal = typeof value === "string" ? value : JSON.stringify(value);
-      if (redis) {
-        await redis.lpush(key, strVal);
-        await redis.ltrim(key, 0, 99); // Keep only last 100 logs
-      } else {
-        const list = memCache.get(key) || [];
-        list.unshift(strVal);
-        if (list.length > 100) list.pop();
-        memCache.set(key, list);
-        saveLocalDB();
+      const tcp = await getRedisTCPClient();
+      if (tcp) {
+        await tcp.lPush(key, strVal);
+        await tcp.lTrim(key, 0, 99);
+        return;
       }
+      if (upstashClient) {
+        await upstashClient.lpush(key, strVal);
+        await upstashClient.ltrim(key, 0, 99);
+        return;
+      }
+      const list = memCache.get(key) || [];
+      list.unshift(strVal);
+      if (list.length > 100) list.pop();
+      memCache.set(key, list);
+      saveLocalDB();
     } catch (e) {}
   },
 
   async lrange(key: string, start: number, stop: number): Promise<string[]> {
     try {
-      if (redis) return await redis.lrange(key, start, stop);
+      const tcp = await getRedisTCPClient();
+      if (tcp) return await tcp.lRange(key, start, stop);
+      if (upstashClient) return await upstashClient.lrange(key, start, stop);
       const list = memCache.get(key) || [];
       return list.slice(start, stop === -1 ? undefined : stop + 1);
     } catch (e) { return []; }
@@ -173,21 +274,28 @@ export const db = {
 
   async sadd(key: string, member: string | number): Promise<void> {
     try {
-      if (redis) await redis.sadd(key, member);
-      else {
-        const set = new Set(memCache.get(key) || []);
-        set.add(member.toString());
-        memCache.set(key, Array.from(set));
-        saveLocalDB();
+      const tcp = await getRedisTCPClient();
+      if (tcp) {
+        await tcp.sAdd(key, member.toString());
+        return;
       }
+      if (upstashClient) {
+        await upstashClient.sadd(key, member);
+        return;
+      }
+      const set = new Set(memCache.get(key) || []);
+      set.add(member.toString());
+      memCache.set(key, Array.from(set));
+      saveLocalDB();
     } catch (e) {}
   },
 
   async smembers(key: string): Promise<string[]> {
     try {
-      if (redis) return await redis.smembers(key);
+      const tcp = await getRedisTCPClient();
+      if (tcp) return await tcp.sMembers(key);
+      if (upstashClient) return await upstashClient.smembers(key);
       return memCache.get(key) || [];
     } catch (e) { return []; }
   }
 };
-
