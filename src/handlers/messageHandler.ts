@@ -233,14 +233,17 @@ export async function messageHandler(ctx: Context, next: NextFunction): Promise<
   }
 
   // Остальные старые проверки: Ночной дозор, Мат, Спам, Имя и т.д.
-  const fullName = `${ctx.from.first_name} ${ctx.from.last_name || ""}`;
-  if (ARABIC_HIEROGLYPH_REGEX.test(fullName)) {
-    try {
-      await ctx.deleteMessage();
-      await banUser(ctx.api, chatId, userId);
-      await ctx.reply(`❌ [${name}](tg://user?id=${userId}) четтетилди. Атында араб тамгалары бар.`, { parse_mode: "Markdown" });
-      return;
-    } catch (e) {}
+  if (config.antiArabicName) {
+    const fullName = `${ctx.from.first_name} ${ctx.from.last_name || ""}`;
+    if (ARABIC_HIEROGLYPH_REGEX.test(fullName)) {
+      try {
+        await ctx.deleteMessage();
+        await banUser(ctx.api, chatId, userId);
+        await logAction(ctx.api, chatId, userId, name, "Бан", "Атында араб/иероглиф тамгалары бар", "Система (Бот)");
+        await ctx.reply(`❌ [${name}](tg://user?id=${userId}) четтетилди. Атында араб/иероглиф тамгалары бар.`, { parse_mode: "Markdown" });
+        return;
+      } catch (e) {}
+    }
   }
 
   if (!shouldDelete && config.nightModeEnabled) {

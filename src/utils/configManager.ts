@@ -16,6 +16,7 @@ export interface GroupConfig {
   warnLimit: number;
   warnAction: "mute" | "ban" | "kick";
   antiChannel: boolean;
+  antiArabicName: boolean;
   
   // Locks Module
   locks: {
@@ -76,6 +77,7 @@ export const DEFAULT_CONFIG: GroupConfig = {
   warnLimit: 3,
   warnAction: "mute",
   antiChannel: false,
+  antiArabicName: false,
   
   locks: {
     text: false,
