@@ -26,19 +26,42 @@ function getAppUrl(): string {
   if (process.env.APP_URL) return process.env.APP_URL;
 
   if (process.env.VERCEL_URL) {
-    const url = process.env.VERCEL_URL;
+    const url = process.env.VERCEL_URL.toLowerCase();
+    
+    // Если URL уже чистый (без дефисов-хешей) или это кастомный домен
+    if (!url.includes("-")) {
+      return `https://${url}`;
+    }
+
     const repoSlug = process.env.VERCEL_GIT_REPO_SLUG;
     if (repoSlug) {
       return `https://${repoSlug}.vercel.app`;
     }
 
-    if (url.includes("-git-")) {
-      const parts = url.split("-");
-      const gitIndex = parts.indexOf("git");
-      if (gitIndex > 0) {
-        return `https://${parts.slice(0, gitIndex).join("-")}.vercel.app`;
+    const parts = url.split("-");
+    
+    // 1. Поиск "-git-" (например: project-name-git-main-scope.vercel.app)
+    const gitIndex = parts.indexOf("git");
+    if (gitIndex > 0) {
+      return `https://${parts.slice(0, gitIndex).join("-")}.vercel.app`;
+    }
+
+    // 2. Поиск хеша деплоя (например: project-name-dz987hsa-scope.vercel.app)
+    // Хеш обычно состоит из букв и цифр, длина от 7 до 12 символов
+    for (let i = 1; i < parts.length; i++) {
+      const part = parts[i];
+      if (part.length >= 7 && part.length <= 12 && /[0-9]/.test(part) && /[a-z]/.test(part)) {
+        return `https://${parts.slice(0, i).join("-")}.vercel.app`;
       }
     }
+
+    // 3. Резервный вариант: если содержит scope-суффиксы Vercel
+    const vercelIndex = parts.findIndex(p => p.includes("projects.vercel.app") || p === "projects");
+    if (vercelIndex > 1) {
+      // Обычно перед scope идет хеш деплоя, поэтому берем части до хеша (индекс vercelIndex - 2)
+      return `https://${parts.slice(0, vercelIndex - 1).join("-")}.vercel.app`;
+    }
+    
     return `https://${url}`;
   }
 
