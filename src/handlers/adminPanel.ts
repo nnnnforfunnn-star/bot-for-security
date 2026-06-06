@@ -1,6 +1,6 @@
 import { Context, NextFunction, InlineKeyboard } from "grammy";
 import { getGroupConfig, updateGroupConfig } from "../utils/configManager.js";
-import { isUserAdmin, isUserAdminInChat } from "../utils/telegram.js";
+import { isUserAdmin, isUserAdminInChat, isUserSeniorAdminInChat } from "../utils/telegram.js";
 import { logger } from "../utils/logger.js";
 
 /**
@@ -13,9 +13,10 @@ export async function adminPanelCommand(ctx: Context) {
     return;
   }
 
-  const isAdmin = await isUserAdmin(ctx);
-  if (!isAdmin) {
-    await ctx.reply("Бул панелди админдер гана колдоно алат.");
+  // Разрешаем доступ только Старшим админам и Создателю (Владельцу) чата
+  const isSenior = await isUserSeniorAdminInChat(ctx.api, ctx.chat.id, ctx.from?.id || 0);
+  if (!isSenior) {
+    await ctx.reply("Бул панелди Башкы администраторлор (Senior Admins) же тайпанын ээси гана колдоно алат.");
     return;
   }
 
@@ -115,9 +116,9 @@ export async function adminPanelCallback(ctx: Context, next: NextFunction) {
 
   if (isNaN(chatId)) return next();
 
-  const isAdmin = await isUserAdminInChat(ctx.api, chatId, query.from.id);
-  if (!isAdmin) {
-    await ctx.answerCallbackQuery({ text: "Сиз бул тайпада админ эмессиз!", show_alert: true });
+  const isSenior = await isUserSeniorAdminInChat(ctx.api, chatId, query.from.id);
+  if (!isSenior) {
+    await ctx.answerCallbackQuery({ text: "Бул аракетти Башкы администраторлор же тайпанын ээси гана жасай алат!", show_alert: true });
     return;
   }
 
