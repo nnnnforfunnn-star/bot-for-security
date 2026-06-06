@@ -16,7 +16,7 @@ import {
   titleCommand, meCommand, reportCommand, antifloodCommand, 
   blacklistCommand, unblacklistCommand, welcomeConfigCommand 
 } from "./handlers/adminCommands.js";
-import { isUserAdminInChat } from "./utils/telegram.js";
+import { isUserAdminInChat, isUserSeniorAdminInChat } from "./utils/telegram.js";
 import {
   handleMuteCommand,
   handleUnmuteCommand,
@@ -160,11 +160,11 @@ bot.command("start", async (ctx) => {
       const chatIdStr = payload.replace("settings_", "");
       const chatId = parseInt(chatIdStr, 10);
       if (!isNaN(chatId) && ctx.from) {
-        const isAdmin = await isUserAdminInChat(ctx.api, chatId, ctx.from.id);
+        const isAdmin = await isUserSeniorAdminInChat(ctx.api, chatId, ctx.from.id);
         if (isAdmin) {
           await sendAdminPanel(ctx, chatId, false);
         } else {
-          await ctx.reply("Кечиресиз, сиз ал тайпада администратор эмессиз!");
+          await ctx.reply("Кечиресиз, Web-Панельди ачуу үчүн сиз тайпанын ээси (creator) же толук укуктуу старший админ болушуңуз керек!");
         }
         return;
       }

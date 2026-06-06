@@ -67,6 +67,28 @@ export async function isUserAdminInChat(api: Api, chatId: string | number, userI
   }
 }
 
+/**
+ * Проверка прав Владельца или Старшего администратора (для Web Panel).
+ * Старший админ = Владелец ИЛИ Админ, у которого есть права изменять настройки, удалять сообщения и блокировать пользователей.
+ */
+export async function isUserSeniorAdminInChat(api: Api, chatId: string | number, userId: number): Promise<boolean> {
+  try {
+    const member = await api.getChatMember(chatId, userId);
+    
+    if (member.status === "creator") return true;
+
+    if (member.status === "administrator") {
+      // @ts-ignore
+      return member.can_change_info && member.can_restrict_members && member.can_delete_messages;
+    }
+
+    return false;
+  } catch (error) {
+    logger.warn(`Не удалось проверить права Старшего администратора для ${userId} в чате ${chatId}`, { error });
+    return false;
+  }
+}
+
 
 /**
  * Безопасное групповое удаление сообщений с учетом лимитов Telegram API.

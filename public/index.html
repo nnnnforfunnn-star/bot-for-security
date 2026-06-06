@@ -9,20 +9,23 @@
     :root {
       --bg-dark: #0f172a; --card-bg: rgba(30, 41, 59, 0.7); --card-border: rgba(255, 255, 255, 0.1);
       --primary: #3b82f6; --text-main: #f8fafc; --text-muted: #94a3b8; --success: #10b981; --danger: #ef4444;
+      --warn: #f59e0b;
     }
     * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
     body { background: var(--bg-dark); color: var(--text-main); padding: 16px; min-height: 100vh; padding-bottom: 80px; }
     .header { text-align: center; margin-bottom: 20px; }
-    .header h1 { font-size: 22px; background: linear-gradient(to right, #60a5fa, #34d399); -webkit-background-clip: text; color: transparent; }
+    .header h1 { font-size: 24px; background: linear-gradient(to right, #60a5fa, #34d399); -webkit-background-clip: text; color: transparent; font-weight: 800; }
     
     .tabs { display: flex; overflow-x: auto; gap: 8px; margin-bottom: 20px; padding-bottom: 4px; }
+    .tabs::-webkit-scrollbar { height: 0px; }
     .tab { padding: 8px 16px; background: rgba(255,255,255,0.05); border-radius: 20px; white-space: nowrap; font-size: 14px; cursor: pointer; transition: 0.3s; }
     .tab.active { background: var(--primary); color: white; font-weight: 500; }
     .tab-content { display: none; animation: fadeIn 0.3s ease; }
     .tab-content.active { display: block; }
 
     .section { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 16px; padding: 16px; margin-bottom: 16px; }
-    .section-title { font-size: 16px; font-weight: 600; margin-bottom: 12px; }
+    .section-title { font-size: 16px; font-weight: 600; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+    
     .setting-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
     .setting-info h3 { font-size: 14px; font-weight: 500; }
     .setting-info p { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
@@ -36,31 +39,68 @@
 
     .input-group { margin-top: 12px; }
     .input-group label { display: block; font-size: 12px; margin-bottom: 4px; color: var(--text-muted); }
-    .input-group input, .input-group textarea, .input-group select { width: 100%; background: rgba(0,0,0,0.3); border: 1px solid var(--card-border); color: white; padding: 10px; border-radius: 8px; font-size: 14px; outline: none; }
-    .input-group input:focus { border-color: var(--primary); }
+    .input-group input, .input-group textarea, .input-group select { width: 100%; background: rgba(0,0,0,0.3); border: 1px solid var(--card-border); color: white; padding: 10px; border-radius: 8px; font-size: 14px; outline: none; transition: 0.2s;}
+    .input-group input:focus, .input-group select:focus, .input-group textarea:focus { border-color: var(--primary); }
 
-    .list-item { display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.2); padding: 10px; border-radius: 8px; margin-top: 8px; }
-    .list-item-text { font-size: 13px; }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+    /* Stats Cards */
+    .stat-card { background: rgba(0,0,0,0.3); padding: 15px; border-radius: 12px; text-align: center; border: 1px solid var(--card-border); }
+    .stat-card .value { font-size: 24px; font-weight: bold; margin-bottom: 4px; color: var(--primary); }
+    .stat-card .label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+    
+    /* Lists */
+    .list-item { display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.2); padding: 12px; border-radius: 12px; margin-top: 8px; border: 1px solid transparent;}
+    .list-item-text { font-size: 14px; margin-bottom: 4px;}
+    
+    /* Action Buttons */
+    .action-btn { background: rgba(255,255,255,0.1); color: white; border: none; padding: 6px 10px; border-radius: 6px; font-size: 11px; cursor: pointer; transition: 0.2s;}
+    .action-btn:hover { background: rgba(255,255,255,0.2); }
+    .action-btn.danger { background: rgba(239, 68, 68, 0.2); color: #fca5a5; }
+    .action-btn.danger:hover { background: rgba(239, 68, 68, 0.4); }
+    .action-btn.warn { background: rgba(245, 158, 11, 0.2); color: #fcd34d; }
+    .action-btn.warn:hover { background: rgba(245, 158, 11, 0.4); }
+
     .delete-btn { background: var(--danger); color: white; border: none; padding: 6px 10px; border-radius: 6px; font-size: 12px; cursor: pointer; }
-    .add-btn { background: var(--success); color: white; border: none; padding: 10px; border-radius: 8px; width: 100%; margin-top: 10px; cursor: pointer; }
+    .add-btn { background: var(--success); color: white; border: none; padding: 12px; border-radius: 10px; width: 100%; margin-top: 14px; cursor: pointer; font-weight: 600;}
 
     .save-btn { background: var(--primary); color: white; border: none; width: calc(100% - 32px); padding: 14px; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; position: fixed; bottom: 16px; left: 16px; box-shadow: 0 4px 14px rgba(59, 130, 246, 0.4); z-index: 10;}
-    .toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%) translateY(-100px); background: var(--success); color: white; padding: 10px 20px; border-radius: 30px; font-size: 13px; opacity: 0; transition: 0.4s; z-index: 100; }
+    
+    .toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%) translateY(-100px); background: var(--success); color: white; padding: 10px 20px; border-radius: 30px; font-size: 13px; opacity: 0; transition: 0.4s; z-index: 100; font-weight: 500; box-shadow: 0 4px 12px rgba(0,0,0,0.5);}
     .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
-    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* Log Entry styling */
+    .log-entry { font-size: 12px; padding: 10px; background: rgba(0,0,0,0.3); border-radius: 8px; margin-top: 8px; border-left: 3px solid var(--primary); }
+    .log-entry.danger { border-left-color: var(--danger); }
+    .log-entry.warn { border-left-color: var(--warn); }
+    .log-header { display: flex; justify-content: space-between; margin-bottom: 4px; color: var(--text-muted); font-size: 10px;}
+    
+    /* Users Grid */
+    .user-card { background: rgba(0,0,0,0.2); padding: 12px; border-radius: 12px; margin-bottom: 10px; }
+    .user-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+    .user-name { font-weight: 600; font-size: 14px; }
+    .user-stats { font-size: 11px; color: var(--text-muted); display: flex; gap: 10px; margin-bottom: 12px; }
+    .user-actions { display: flex; gap: 6px; flex-wrap: wrap; }
   </style>
 </head>
 <body>
 
   <div id="toast" class="toast">Сакталды!</div>
-  <div class="header"><h1>Коопсузбек</h1><p style="font-size: 12px; color: var(--text-muted);">Толук Башкаруу Панели</p></div>
+  <div class="header">
+    <h1>Коопсузбек</h1>
+    <p style="font-size: 12px; color: var(--text-muted);">Толук Башкаруу Панели</p>
+  </div>
 
-  <div id="loader" style="text-align: center; margin-top: 50px;">Жүктөлүүдө...</div>
+  <div id="loader" style="text-align: center; margin-top: 50px;">Маалыматтар жүктөлүүдө...</div>
 
   <div id="content" style="display: none;">
     
+    <!-- TABS NAVIGATION -->
     <div class="tabs">
       <div class="tab active" onclick="openTab('tab-main')">⚙️ Башкы</div>
+      <div class="tab" onclick="openTab('tab-stats')">📊 Аналитика</div>
+      <div class="tab" onclick="openTab('tab-users')">👥 Катышуучулар</div>
       <div class="tab" onclick="openTab('tab-black')">🚫 Кара тизме</div>
       <div class="tab" onclick="openTab('tab-filters')">🤖 Автожооптор</div>
       <div class="tab" onclick="openTab('tab-notes')">📝 Белгилер</div>
@@ -106,15 +146,15 @@
           <div class="setting-info"><h3>Иштетүү</h3><p>Түнкүсүн медиа/шилтемеге тыюу</p></div>
           <label class="switch"><input type="checkbox" id="nightModeEnabled"><span class="slider"></span></label>
         </div>
-        <div style="display:flex; gap:10px;">
-          <div class="input-group" style="flex:1"><label>Башталышы (Саат)</label><input type="number" id="nightModeStart" min="0" max="23"></div>
-          <div class="input-group" style="flex:1"><label>Бүтүшү (Саат)</label><input type="number" id="nightModeEnd" min="0" max="23"></div>
+        <div class="grid-2">
+          <div class="input-group"><label>Башталышы (Саат)</label><input type="number" id="nightModeStart" min="0" max="23"></div>
+          <div class="input-group"><label>Бүтүшү (Саат)</label><input type="number" id="nightModeEnd" min="0" max="23"></div>
         </div>
       </div>
 
       <div class="section">
         <div class="section-title">🔒 Бөгөттөөлөр (Locks)</div>
-        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+        <div class="grid-2">
           <label class="switch-row"><input type="checkbox" id="lock_text"><span> Текст</span></label>
           <label class="switch-row"><input type="checkbox" id="lock_links"><span> Шилтеме</span></label>
           <label class="switch-row"><input type="checkbox" id="lock_photo"><span> Сүрөт</span></label>
@@ -136,14 +176,8 @@
 
       <div class="section">
         <div class="section-title">⚖️ Жазалоо (Варндар)</div>
-        <div class="input-group">
-          <label>Лимит</label>
-          <input type="number" id="warnLimit" min="1" max="10">
-        </div>
-        <div class="input-group">
-          <label>Муттун узактыгы (мүнөт)</label>
-          <input type="number" id="muteDurationMinutes">
-        </div>
+        <div class="input-group"><label>Лимит</label><input type="number" id="warnLimit" min="1" max="10"></div>
+        <div class="input-group"><label>Муттун узактыгы (мүнөт)</label><input type="number" id="muteDurationMinutes"></div>
         <div class="input-group">
           <label>Лимит толгондо Жаза</label>
           <select id="warnAction">
@@ -162,8 +196,10 @@
           <div class="setting-info"><h3>Антифлудту иштетүү</h3></div>
           <label class="switch"><input type="checkbox" id="antiflood_enabled"><span class="slider"></span></label>
         </div>
-        <div class="input-group"><label>Билдирүүлөр саны</label><input type="number" id="antiflood_messages"></div>
-        <div class="input-group"><label>Убакыт (сек)</label><input type="number" id="antiflood_seconds"></div>
+        <div class="grid-2">
+          <div class="input-group"><label>Билдирүүлөр саны</label><input type="number" id="antiflood_messages"></div>
+          <div class="input-group"><label>Убакыт (сек)</label><input type="number" id="antiflood_seconds"></div>
+        </div>
         <div class="input-group">
           <label>Жаза</label>
           <select id="antiflood_action">
@@ -177,17 +213,55 @@
 
       <div class="section">
         <div class="section-title">Тексттер</div>
-        <div class="setting-row">
-          <div class="setting-info"><h3>Саламдашуу</h3></div>
-          <label class="switch"><input type="checkbox" id="welcome_enabled"><span class="slider"></span></label>
-        </div>
+        <div class="setting-row"><div class="setting-info"><h3>Саламдашуу</h3></div><label class="switch"><input type="checkbox" id="welcome_enabled"><span class="slider"></span></label></div>
         <div class="input-group"><label>Текст ({name})</label><textarea id="welcome_text" rows="2"></textarea></div>
-        <div class="setting-row">
-          <div class="setting-info"><h3>Коштошуу</h3></div>
-          <label class="switch"><input type="checkbox" id="goodbye_enabled"><span class="slider"></span></label>
-        </div>
+        <div class="setting-row"><div class="setting-info"><h3>Коштошуу</h3></div><label class="switch"><input type="checkbox" id="goodbye_enabled"><span class="slider"></span></label></div>
         <div class="input-group"><label>Коштошуу тексти ({name})</label><textarea id="goodbye_text" rows="2"></textarea></div>
         <div class="input-group"><label>Эрежелер (/rules)</label><textarea id="rulesText" rows="3"></textarea></div>
+      </div>
+    </div>
+
+    <!-- ТАБ: АНАЛИТИКА -->
+    <div id="tab-stats" class="tab-content">
+      <div class="section">
+        <div class="section-title">📈 Тайпанын Статистикасы</div>
+        <div class="grid-2" style="margin-bottom: 10px;">
+          <div class="stat-card">
+            <div class="value" id="stat_total">0</div>
+            <div class="label">Жалпы СМС</div>
+          </div>
+          <div class="stat-card">
+            <div class="value" id="stat_today">0</div>
+            <div class="label">Бүгүнкү СМС</div>
+          </div>
+          <div class="stat-card" style="border-color: rgba(239, 68, 68, 0.3);">
+            <div class="value" style="color: var(--danger);" id="stat_bans">0</div>
+            <div class="label">Бандар</div>
+          </div>
+          <div class="stat-card" style="border-color: rgba(245, 158, 11, 0.3);">
+            <div class="value" style="color: var(--warn);" id="stat_mutes">0</div>
+            <div class="label">Муттар</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">🕵️ Аракеттер Журналы (Audit Log)</div>
+        <p style="font-size:12px; color:var(--text-muted); margin-bottom:10px;">Боттун акыркы 50 аракети көрсөтүлөт.</p>
+        <div id="logs_container" style="max-height: 400px; overflow-y: auto; padding-right: 4px;">
+          <!-- Logs go here -->
+        </div>
+      </div>
+    </div>
+
+    <!-- ТАБ: КАТЫШУУЧУЛАР -->
+    <div id="tab-users" class="tab-content">
+      <div class="section">
+        <div class="section-title">👥 Колдонуучуларды Башкаруу</div>
+        <p style="font-size:12px; color:var(--text-muted); margin-bottom:15px;">Тайпадагы акыркы активдүү катышуучулар.</p>
+        <div id="users_container">
+          <!-- Users go here -->
+        </div>
       </div>
     </div>
 
@@ -208,9 +282,7 @@
         </div>
         <button class="add-btn" onclick="addBlacklist()">Кошуу</button>
       </div>
-      <div class="section" id="bl_list">
-        <!-- Тизме бул жерде болот -->
-      </div>
+      <div class="section" id="bl_list"></div>
     </div>
 
     <!-- ТАБ: АВТОЖООПТОР -->
@@ -246,12 +318,18 @@
     const chatId = urlParams.get('chatId');
     const initData = tg.initData;
     const apiUrl = '/api/config?chatId=' + chatId;
+    const statsUrl = '/api/stats?chatId=' + chatId;
+    const actionUrl = '/api/action?chatId=' + chatId;
 
     let appData = { config: {}, blacklist: {}, filters: {}, notes: {} };
+    let statsData = { logs: [], stats: {}, users: [] };
 
-    function showToast(msg) {
-      const t = document.getElementById('toast'); t.innerText = msg;
-      t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 3000);
+    function showToast(msg, type='success') {
+      const t = document.getElementById('toast'); 
+      t.innerText = msg;
+      t.style.background = type === 'success' ? 'var(--success)' : 'var(--danger)';
+      t.classList.add('show'); 
+      setTimeout(() => t.classList.remove('show'), 3000);
     }
 
     function openTab(id) {
@@ -264,9 +342,19 @@
     async function fetchData() {
       if (!chatId || !initData) return;
       try {
+        // Fetch Config
         const res = await fetch(apiUrl, { headers: { 'Authorization': 'tma ' + initData }});
+        if(!res.ok) throw new Error("Кечиресиз, сизде уруксат жок.");
         appData = await res.json();
         renderMain(); renderLists();
+
+        // Fetch Stats
+        const resStats = await fetch(statsUrl, { headers: { 'Authorization': 'tma ' + initData }});
+        if(resStats.ok) {
+          statsData = await resStats.json();
+          renderStatsAndUsers();
+        }
+
         document.getElementById('loader').style.display = 'none';
         document.getElementById('content').style.display = 'block';
       } catch (e) {
@@ -274,6 +362,69 @@
       }
     }
 
+    function renderStatsAndUsers() {
+      // Stats
+      document.getElementById('stat_total').innerText = statsData.stats.msgCount || 0;
+      document.getElementById('stat_today').innerText = statsData.stats.msgsToday || 0;
+      document.getElementById('stat_bans').innerText = statsData.stats.bansCount || 0;
+      document.getElementById('stat_mutes').innerText = statsData.stats.mutesCount || 0;
+
+      // Logs
+      const logsHtml = statsData.logs.map(log => {
+        let typeClass = "";
+        if(log.action.includes("Бан") || log.action.includes("Кик")) typeClass = "danger";
+        if(log.action.includes("Мут") || log.action.includes("Эскертүү")) typeClass = "warn";
+        const date = new Date(log.timestamp).toLocaleString("ru-RU", {day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'});
+        return `<div class="log-entry ${typeClass}">
+          <div class="log-header"><span>${date}</span> <b>${log.action}</b></div>
+          <div>👤 ${log.name}</div>
+          <div style="color:var(--text-muted); margin-top:2px;">📝 ${log.reason}</div>
+        </div>`;
+      }).join('');
+      document.getElementById('logs_container').innerHTML = logsHtml || "<div style='color:var(--text-muted); font-size:12px;'>Журнал бош.</div>";
+
+      // Users
+      const usersHtml = statsData.users.sort((a,b)=> b.urmat - a.urmat).map(u => `
+        <div class="user-card">
+          <div class="user-header">
+            <span class="user-name">${u.name} ${u.username ? '(@'+u.username+')' : ''}</span>
+          </div>
+          <div class="user-stats">
+            <span>⚠️ Варн: ${u.warns}</span>
+            <span>🌟 Сый-Урмат: ${u.urmat}</span>
+          </div>
+          <div class="user-actions">
+            <button class="action-btn warn" onclick="doAction('mute', ${u.id})">Мут (24с)</button>
+            <button class="action-btn danger" onclick="doAction('kick', ${u.id})">Кик</button>
+            <button class="action-btn danger" onclick="doAction('ban', ${u.id})">Бан</button>
+            <button class="action-btn" onclick="doAction('unban', ${u.id})">Разбан</button>
+          </div>
+        </div>
+      `).join('');
+      document.getElementById('users_container').innerHTML = usersHtml || "<div style='color:var(--text-muted); font-size:12px;'>Катышуучулар табылган жок.</div>";
+    }
+
+    async function doAction(actionName, targetUserId) {
+      if(!confirm("Ушул аракетти аткарууну тастыктайсызбы?")) return;
+      try {
+        const res = await fetch(actionUrl, {
+          method: 'POST',
+          headers: { 'Authorization': 'tma ' + initData, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: actionName, targetUserId })
+        });
+        if(res.ok) {
+          showToast("Аракет аткарылды!", 'success');
+          tg.HapticFeedback.notificationOccurred("success");
+        } else {
+          showToast("Ката кетти", 'error');
+          tg.HapticFeedback.notificationOccurred("error");
+        }
+      } catch (e) {
+        showToast("Ката кетти", 'error');
+      }
+    }
+
+    // [The rest of the rendering/saving logic remains the same]
     function renderMain() {
       const cfg = appData.config;
       document.getElementById('captchaEnabled').checked = cfg.captchaEnabled || false;
@@ -287,22 +438,9 @@
       document.getElementById('nightModeEnd').value = cfg.nightModeEnd || 7;
       
       const locks = cfg.locks || {};
-      document.getElementById('lock_text').checked = locks.text || false;
-      document.getElementById('lock_links').checked = locks.links || false;
-      document.getElementById('lock_photo').checked = locks.photo || false;
-      document.getElementById('lock_video').checked = locks.video || false;
-      document.getElementById('lock_audio').checked = locks.audio || false;
-      document.getElementById('lock_voices').checked = locks.voices || false;
-      document.getElementById('lock_videonote').checked = locks.videonote || false;
-      document.getElementById('lock_document').checked = locks.document || false;
-      document.getElementById('lock_stickers').checked = locks.stickers || false;
-      document.getElementById('lock_gifs').checked = locks.gifs || false;
-      document.getElementById('lock_bots').checked = locks.bots || false;
-      document.getElementById('lock_commands').checked = locks.commands || false;
-      document.getElementById('lock_games').checked = locks.games || false;
-      document.getElementById('lock_forwards').checked = locks.forwards || false;
-      document.getElementById('lock_arabic').checked = locks.arabic || false;
-      document.getElementById('lock_porn').checked = locks.porn || false;
+      ['text','links','photo','video','audio','voices','videonote','document','stickers','gifs','bots','commands','games','forwards','arabic','porn'].forEach(lock => {
+        document.getElementById('lock_'+lock).checked = locks[lock] || false;
+      });
 
       document.getElementById('warnLimit').value = cfg.warnLimit || 3;
       document.getElementById('muteDurationMinutes').value = cfg.muteDurationMinutes || 120;
@@ -317,7 +455,7 @@
       const welcome = cfg.welcome || {};
       document.getElementById('welcome_enabled').checked = welcome.enabled || false;
       document.getElementById('welcome_text').value = welcome.text || '';
-
+      
       const goodbye = cfg.goodbye || {};
       document.getElementById('goodbye_enabled').checked = goodbye.enabled || false;
       document.getElementById('goodbye_text').value = goodbye.text || '';
@@ -326,7 +464,6 @@
     }
 
     function renderLists() {
-      // Blacklist
       const blHtml = Object.entries(appData.blacklist).map(([k, v]) => `
         <div class="list-item">
           <div><div class="list-item-text"><b>${k}</b></div><div style="font-size:10px;color:#94a3b8">Жаза: ${v}</div></div>
@@ -334,7 +471,6 @@
         </div>`).join('');
       document.getElementById('bl_list').innerHTML = blHtml || "<p style='font-size:12px;color:#94a3b8'>Тизме бош</p>";
 
-      // Filters
       const flHtml = Object.entries(appData.filters).map(([k, v]) => `
         <div class="list-item">
           <div><div class="list-item-text"><b>${k}</b></div><div style="font-size:10px;color:#94a3b8">${v.substring(0, 20)}...</div></div>
@@ -342,7 +478,6 @@
         </div>`).join('');
       document.getElementById('fl_list').innerHTML = flHtml || "<p style='font-size:12px;color:#94a3b8'>Тизме бош</p>";
 
-      // Notes
       const ntHtml = Object.entries(appData.notes).map(([k, v]) => `
         <div class="list-item">
           <div><div class="list-item-text"><b>#${k}</b></div><div style="font-size:10px;color:#94a3b8">${v.substring(0, 20)}...</div></div>
@@ -387,22 +522,9 @@
       appData.config.warnAction = document.getElementById('warnAction').value;
       
       if(!appData.config.locks) appData.config.locks = {};
-      appData.config.locks.text = document.getElementById('lock_text').checked;
-      appData.config.locks.links = document.getElementById('lock_links').checked;
-      appData.config.locks.photo = document.getElementById('lock_photo').checked;
-      appData.config.locks.video = document.getElementById('lock_video').checked;
-      appData.config.locks.audio = document.getElementById('lock_audio').checked;
-      appData.config.locks.voices = document.getElementById('lock_voices').checked;
-      appData.config.locks.videonote = document.getElementById('lock_videonote').checked;
-      appData.config.locks.document = document.getElementById('lock_document').checked;
-      appData.config.locks.stickers = document.getElementById('lock_stickers').checked;
-      appData.config.locks.gifs = document.getElementById('lock_gifs').checked;
-      appData.config.locks.bots = document.getElementById('lock_bots').checked;
-      appData.config.locks.commands = document.getElementById('lock_commands').checked;
-      appData.config.locks.games = document.getElementById('lock_games').checked;
-      appData.config.locks.forwards = document.getElementById('lock_forwards').checked;
-      appData.config.locks.arabic = document.getElementById('lock_arabic').checked;
-      appData.config.locks.porn = document.getElementById('lock_porn').checked;
+      ['text','links','photo','video','audio','voices','videonote','document','stickers','gifs','bots','commands','games','forwards','arabic','porn'].forEach(lock => {
+        appData.config.locks[lock] = document.getElementById('lock_'+lock).checked;
+      });
 
       if(!appData.config.antiflood) appData.config.antiflood = {};
       appData.config.antiflood.enabled = document.getElementById('antiflood_enabled').checked;

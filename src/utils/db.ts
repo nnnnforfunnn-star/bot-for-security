@@ -145,6 +145,49 @@ export const db = {
         }
       }
     } catch (e) {}
+  },
+
+  async lpush(key: string, value: any): Promise<void> {
+    try {
+      const strVal = typeof value === "string" ? value : JSON.stringify(value);
+      if (redis) {
+        await redis.lpush(key, strVal);
+        await redis.ltrim(key, 0, 99); // Keep only last 100 logs
+      } else {
+        const list = memCache.get(key) || [];
+        list.unshift(strVal);
+        if (list.length > 100) list.pop();
+        memCache.set(key, list);
+        saveLocalDB();
+      }
+    } catch (e) {}
+  },
+
+  async lrange(key: string, start: number, stop: number): Promise<string[]> {
+    try {
+      if (redis) return await redis.lrange(key, start, stop);
+      const list = memCache.get(key) || [];
+      return list.slice(start, stop === -1 ? undefined : stop + 1);
+    } catch (e) { return []; }
+  },
+
+  async sadd(key: string, member: string | number): Promise<void> {
+    try {
+      if (redis) await redis.sadd(key, member);
+      else {
+        const set = new Set(memCache.get(key) || []);
+        set.add(member.toString());
+        memCache.set(key, Array.from(set));
+        saveLocalDB();
+      }
+    } catch (e) {}
+  },
+
+  async smembers(key: string): Promise<string[]> {
+    try {
+      if (redis) return await redis.smembers(key);
+      return memCache.get(key) || [];
+    } catch (e) { return []; }
   }
 };
 

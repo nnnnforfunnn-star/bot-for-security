@@ -1,4 +1,3 @@
-import { getGroupConfig, updateGroupConfig } from "../src/utils/configManager.js";
 import { validateWebAppData, getUserFromInitData } from "../src/utils/telegramAuth.js";
 import { isUserSeniorAdminInChat } from "../src/utils/telegram.js";
 import { bot } from "../src/bot.js";
@@ -10,7 +9,7 @@ export default async function handler(req: any, res: any) {
   // CORS setup
   res.setHeader("Access-Control-Allow-Credentials", true);
   res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "GET,OPTIONS,PATCH,DELETE,POST,PUT");
+  res.setHeader("Access-Control-Allow-Methods", "GET,OPTIONS");
   res.setHeader(
     "Access-Control-Allow-Headers",
     "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization"
@@ -54,40 +53,46 @@ export default async function handler(req: any, res: any) {
     }
 
     if (req.method === "GET") {
-      const config = await getGroupConfig(chatId);
-      const blacklist = (await db.hgetall(`chat:${chatId}:blacklist`)) || {};
-      const filters = (await db.hgetall(`chat:${chatId}:filters`)) || {};
-      const notes = (await db.hgetall(`chat:${chatId}:notes`)) || {};
-      return res.status(200).json({ config, blacklist, filters, notes });
-    } 
-    
-    if (req.method === "POST") {
-      const { config, blacklist, filters, notes } = req.body;
+      // 1. Logs
+      const logsRaw = await db.lrange(`chat:${chatId}:logs`, 0, 50);
+      const logs = logsRaw.map(l => typeof l === "string" ? JSON.parse(l) : l);
+
+      // 2. Stats
+      const msgCount = await db.get<number>(`chat:${chatId}:stats:messages_count`) || 0;
+      const bansCount = await db.get<number>(`chat:${chatId}:stats:bans_count`) || 0;
+      const mutesCount = await db.get<number>(`chat:${chatId}:stats:mutes_count`) || 0;
       
-      let updatedConfig = {};
-      if (config) {
-        updatedConfig = await updateGroupConfig(chatId, config);
+      const today = new Date().toISOString().split("T")[0];
+      const msgsToday = await db.get<number>(`chat:${chatId}:stats:messages_by_date:${today}`) || 0;
+
+      // 3. Top Users & Members
+      const userIds = await db.smembers(`chat:${chatId}:users`);
+      const usersInfo = [];
+      
+      for (const uid of userIds) {
+        const info = await db.hgetall(`chat:${chatId}:user:${uid}:info`);
+        const warns = await db.get<number>(`chat:${chatId}:user:${uid}:warns`) || 0;
+        const urmat = await db.get<number>(`chat:${chatId}:user:${uid}:urmat`) || 0;
+        
+        usersInfo.push({
+          id: uid,
+          name: info?.name || "Белгисиз",
+          username: info?.username || "",
+          warns,
+          urmat
+        });
       }
 
-      // Helper function to sync hashes
-      const syncHash = async (hashName: string, data: Record<string, string>) => {
-        if (!data) return;
-        await db.del(hashName);
-        for (const [k, v] of Object.entries(data)) {
-          if (k.trim()) await db.hset(hashName, k.trim().toLowerCase(), v);
-        }
-      };
-
-      await syncHash(`chat:${chatId}:blacklist`, blacklist);
-      await syncHash(`chat:${chatId}:filters`, filters);
-      await syncHash(`chat:${chatId}:notes`, notes);
-
-      return res.status(200).json({ success: true, config: updatedConfig });
+      return res.status(200).json({ 
+        logs, 
+        stats: { msgCount, bansCount, mutesCount, msgsToday },
+        users: usersInfo
+      });
     }
 
     return res.status(405).json({ error: "Method Not Allowed" });
   } catch (error) {
-    console.error("Dashboard API Error:", error);
+    console.error("Stats API Error:", error);
     return res.status(500).json({ error: "Internal Server Error" });
   }
 }
