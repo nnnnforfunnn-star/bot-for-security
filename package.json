@@ -7,7 +7,8 @@
   "scripts": {
     "dev": "tsx watch src/local.ts",
     "build:ts": "tsc",
-    "start": "node dist/src/local.js"
+    "start": "node dist/src/local.js",
+    "set-webhook": "tsx scripts/setWebhook.ts"
   },
   "dependencies": {
     "@upstash/redis": "^1.38.0",
