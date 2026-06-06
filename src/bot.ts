@@ -23,6 +23,11 @@ import {
   handleBanCommand,
   handleUnbanCommand,
 } from "./handlers/commandHandler.js";
+import {
+  promoteCommand, demoteCommand, tmuteCommand, tbanCommand,
+  slowmodeCommand, setPhotoCommand, setTitleCommand, setDescCommand,
+  adminsCommand, infoCommand, resetWarnsCommand, linkCommand
+} from "./handlers/groupCommands.js";
 
 if (!config.BOT_TOKEN) {
   throw new Error("BOT_TOKEN не установлен в переменных окружения!");
@@ -48,6 +53,20 @@ bot.command("id", idCommand);
 bot.command("del", delCommand);
 bot.command("purge", purgeCommand);
 bot.command("report", reportCommand);
+
+// 1.5 Жаңы тайпа башкаруу команд лары
+bot.command("promote", promoteCommand);
+bot.command("demote", demoteCommand);
+bot.command("tmute", tmuteCommand);
+bot.command("tban", tbanCommand);
+bot.command("slowmode", slowmodeCommand);
+bot.command("setphoto", setPhotoCommand);
+bot.command("settitle", setTitleCommand);
+bot.command("setdesc", setDescCommand);
+bot.command("admins", adminsCommand);
+bot.command("info", infoCommand);
+bot.command("resetwarns", resetWarnsCommand);
+bot.command("link", linkCommand);
 
 // 2. Бөгөттөө (Locks)
 bot.command("lock", lockCommand);

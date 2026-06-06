@@ -53,7 +53,8 @@ export default async function handler(req: any, res: any) {
 
     const { action, targetUserId, reason } = req.body;
 
-    if (!action || !targetUserId) {
+    const requiresTarget = ["ban", "mute", "unmute", "kick", "unban", "promote", "demote", "resetwarns"];
+    if (!action || (requiresTarget.includes(action) && !targetUserId)) {
       return res.status(400).json({ error: "Bad Request: missing action or targetUserId" });
     }
 
@@ -85,6 +86,41 @@ export default async function handler(req: any, res: any) {
       case "unban":
         await bot.api.unbanChatMember(chatId, targetUserId, { only_if_banned: true }).catch(() => {});
         await logAction(bot.api, chatId, targetUserId, targetName, "Разбан", reason || "Web Panel аркылуу", user.first_name || "Админ");
+        break;
+      case "promote":
+        await bot.api.promoteChatMember(chatId, targetUserId, {
+          can_delete_messages: true, can_restrict_members: true,
+          can_pin_messages: true, can_invite_users: true,
+        });
+        await logAction(bot.api, chatId, targetUserId, targetName, "Promote", "Web Panel аркылуу админ кылынды", user.first_name || "Админ");
+        break;
+      case "demote":
+        await bot.api.promoteChatMember(chatId, targetUserId, {
+          can_delete_messages: false, can_restrict_members: false,
+          can_pin_messages: false, can_invite_users: false,
+          can_change_info: false, can_manage_chat: false,
+        });
+        await logAction(bot.api, chatId, targetUserId, targetName, "Demote", "Web Panel аркылуу укугу алынды", user.first_name || "Админ");
+        break;
+      case "resetwarns":
+        const { db } = await import("../src/utils/db.js");
+        await db.del(`chat:${chatId}:user:${targetUserId}:warns`);
+        await logAction(bot.api, chatId, targetUserId, targetName, "Тазалоо", "Web Panel: Эскертүүлөр тазаланды", user.first_name || "Админ");
+        break;
+      case "slowmode":
+        const seconds = parseInt(req.body.value) || 0;
+        await (bot.api as any).setChatSlowModeDelay(chatId, seconds).catch(() => {});
+        await logAction(bot.api, chatId, 0, "Тайпа", "Slowmode", `Web Panel: ${seconds} сек`, user.first_name || "Админ");
+        break;
+      case "settitle":
+        const title = req.body.text || "";
+        if (title) await (bot.api as any).raw.setChatTitle({ chat_id: chatId, title });
+        await logAction(bot.api, chatId, 0, "Тайпа", "SetTitle", `Web Panel: ${title}`, user.first_name || "Админ");
+        break;
+      case "setdesc":
+        const desc = req.body.text || "";
+        await (bot.api as any).raw.setChatDescription({ chat_id: chatId, description: desc });
+        await logAction(bot.api, chatId, 0, "Тайпа", "SetDesc", "Web Panel аркылуу өзгөртүлдү", user.first_name || "Админ");
         break;
       default:
         return res.status(400).json({ error: "Unknown action" });

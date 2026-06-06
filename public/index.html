@@ -126,6 +126,7 @@
         <div class="nav-item active" onclick="openTab('tab-main', this)">⚙️ Башкы</div>
         <div class="nav-item" onclick="openTab('tab-stats', this)">📊 Аналитика</div>
         <div class="nav-item" onclick="openTab('tab-users', this)">👥 Катышуучулар</div>
+        <div class="nav-item" onclick="openTab('tab-group', this)">🏠 Тайпа</div>
         <div class="nav-item" onclick="openTab('tab-black', this)">🚫 Кара тизме</div>
         <div class="nav-item" onclick="openTab('tab-filters', this)">🤖 Автожооптор</div>
         <div class="nav-item" onclick="openTab('tab-swear', this)">🤬 Сөгүнүү</div>
@@ -296,6 +297,43 @@
             <div class="section-title">👥 Катышуучуларды Башкаруу</div>
             <p style="font-size:12px; color:var(--text-muted); margin-bottom:15px;">Тайпадагы акыркы активдүү катышуучулар (Сый-Урмат боюнча).</p>
             <div id="users_container"></div>
+          </div>
+        </div>
+
+        <!-- ТАБ: ТАЙПА (GROUP) -->
+        <div id="tab-group" class="tab-content">
+          <div class="section">
+            <div class="section-title">🏠 Тайпа Башкаруу</div>
+            
+            <div class="input-group">
+              <label>Тайпанын аталышы (Title)</label>
+              <div style="display: flex; gap: 8px;">
+                <input type="text" id="group_title" placeholder="Жаңы аталыш">
+                <button class="add-btn" onclick="doGroupAction('settitle', document.getElementById('group_title').value)">Өзгөртүү</button>
+              </div>
+            </div>
+            
+            <div class="input-group">
+              <label>Тайпанын баяндамасы (Description)</label>
+              <div style="display: flex; gap: 8px;">
+                <textarea id="group_desc" rows="2" placeholder="Жаңы баяндама"></textarea>
+                <button class="add-btn" onclick="doGroupAction('setdesc', document.getElementById('group_desc').value)">Өзгөртүү</button>
+              </div>
+            </div>
+            
+            <div class="input-group">
+              <label>Жай режим (Slowmode, секунд)</label>
+              <div style="display: flex; gap: 8px;">
+                <select id="group_slowmode">
+                  <option value="0">Өчүрүү (0s)</option>
+                  <option value="10">10 секунд</option>
+                  <option value="30">30 секунд</option>
+                  <option value="60">1 мүнөт</option>
+                  <option value="300">5 мүнөт</option>
+                </select>
+                <button class="add-btn" onclick="doGroupAction('slowmode', null, document.getElementById('group_slowmode').value)">Сактоо</button>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -524,6 +562,9 @@
             <button class="action-btn danger" onclick="doAction('kick', ${u.id})">Кик</button>
             <button class="action-btn danger" onclick="doAction('ban', ${u.id})">Бан</button>
             <button class="action-btn" onclick="doAction('unban', ${u.id})">Разбан</button>
+            <button class="action-btn" style="background:#8b5cf6;" onclick="doAction('promote', ${u.id})">Админ кылуу</button>
+            <button class="action-btn" style="background:#64748b;" onclick="doAction('demote', ${u.id})">Админден алуу</button>
+            <button class="action-btn warn" onclick="doAction('resetwarns', ${u.id})">Тазалоо (Warns)</button>
           </div>
         </div>
       `).join('');
@@ -542,6 +583,24 @@
           showToast("Аракет аткарылды!", 'success');
           tg.HapticFeedback.notificationOccurred("success");
           fetchData(); // reload stats
+        } else {
+          showToast("Ката кетти", 'error');
+        }
+      } catch (e) { showToast("Ката кетти", 'error'); }
+    }
+
+    async function doGroupAction(actionName, text = null, value = null) {
+      if(!confirm("Ушул аракетти аткарууну тастыктайсызбы?")) return;
+      try {
+        const res = await fetch(actionUrl, {
+          method: 'POST',
+          headers: { 'Authorization': 'tma ' + initData, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: actionName, text, value })
+        });
+        if(res.ok) {
+          showToast("Аракет аткарылды!", 'success');
+          tg.HapticFeedback.notificationOccurred("success");
+          fetchData(); // reload
         } else {
           showToast("Ката кетти", 'error');
         }
