@@ -6,19 +6,16 @@ const bot = new Bot(config.BOT_TOKEN);
 async function setupProfile() {
   console.log("Setting up bot profile...");
   
-  await bot.api.setMyName("Коопсузбек | Модератор");
+  await bot.api.setMyName("Коопсузбек");
   
   await bot.api.setMyShortDescription(
-    "Коопсузбек — кыргызча модератор-бот.\n\nТех. колдоо: @noneaibek"
+    "Тынчтык биздин бактыбыз.\n\nТех. колдоо: @noneaibek"
   );
 
   await bot.api.setMyDescription(
-    "🛡 Коопсузбек — тайпаңыздын тазалыгын жана коопсуздугун сактаган кыргызча супер-модератор!\n\n" +
-      "🔹 Спам жана жарнамаларды өчүрөт\n" +
-      "🔹 Сөгүнүү жана уят сөздөрдү жок кылат\n" +
-      "🔹 Капча жана Анти-бот системасы бар\n" +
-      "🔹 Инновациялык Web-Панель аркылуу башкаруу\n\n" +
-      "🆘 Техникалык колдоо: @noneaibek"
+    "🛡 Коопсузбек — тайпаңызды коргоо жана башкаруу үчүн түзүлгөн эң күчтүү, ишенимдүү жардамчы.\n\n" +
+    "Тынчтык биздин бактыбыз.\n\n" +
+    "🆘 Техникалык колдоо: @noneaibek"
   );
 
   await bot.api.setMyCommands([
