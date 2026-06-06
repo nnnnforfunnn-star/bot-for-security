@@ -172,11 +172,19 @@
               <div class="setting-info"><h3>Анти-Сөгүнүү</h3></div>
               <label class="switch"><input type="checkbox" id="antiSwearEnabled"><span class="slider"></span></label>
             </div>
-            <div class="setting-row">
-              <div class="setting-info"><h3>Анти-Канал (Бан)</h3></div>
-              <label class="switch"><input type="checkbox" id="antiChannel"><span class="slider"></span></label>
-            </div>
-          </div>
+             <div class="setting-row">
+               <div class="setting-info"><h3>Анти-Канал (Бан)</h3></div>
+               <label class="switch"><input type="checkbox" id="antiChannel"><span class="slider"></span></label>
+             </div>
+             <div class="setting-row">
+               <div class="setting-info"><h3>Тынч режим (Silent Mode)</h3><p>Модераторлордун аракеттери тууралуу билдирүүлөрдү тайпада жашыруу.</p></div>
+               <label class="switch"><input type="checkbox" id="silentMode"><span class="slider"></span></label>
+             </div>
+             <div class="input-group">
+               <label>Лог каналынын ID'си (Log Channel ID)</label>
+               <input type="text" id="logChannelId" placeholder="Мисалы: -100123456789">
+             </div>
+           </div>
 
           <div class="section">
             <div class="section-title">🌙 Түнкү дозор (Night Mode)</div>
@@ -616,6 +624,8 @@
       document.getElementById('antiArabicName').checked = cfg.antiArabicName || false;
       document.getElementById('antiSwearEnabled').checked = cfg.antiSwearEnabled || false;
       document.getElementById('antiChannel').checked = cfg.antiChannel || false;
+      document.getElementById('silentMode').checked = cfg.silentMode || false;
+      document.getElementById('logChannelId').value = cfg.logChannelId || '';
       document.getElementById('nightModeEnabled').checked = cfg.nightModeEnabled || false;
       document.getElementById('nightModeStart').value = cfg.nightModeStart || 0;
       document.getElementById('nightModeEnd').value = cfg.nightModeEnd || 7;
@@ -718,6 +728,8 @@
       appData.config.antiArabicName = document.getElementById('antiArabicName').checked;
       appData.config.antiSwearEnabled = document.getElementById('antiSwearEnabled').checked;
       appData.config.antiChannel = document.getElementById('antiChannel').checked;
+      appData.config.silentMode = document.getElementById('silentMode').checked;
+      appData.config.logChannelId = document.getElementById('logChannelId').value.trim();
       
       appData.config.nightModeEnabled = document.getElementById('nightModeEnabled').checked;
       appData.config.nightModeStart = parseInt(document.getElementById('nightModeStart').value) || 0;

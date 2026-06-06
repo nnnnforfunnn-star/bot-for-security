@@ -28,6 +28,12 @@ import {
   slowmodeCommand, setPhotoCommand, setTitleCommand, setDescCommand,
   adminsCommand, infoCommand, resetWarnsCommand, linkCommand
 } from "./handlers/groupCommands.js";
+import {
+  silentCommand, logChannelCommand, unpinAllCommand, warnLimitCommand,
+  warnActionCommand, welcomeToggleCommand, goodbyeToggleCommand,
+  cleanWelcomeToggleCommand, captchaTypeCommand, captchaKickCommand,
+  antiArabicCommand, antiSwearCommand
+} from "./handlers/configCommands.js";
 
 if (!config.BOT_TOKEN) {
   throw new Error("BOT_TOKEN не установлен в переменных окружения!");
@@ -67,6 +73,23 @@ bot.command("admins", adminsCommand);
 bot.command("info", infoCommand);
 bot.command("resetwarns", resetWarnsCommand);
 bot.command("link", linkCommand);
+
+// 1.6 Жаңы жөндөө командалары
+bot.command("silent", silentCommand);
+bot.command("logchannel", logChannelCommand);
+bot.command("unpinall", unpinAllCommand);
+bot.command("warnlimit", warnLimitCommand);
+bot.command("warnaction", warnActionCommand);
+bot.command("welcomeon", welcomeToggleCommand);
+bot.command("welcomeoff", welcomeToggleCommand);
+bot.command("goodbyeon", goodbyeToggleCommand);
+bot.command("goodbyeoff", goodbyeToggleCommand);
+bot.command("cleanwelcomeon", cleanWelcomeToggleCommand);
+bot.command("cleanwelcomeoff", cleanWelcomeToggleCommand);
+bot.command("captchatype", captchaTypeCommand);
+bot.command("captchakick", captchaKickCommand);
+bot.command("antiarabic", antiArabicCommand);
+bot.command("antiswear", antiSwearCommand);
 
 // 2. Бөгөттөө (Locks)
 bot.command("lock", lockCommand);

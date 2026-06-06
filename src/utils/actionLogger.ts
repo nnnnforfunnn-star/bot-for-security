@@ -30,8 +30,8 @@ export async function logAction(
     await db.incr(`chat:${chatId}:stats:${action.toLowerCase()}s_count`); // e.g. bans_count, mutes_count
     
     // Check if Log Channel is configured
-    // Note: Log channel is not in GroupConfig yet, we'll store it directly in db
-    const logChannelId = await db.get<string>(`chat:${chatId}:log_channel`);
+    const config = await getGroupConfig(chatId).catch(() => null);
+    const logChannelId = config?.logChannelId || (await db.get<string>(`chat:${chatId}:log_channel`));
     if (logChannelId) {
       let emoji = "ℹ️";
       if (action.includes("Ban") || action.includes("Бан")) emoji = "🚫";
@@ -40,7 +40,7 @@ export async function logAction(
       if (action.includes("Warn") || action.includes("Эскертүү")) emoji = "⚠️";
       if (action.includes("Delete") || action.includes("Удаление")) emoji = "🗑";
 
-      const text = `${emoji} **Аракет:** ${action}\n👤 **Колдонуучу:** [${name}](tg://user?id=${userId}) (<code>${userId}</code>)\n📝 **Себеби:** ${reason}`;
+      const text = `${emoji} **Аракет:** ${action}\n👤 **Колдонуучу:** [${name}](tg://user?id=${userId}) (<code>${userId}</code>)\n📝 **Себеби:** ${reason}\n🛡 **Администратор:** ${adminName}`;
       await api.sendMessage(logChannelId, text, { parse_mode: "HTML" }).catch(() => {});
     }
   } catch (e) {

@@ -1,6 +1,18 @@
 import { Context } from "grammy";
 import { logger } from "../utils/logger.js";
 import { isUserAdmin, muteUser, banUser, unbanUser } from "../utils/telegram.js";
+import { getGroupConfig } from "../utils/configManager.js";
+import { logAction } from "../utils/actionLogger.js";
+
+async function replyMaybeSilent(ctx: Context, text: string) {
+  if (!ctx.chat) return;
+  const config = await getGroupConfig(ctx.chat.id);
+  if (config.silentMode) {
+    await ctx.deleteMessage().catch(() => {});
+  } else {
+    await ctx.reply(text, { parse_mode: "HTML" });
+  }
+}
 
 /**
  * Парсит строку длительности (например: "10m", "2h", "1d") и возвращает время в секундах.
@@ -86,7 +98,8 @@ export async function handleMuteCommand(ctx: Context): Promise<void> {
 
   const success = await muteUser(ctx.api, ctx.chat!.id, check.targetUserId, durationSeconds);
   if (success) {
-    await ctx.reply(`🔇 Пользователь <b>${check.targetName}</b> был заглушен ${durationText}.`, { parse_mode: "HTML" });
+    await logAction(ctx.api, ctx.chat!.id, check.targetUserId, check.targetName, "Мут", `Мут жазасы берилди (${durationText})`, ctx.from?.first_name || "Админ");
+    await replyMaybeSilent(ctx, `🔇 Пользователь <b>${check.targetName}</b> был заглушен ${durationText}.`);
   } else {
     await ctx.reply("❌ Не удалось заглушить пользователя. Проверьте права бота.");
   }
@@ -113,7 +126,8 @@ export async function handleUnmuteCommand(ctx: Context): Promise<void> {
       can_send_other_messages: true,
       can_add_web_page_previews: true,
     });
-    await ctx.reply(`🔊 Пользователь <b>${check.targetName}</b> разглушен.`, { parse_mode: "HTML" });
+    await logAction(ctx.api, ctx.chat!.id, check.targetUserId, check.targetName, "Анмут", "Мут жазасы алынды (/unmute)", ctx.from?.first_name || "Админ");
+    await replyMaybeSilent(ctx, `🔊 Пользователь <b>${check.targetName}</b> разглушен.`);
   } catch (error) {
     logger.error("Ошибка при разглушении пользователя", error);
     await ctx.reply("❌ Не удалось разглушить пользователя. Проверьте права бота.");
@@ -135,7 +149,8 @@ export async function handleBanCommand(ctx: Context): Promise<void> {
 
   const success = await banUser(ctx.api, ctx.chat!.id, check.targetUserId, durationSeconds);
   if (success) {
-    await ctx.reply(`🚷 Пользователь <b>${check.targetName}</b> заблокирован в чате ${durationText}.`, { parse_mode: "HTML" });
+    await logAction(ctx.api, ctx.chat!.id, check.targetUserId, check.targetName, "Бан", `Бан жазасы берилди (${durationText})`, ctx.from?.first_name || "Админ");
+    await replyMaybeSilent(ctx, `🚷 Пользователь <b>${check.targetName}</b> заблокирован в чате ${durationText}.`);
   } else {
     await ctx.reply("❌ Не удалось заблокировать пользователя. Проверьте права бота.");
   }
@@ -185,7 +200,8 @@ export async function handleUnbanCommand(ctx: Context): Promise<void> {
 
   const success = await unbanUser(ctx.api, ctx.chat.id, targetUserId);
   if (success) {
-    await ctx.reply(`✅ Пользователь с ID <code>${targetUserId}</code> разблокирован.`, { parse_mode: "HTML" });
+    await logAction(ctx.api, ctx.chat.id, targetUserId, `Колдонуучу (${targetUserId})`, "Разбан", "Бан жазасы алынды (/unban)", ctx.from?.first_name || "Админ");
+    await replyMaybeSilent(ctx, `✅ Пользователь с ID <code>${targetUserId}</code> разблокирован.`);
   } else {
     await ctx.reply("❌ Не удалось разблокировать пользователя. Убедитесь, что ID верен и у бота есть права администратора.");
   }

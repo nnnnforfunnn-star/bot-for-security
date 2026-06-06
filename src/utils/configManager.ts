@@ -17,6 +17,8 @@ export interface GroupConfig {
   warnAction: "mute" | "ban" | "kick";
   antiChannel: boolean;
   antiArabicName: boolean;
+  silentMode: boolean;
+  logChannelId: string;
   
   // Locks Module
   locks: {
@@ -78,6 +80,8 @@ export const DEFAULT_CONFIG: GroupConfig = {
   warnAction: "mute",
   antiChannel: false,
   antiArabicName: false,
+  silentMode: false,
+  logChannelId: "",
   
   locks: {
     text: false,
