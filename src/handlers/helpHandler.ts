@@ -34,6 +34,8 @@ async function sendHelpMenu(ctx: Context, section: string, editMessage = false) 
 
   if (section !== "main") {
     keyboard.text("🔙 Артка", "help:main");
+  } else {
+    keyboard.text("🔙 Башкы бетке", "start:main");
   }
 
   const text = HELP_TEXTS[section] || HELP_TEXTS["main"];

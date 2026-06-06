@@ -136,15 +136,29 @@ bot.on("message:text", async (ctx, next) => {
 // Помощь
 bot.command("help", helpCommand);
 
-// Старт и обработка Deep Links (Панель управления в ЛС)
+async function sendStartMenu(ctx: any, editMessage = false) {
+  const keyboard = new InlineKeyboard()
+    .url("➕ Тайпага кошуу (Добавить в группу)", `https://t.me/${ctx.me.username}?startgroup=true`).row()
+    .text("📖 Буйруктар (Команды)", "help:main").row()
+    .url("🆘 Тех. Колдоо (Поддержка)", "https://t.me/noneaibek");
+
+  const text = `👋 Салам, <b>${ctx.from?.first_name || 'досум'}</b>!\n\n` +
+    `🛡 <b>Коопсузбек</b> — тайпаңызды коргоо жана башкаруу үчүн түзүлгөн эң күчтүү, заманбап кыргызча модератор-бот.\n\n` +
+    `🚀 Мени тайпаңызга кошуп, администратор укугун бериңиз да, <code>/settings</code> буйругу менен баарын өзүңүзгө ылайыктап алыңыз!`;
+
+  if (editMessage) {
+    await ctx.editMessageText(text, { parse_mode: "HTML", reply_markup: keyboard }).catch(() => {});
+  } else {
+    await ctx.reply(text, { parse_mode: "HTML", reply_markup: keyboard });
+  }
+}
+
 bot.command("start", async (ctx) => {
   if (ctx.chat.type === "private") {
     const payload = ctx.match;
-    
     if (payload && payload.startsWith("settings_")) {
       const chatIdStr = payload.replace("settings_", "");
       const chatId = parseInt(chatIdStr, 10);
-      
       if (!isNaN(chatId) && ctx.from) {
         const isAdmin = await isUserAdminInChat(ctx.api, chatId, ctx.from.id);
         if (isAdmin) {
@@ -155,21 +169,16 @@ bot.command("start", async (ctx) => {
         return;
       }
     }
+    await sendStartMenu(ctx, false);
+  }
+});
 
-    const keyboard = new InlineKeyboard()
-      .url("➕ Тайпага кошуу (Добавить в группу)", `https://t.me/${ctx.me.username}?startgroup=true`).row()
-      .text("📖 Буйруктар (Команды)", "help:main").row()
-      .url("🆘 Тех. Колдоо (Поддержка)", "https://t.me/noneaibek");
-
-    await ctx.reply(
-      `👋 Салам, <b>${ctx.from?.first_name || 'досум'}</b>!\n\n` +
-      `🛡 <b>Коопсузбек</b> — тайпаңызды коргоо жана башкаруу үчүн түзүлгөн эң күчтүү, заманбап кыргызча модератор-бот.\n\n` +
-      `🚀 Мени тайпаңызга кошуп, администратор укугун бериңиз да, <code>/settings</code> буйругу менен баарын өзүңүзгө ылайыктап алыңыз!`,
-      { 
-        parse_mode: "HTML",
-        reply_markup: keyboard
-      }
-    );
+bot.on("callback_query:data", async (ctx, next) => {
+  if (ctx.callbackQuery.data === "start:main") {
+    await sendStartMenu(ctx, true);
+    await ctx.answerCallbackQuery();
+  } else {
+    await next();
   }
 });
 
