@@ -1734,6 +1734,46 @@
                     </label>
                   </div>
 
+                  <div class="setting-row" style="border: 1px solid rgba(255,255,255,0.05); padding: 10px; border-radius: 8px;">
+                    <div class="setting-info">
+                      <div class="setting-name" style="font-size: 13px;">Өзүн чыгаруу (/kickme)</div>
+                    </div>
+                    <label class="switch">
+                      <input type="checkbox" id="cmd_toggle_kickme" checked>
+                      <span class="slider"></span>
+                    </label>
+                  </div>
+
+                  <div class="setting-row" style="border: 1px solid rgba(255,255,255,0.05); padding: 10px; border-radius: 8px;">
+                    <div class="setting-info">
+                      <div class="setting-name" style="font-size: 13px;">Баарын унчукпоо (/muteall)</div>
+                    </div>
+                    <label class="switch">
+                      <input type="checkbox" id="cmd_toggle_muteall" checked>
+                      <span class="slider"></span>
+                    </label>
+                  </div>
+
+                  <div class="setting-row" style="border: 1px solid rgba(255,255,255,0.05); padding: 10px; border-radius: 8px;">
+                    <div class="setting-info">
+                      <div class="setting-name" style="font-size: 13px;">Чатты ачуу (/unmuteall)</div>
+                    </div>
+                    <label class="switch">
+                      <input type="checkbox" id="cmd_toggle_unmuteall" checked>
+                      <span class="slider"></span>
+                    </label>
+                  </div>
+
+                  <div class="setting-row" style="border: 1px solid rgba(255,255,255,0.05); padding: 10px; border-radius: 8px;">
+                    <div class="setting-info">
+                      <div class="setting-name" style="font-size: 13px;">Зомбилерди өчүрүү (/zombies)</div>
+                    </div>
+                    <label class="switch">
+                      <input type="checkbox" id="cmd_toggle_zombies" checked>
+                      <span class="slider"></span>
+                    </label>
+                  </div>
+
                 </div>
               </div>
             </div>
@@ -2090,7 +2130,7 @@
       document.getElementById('linkWhitelist').value = (cfg.linkWhitelist || []).join(', ');
 
       const disabledCmds = cfg.disabledCommands || {};
-      ['ban','mute','kick','warn','purge','del','slowmode','promote','demote','rules','info','admins','me','top','link','bata','rp'].forEach(cmd => {
+      ['ban','mute','kick','warn','purge','del','slowmode','promote','demote','rules','info','admins','me','top','link','bata','rp','kickme','muteall','unmuteall','zombies'].forEach(cmd => {
         const el = document.getElementById('cmd_toggle_' + cmd);
         if (el) el.checked = !disabledCmds[cmd];
       });
@@ -2619,7 +2659,7 @@
         .filter(x => x.length > 0);
 
       if (!appData.config.disabledCommands) appData.config.disabledCommands = {};
-      ['ban','mute','kick','warn','purge','del','slowmode','promote','demote','rules','info','admins','me','top','link','bata','rp'].forEach(cmd => {
+      ['ban','mute','kick','warn','purge','del','slowmode','promote','demote','rules','info','admins','me','top','link','bata','rp','kickme','muteall','unmuteall','zombies'].forEach(cmd => {
         appData.config.disabledCommands[cmd] = !document.getElementById('cmd_toggle_' + cmd).checked;
       });
 

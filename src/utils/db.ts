@@ -309,5 +309,23 @@ export const db = {
       if (upstashClient) return await upstashClient.smembers(key);
       return memCache.get(key) || [];
     } catch (e) { return []; }
+  },
+
+  async srem(key: string, member: string | number): Promise<void> {
+    try {
+      const tcp = await getRedisTCPClient();
+      if (tcp) {
+        await tcp.sRem(key, member.toString());
+        return;
+      }
+      if (upstashClient) {
+        await upstashClient.srem(key, member);
+        return;
+      }
+      const set = new Set(memCache.get(key) || []);
+      set.delete(member.toString());
+      memCache.set(key, Array.from(set));
+      saveLocalDB();
+    } catch (e) {}
   }
 };

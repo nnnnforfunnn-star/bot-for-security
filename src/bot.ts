@@ -10,7 +10,7 @@ import { adminPanelCommand, adminPanelCallback, sendAdminPanel } from "./handler
 import { bataCommand, topUrmatCommand } from "./handlers/funHandler.js";
 import { filterCommand, stopFilterCommand, filtersListCommand } from "./handlers/filterHandler.js";
 import { helpCommand, helpCallback } from "./handlers/helpHandler.js";
-import { kickCommand, pinCommand, unpinCommand, warnCommand, unwarnCommand, warnsCommand, idCommand } from "./handlers/modCommands.js";
+import { kickCommand, pinCommand, unpinCommand, warnCommand, unwarnCommand, warnsCommand, idCommand, kickmeCommand, muteallCommand, unmuteallCommand, zombiesCommand } from "./handlers/modCommands.js";
 import { lockCommand, unlockCommand, locksListCommand } from "./handlers/locksHandler.js";
 import { 
   delCommand, purgeCommand, setRulesCommand, rulesCommand, 
@@ -82,6 +82,10 @@ bot.command("id", idCommand);
 bot.command("del", delCommand);
 bot.command("purge", purgeCommand);
 bot.command("report", reportCommand);
+bot.command("kickme", kickmeCommand);
+bot.command("muteall", muteallCommand);
+bot.command("unmuteall", unmuteallCommand);
+bot.command("zombies", zombiesCommand);
 
 // 1.5 Жаңы тайпа башкаруу команд лары
 bot.command("promote", promoteCommand);
@@ -171,18 +175,36 @@ bot.on("message:text", async (ctx, next) => {
 
   // RP Actions Check
   if (ctx.message.reply_to_message) {
-    const actionWords = ["обнять", "поцеловать", "ударить", "укусить", "убить", "дать пять", "погладить", "пнуть", "расстрелять"];
-    for (const w of actionWords) {
-      if (text.startsWith(w)) {
-        try {
-          const groupCfg = await getGroupConfig(ctx.chat.id);
-          if (groupCfg.disabledCommands && groupCfg.disabledCommands["rp"] === true) {
-            await next();
-            return;
-          }
-        } catch (e) {}
-        return handleRpCommand(ctx);
+    let cleanText = text;
+    if (cleanText.startsWith("/") || cleanText.startsWith("!")) {
+      cleanText = cleanText.substring(1);
+    }
+    cleanText = cleanText.trim();
+
+    const rpTriggers = [
+      "обнять", "кучакта", "поцеловать", "өп", "ударить", "ур", "укусить", "тиште",
+      "убить", "өлтүр", "дать пять", "беш бер", "погладить", "сыла", "пнуть", "теп",
+      "расстрелять", "ат", "эркелет", "cuddle", "highfive", "slap", "kiss", "hug",
+      "bite", "kill", "pat", "shoot", "support", "колдоо"
+    ];
+
+    let isRp = false;
+    for (const trigger of rpTriggers) {
+      if (cleanText.startsWith(trigger)) {
+        isRp = true;
+        break;
       }
+    }
+
+    if (isRp) {
+      try {
+        const groupCfg = await getGroupConfig(ctx.chat.id);
+        if (groupCfg.disabledCommands && groupCfg.disabledCommands["rp"] === true) {
+          await next();
+          return;
+        }
+      } catch (e) {}
+      return handleRpCommand(ctx);
     }
   }
   

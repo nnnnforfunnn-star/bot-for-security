@@ -1,26 +1,72 @@
 import { Context } from "grammy";
 import { db } from "../utils/db.js";
 
-// РП Действия
-const RP_ACTIONS: Record<string, string> = {
+// РП Действия (Русский, Кыргызча, English)
+const RP_ACTIONS_MAP: Record<string, string> = {
+  // Обнять
   "обнять": "кучактады",
+  "кучакта": "кучактады",
+  "кучактады": "кучактады",
+  "hug": "кучактады",
+  // Поцеловать
   "поцеловать": "өптү",
+  "өп": "өптү",
+  "өптү": "өптү",
+  "kiss": "өптү",
+  // Ударить
   "ударить": "урду",
+  "ур": "урду",
+  "урду": "урду",
+  "slap": "урду",
+  // Укусить
   "укусить": "тиштеди",
+  "тиште": "тиштеди",
+  "тиштеди": "тиштеди",
+  "bite": "тиштеди",
+  // Убить
   "убить": "өлтүрдү",
+  "өлтүр": "өлтүрдү",
+  "өлтүрдү": "өлтүрдү",
+  "kill": "өлтүрдү",
+  // Дать пять
   "дать пять": "беш берди",
+  "беш бер": "беш берди",
+  "highfive": "беш берди",
+  // Погладить
   "погладить": "сылады",
+  "сыла": "сылады",
+  "сылады": "сылады",
+  "pat": "сылады",
+  // Пнуть
   "пнуть": "тепти",
-  "расстрелять": "атып салды"
+  "теп": "тепти",
+  "тепти": "тепти",
+  "kickrp": "тепти",
+  // Расстрелять
+  "расстрелять": "атып салды",
+  "ат": "атып салды",
+  "атып салды": "атып салды",
+  "shoot": "атып салды",
+  // Эркелетуу
+  "эркелет": "эркелетти",
+  "cuddle": "эркелетти",
+  // Колдоо
+  "колдоо": "колдоп койду",
+  "support": "колдоп койду"
 };
 
 export async function handleRpCommand(ctx: Context) {
   if (!ctx.chat || ctx.chat.type === "private" || !ctx.message?.text || !ctx.message.reply_to_message) return;
-  const text = ctx.message.text.toLowerCase().trim();
   
-  const actionKeys = Object.keys(RP_ACTIONS);
+  const rawText = ctx.message.text.trim();
+  let text = rawText.toLowerCase();
+  if (text.startsWith("/") || text.startsWith("!")) {
+    text = text.substring(1);
+  }
+  text = text.trim();
+
   let matchedAction = "";
-  for (const key of actionKeys) {
+  for (const key of Object.keys(RP_ACTIONS_MAP)) {
     if (text.startsWith(key)) {
       matchedAction = key;
       break;
@@ -30,7 +76,7 @@ export async function handleRpCommand(ctx: Context) {
   if (matchedAction) {
     const fromName = ctx.from?.first_name || "Колдонуучу";
     const toName = ctx.message.reply_to_message.from?.first_name || "Колдонуучу";
-    const pastTense = RP_ACTIONS[matchedAction];
+    const pastTense = RP_ACTIONS_MAP[matchedAction];
     await ctx.reply(`👤 [${fromName}](tg://user?id=${ctx.from?.id}) ${pastTense} [${toName}](tg://user?id=${ctx.message.reply_to_message.from?.id})`, { parse_mode: "Markdown" });
   }
 }

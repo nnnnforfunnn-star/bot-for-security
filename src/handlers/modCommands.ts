@@ -159,3 +159,104 @@ export async function idCommand(ctx: Context) {
   }
   await ctx.reply(text, { parse_mode: "Markdown" });
 }
+
+// 12. /kickme — Өзүн тайпадан чыгаруу
+export async function kickmeCommand(ctx: Context) {
+  if (!ctx.chat || ctx.chat.type === "private" || !ctx.from) return;
+  if (await isUserAdmin(ctx, ctx.from.id)) {
+    await ctx.reply("❌ Сиз администраторсуз, өзүңүздү кик кыла албайсыз.");
+    return;
+  }
+  try {
+    await ctx.api.banChatMember(ctx.chat.id, ctx.from.id);
+    await ctx.api.unbanChatMember(ctx.chat.id, ctx.from.id);
+    await ctx.reply(`👢 **${ctx.from.first_name}** өз каалоосу менен тайпадан чыкты.`);
+  } catch (e) {}
+}
+
+// 13. /muteall — Тайпада жазууну толук бөгөттөө
+export async function muteallCommand(ctx: Context) {
+  if (!ctx.chat || ctx.chat.type === "private" || !(await isUserAdmin(ctx))) return;
+  try {
+    await ctx.api.setChatPermissions(ctx.chat.id, {
+      can_send_messages: false,
+      can_send_audios: false,
+      can_send_documents: false,
+      can_send_photos: false,
+      can_send_videos: false,
+      can_send_video_notes: false,
+      can_send_voice_notes: false,
+      can_send_polls: false,
+      can_send_other_messages: false,
+      can_add_web_page_previews: false
+    });
+    await logAction(ctx.api, ctx.chat.id, 0, "Группа", "Muteall", "Группа жабылды (/muteall)", ctx.from?.first_name || "Админ");
+    await ctx.reply("🔇 **Тайпада жазуу толук бөгөттөлдү (Mute All)!**\nАдминистраторлордон башка эч ким билдирүү жөнөтө албайт.", { parse_mode: "Markdown" });
+  } catch (e) {
+    await ctx.reply("❌ Чаттын укуктарын өзгөртүү мүмкүн болбоду.");
+  }
+}
+
+// 14. /unmuteall — Бөгөттү алуу
+export async function unmuteallCommand(ctx: Context) {
+  if (!ctx.chat || ctx.chat.type === "private" || !(await isUserAdmin(ctx))) return;
+  try {
+    await ctx.api.setChatPermissions(ctx.chat.id, {
+      can_send_messages: true,
+      can_send_audios: true,
+      can_send_documents: true,
+      can_send_photos: true,
+      can_send_videos: true,
+      can_send_video_notes: true,
+      can_send_voice_notes: true,
+      can_send_polls: true,
+      can_send_other_messages: true,
+      can_add_web_page_previews: true
+    });
+    await logAction(ctx.api, ctx.chat.id, 0, "Группа", "Unmuteall", "Группа ачылды (/unmuteall)", ctx.from?.first_name || "Админ");
+    await ctx.reply("🔊 **Тайпа толугу менен ачылды (Unmute All)!**\nЭми бардык колдонуучулар жаза алышат.", { parse_mode: "Markdown" });
+  } catch (e) {
+    await ctx.reply("❌ Чаттын укуктарын өзгөртүү мүмкүн болбоду.");
+  }
+}
+
+// 15. /zombies — Өчүрүлгөн аккаунттарды тазалоо
+export async function zombiesCommand(ctx: Context) {
+  if (!ctx.chat || ctx.chat.type === "private" || !(await isUserAdmin(ctx))) return;
+  const args = ctx.message?.text?.split(" ") || [];
+  const cleanMode = args[1] === "clean" || args[1] === "тазалоо";
+
+  await ctx.reply("🔍 Тайпадагы өчүрүлгөн аккаунттарды (Deleted Accounts) издөө башталды... Күтө туруңуз.");
+
+  try {
+    const userIds = await db.smembers(`chat:${ctx.chat.id}:users`);
+    let zombieCount = 0;
+    let kickedCount = 0;
+    
+    for (const uidStr of userIds) {
+      const uid = parseInt(uidStr, 10);
+      try {
+        const member = await ctx.api.getChatMember(ctx.chat.id, uid);
+        if (member.status === "left" || member.status === "kicked") continue;
+        
+        if (member.user.first_name === "" || member.user.first_name === "Deleted Account" || !member.user.first_name) {
+          zombieCount++;
+          if (cleanMode) {
+            await ctx.api.banChatMember(ctx.chat.id, uid).catch(() => {});
+            await ctx.api.unbanChatMember(ctx.chat.id, uid).catch(() => {});
+            await db.srem(`chat:${ctx.chat.id}:users`, uidStr);
+            kickedCount++;
+          }
+        }
+      } catch (e) {}
+    }
+
+    if (cleanMode) {
+      await ctx.reply(`🧹 **Тазалоо аяктады!**\nТайпадан **${kickedCount}** өчүрүлгөн аккаунт (зомби) чыгарылды.`);
+    } else {
+      await ctx.reply(`📊 **Издөө аяктады!**\nТайпада **${zombieCount}** өчүрүлгөн аккаунт (зомби) аныкталды.\n\nАларды тазалоо үчүн \`/zombies clean\` буйругун колдонуңуз.`, { parse_mode: "Markdown" });
+    }
+  } catch (e) {
+    await ctx.reply("❌ Издөө учурунда ката кетти.");
+  }
+}
