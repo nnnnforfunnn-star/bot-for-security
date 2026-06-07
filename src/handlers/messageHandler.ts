@@ -11,6 +11,43 @@ const ARABIC_HIEROGLYPH_REGEX = /[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-
 // Слова-триггеры для системы Кармы (Сый-Урмат)
 const KARMA_WORDS = ["рахмат", "рхм", "ыраазымын", "чоң рахмат", "спс", "спасибо"];
 
+function isLinkWhitelisted(text: string, entities: any[], whitelist: string[]): boolean {
+  if (!entities || entities.length === 0) return true;
+  if (!whitelist || whitelist.length === 0) return false;
+  
+  const cleanWhitelist = whitelist.map(d => d.trim().toLowerCase()).filter(d => d.length > 0);
+  if (cleanWhitelist.length === 0) return false;
+
+  for (const entity of entities) {
+    let urlStr = "";
+    if (entity.type === "url") {
+      urlStr = text.substring(entity.offset, entity.offset + entity.length);
+    } else if (entity.type === "text_link") {
+      urlStr = entity.url;
+    }
+    
+    if (urlStr) {
+      try {
+        if (!urlStr.startsWith("http://") && !urlStr.startsWith("https://")) {
+          urlStr = "https://" + urlStr;
+        }
+        const hostname = new URL(urlStr).hostname.toLowerCase();
+        
+        const isWhitelisted = cleanWhitelist.some(domain => {
+          return hostname === domain || hostname.endsWith("." + domain);
+        });
+        
+        if (!isWhitelisted) {
+          return false;
+        }
+      } catch (e) {
+        return false;
+      }
+    }
+  }
+  return true;
+}
+
 /**
  * Обработчик выдачи предупреждений (Страйков).
  */
@@ -114,6 +151,9 @@ export async function messageHandler(ctx: Context, next: NextFunction): Promise<
       }
 
       if (matchedCmdKey && matchedCmd) {
+        if (config.disabledCommands && config.disabledCommands[matchedCmdKey] === true) {
+          return;
+        }
         const action = matchedCmd.action || "none";
         const customReply = matchedCmd.replyText || "";
         const autoDelete = matchedCmd.autoDelete || false;
@@ -186,7 +226,7 @@ export async function messageHandler(ctx: Context, next: NextFunction): Promise<
       }
 
       // 0.2 Стандартные жестко заданные текстовые команды (обратная совместимость)
-      if (lowerText.startsWith("бан") || lowerText.startsWith("ban")) {
+      if ((lowerText.startsWith("бан") || lowerText.startsWith("ban")) && !(config.disabledCommands?.ban)) {
         let duration = 0;
         const match = lowerText.match(/(?:бан|ban)\s+(\d+)([мчсдкmhds])/);
         if (match) {
@@ -200,7 +240,7 @@ export async function messageHandler(ctx: Context, next: NextFunction): Promise<
         await logAction(ctx.api, chatId, targetUserId, targetMsg.from?.first_name || "Колдонуучу", "Бан", "Админдин буйругу (Manual)", ctx.from.first_name);
         await ctx.reply(`🚷 [${targetMsg.from?.first_name}](tg://user?id=${targetUserId}) бөгөттөлдү (Бан).`, { parse_mode: "Markdown" });
         return;
-      } else if (lowerText.startsWith("мут") || lowerText.startsWith("mute")) {
+      } else if ((lowerText.startsWith("мут") || lowerText.startsWith("mute")) && !(config.disabledCommands?.mute)) {
         let duration = 120 * 60; // 2 hours default
         const match = lowerText.match(/(?:мут|mute)\s+(\d+)([мчсдкmhds])/);
         if (match) {
@@ -214,18 +254,18 @@ export async function messageHandler(ctx: Context, next: NextFunction): Promise<
         await logAction(ctx.api, chatId, targetUserId, targetMsg.from?.first_name || "Колдонуучу", "Мут", "Админдин буйругу (Manual)", ctx.from.first_name);
         await ctx.reply(`🔇 [${targetMsg.from?.first_name}](tg://user?id=${targetUserId}) жазуу укугунан ажыратылды (Мут).`, { parse_mode: "Markdown" });
         return;
-      } else if (lowerText === "кик" || lowerText === "kick") {
+      } else if ((lowerText === "кик" || lowerText === "kick") && !(config.disabledCommands?.kick)) {
         await ctx.api.banChatMember(chatId, targetUserId).catch(() => {});
         await ctx.api.unbanChatMember(chatId, targetUserId).catch(() => {});
         await logAction(ctx.api, chatId, targetUserId, targetMsg.from?.first_name || "Колдонуучу", "Кик", "Админдин буйругу (Manual)", ctx.from.first_name);
         await ctx.reply(`👢 ${targetMsg.from?.first_name} чаттан чыгарылды (Кик).`);
         return;
-      } else if (lowerText === "разбан" || lowerText === "unban") {
+      } else if ((lowerText === "разбан" || lowerText === "unban") && !(config.disabledCommands?.unban)) {
         await unbanUser(ctx.api, chatId, targetUserId);
         await logAction(ctx.api, chatId, targetUserId, targetMsg.from?.first_name || "Колдонуучу", "Разбан", "Админдин буйругу (Manual)", ctx.from.first_name);
         await ctx.reply(`✅ [${targetMsg.from?.first_name}](tg://user?id=${targetUserId}) бөгөттөн чыгарылды (Разбан).`, { parse_mode: "Markdown" });
         return;
-      } else if (lowerText === "анмут" || lowerText === "unmute") {
+      } else if ((lowerText === "анмут" || lowerText === "unmute") && !(config.disabledCommands?.unmute)) {
         await ctx.api.restrictChatMember(chatId, targetUserId, {
           can_send_messages: true, can_send_audios: true, can_send_documents: true,
           can_send_photos: true, can_send_videos: true, can_send_video_notes: true,
@@ -235,10 +275,10 @@ export async function messageHandler(ctx: Context, next: NextFunction): Promise<
         await logAction(ctx.api, chatId, targetUserId, targetMsg.from?.first_name || "Колдонуучу", "Анмут", "Админдин буйругу (Manual)", ctx.from.first_name);
         await ctx.reply(`🔊 [${targetMsg.from?.first_name}](tg://user?id=${targetUserId}) жазуу укугу кайтарылды (Анмут).`, { parse_mode: "Markdown" });
         return;
-      } else if (lowerText === "эскертүү" || lowerText === "warn") {
+      } else if ((lowerText === "эскертүү" || lowerText === "warn") && !(config.disabledCommands?.warn)) {
         await handleWarn(ctx, targetUserId, chatId, targetMsg.from?.first_name || "", "Админдин эскертүүсү", config.muteDurationMinutes, config.warnLimit, config.warnAction, ctx.from.first_name);
         return;
-      } else if (lowerText === "өчүр" || lowerText === "del") {
+      } else if ((lowerText === "өчүр" || lowerText === "del") && !(config.disabledCommands?.del)) {
         await ctx.api.deleteMessage(chatId, targetMsg.message_id).catch(() => {});
         await ctx.deleteMessage().catch(() => {});
         await logAction(ctx.api, chatId, targetUserId, targetMsg.from?.first_name || "Колдонуучу", "Удаление", "Админдин буйругу (Manual Del)", ctx.from.first_name);
@@ -287,7 +327,12 @@ export async function messageHandler(ctx: Context, next: NextFunction): Promise<
   // 2. Locks Module (Жесткие блокировки)
   if (!shouldDelete) {
     if (config.locks?.links && ctx.message.entities?.some(e => e.type === "url" || e.type === "text_link")) {
-      shouldDelete = true; warnReason = "Шилтемелер (Links) бөгөттөлгөн.";
+      const whitelist = config.linkWhitelist || [];
+      const allWhitelisted = isLinkWhitelisted(text, ctx.message.entities, whitelist);
+      if (!allWhitelisted) {
+        shouldDelete = true;
+        warnReason = "Шилтемелер (Links) бөгөттөлгөн.";
+      }
     } else if (config.locks?.forwards && ctx.message.forward_origin) {
       shouldDelete = true; warnReason = "Башка каналдан репост кылуу бөгөттөлгөн.";
     } else if (config.locks?.media && (ctx.message.photo || ctx.message.video || ctx.message.document)) {

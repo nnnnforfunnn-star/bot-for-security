@@ -1355,6 +1355,11 @@
                   <label class="lock-checkbox"><input type="checkbox" id="lock_arabic"><span>Араб тамгалары</span></label>
                   <label class="lock-checkbox"><input type="checkbox" id="lock_porn"><span>Катуу сөздөр / NSFW</span></label>
                 </div>
+                <div class="form-group" style="margin-top: 18px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 14px;">
+                  <label class="form-label">🔗 Уруксат берилген шилтемелер (Link Whitelist)</label>
+                  <input type="text" class="form-input" id="linkWhitelist" placeholder="Мисалы: google.com, t.me, youtube.com">
+                  <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">Шилтемелер бөгөттөлгөн учурда да бул домендерге уруксат берилет. Үтүр менен бөлүңүз.</div>
+                </div>
               </div>
             </div>
           </div>
@@ -1547,6 +1552,189 @@
               <div class="card-body">
                 <p style="font-size:12px; color:var(--text-muted); margin-bottom:16px;">Буйруктарды өзгөртүү үчүн ар бирин басып жайып алыңыз:</p>
                 <div id="commands_container"></div>
+              </div>
+            </div>
+
+            <!-- Command Toggle Manager Card -->
+            <div class="card" style="margin-top: 24px;">
+              <div class="card-header">
+                <div class="card-title">⚙️ Буйруктарды жандыруу жана өчүрүү</div>
+                <div class="card-description">Боттун кээ бир функцияларын же буйруктарын тайпа үчүн толугу менен өчүрүп койсо болот.</div>
+              </div>
+              <div class="card-body">
+                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 14px;">
+                  
+                  <div class="setting-row" style="border: 1px solid rgba(255,255,255,0.05); padding: 10px; border-radius: 8px;">
+                    <div class="setting-info">
+                      <div class="setting-name" style="font-size: 13px;">Бан (/ban)</div>
+                    </div>
+                    <label class="switch">
+                      <input type="checkbox" id="cmd_toggle_ban" checked>
+                      <span class="slider"></span>
+                    </label>
+                  </div>
+
+                  <div class="setting-row" style="border: 1px solid rgba(255,255,255,0.05); padding: 10px; border-radius: 8px;">
+                    <div class="setting-info">
+                      <div class="setting-name" style="font-size: 13px;">Мут (/mute)</div>
+                    </div>
+                    <label class="switch">
+                      <input type="checkbox" id="cmd_toggle_mute" checked>
+                      <span class="slider"></span>
+                    </label>
+                  </div>
+
+                  <div class="setting-row" style="border: 1px solid rgba(255,255,255,0.05); padding: 10px; border-radius: 8px;">
+                    <div class="setting-info">
+                      <div class="setting-name" style="font-size: 13px;">Кик (/kick)</div>
+                    </div>
+                    <label class="switch">
+                      <input type="checkbox" id="cmd_toggle_kick" checked>
+                      <span class="slider"></span>
+                    </label>
+                  </div>
+
+                  <div class="setting-row" style="border: 1px solid rgba(255,255,255,0.05); padding: 10px; border-radius: 8px;">
+                    <div class="setting-info">
+                      <div class="setting-name" style="font-size: 13px;">Варн (/warn)</div>
+                    </div>
+                    <label class="switch">
+                      <input type="checkbox" id="cmd_toggle_warn" checked>
+                      <span class="slider"></span>
+                    </label>
+                  </div>
+
+                  <div class="setting-row" style="border: 1px solid rgba(255,255,255,0.05); padding: 10px; border-radius: 8px;">
+                    <div class="setting-info">
+                      <div class="setting-name" style="font-size: 13px;">Тазалоо (/purge)</div>
+                    </div>
+                    <label class="switch">
+                      <input type="checkbox" id="cmd_toggle_purge" checked>
+                      <span class="slider"></span>
+                    </label>
+                  </div>
+
+                  <div class="setting-row" style="border: 1px solid rgba(255,255,255,0.05); padding: 10px; border-radius: 8px;">
+                    <div class="setting-info">
+                      <div class="setting-name" style="font-size: 13px;">Өчүрүү (/del)</div>
+                    </div>
+                    <label class="switch">
+                      <input type="checkbox" id="cmd_toggle_del" checked>
+                      <span class="slider"></span>
+                    </label>
+                  </div>
+
+                  <div class="setting-row" style="border: 1px solid rgba(255,255,255,0.05); padding: 10px; border-radius: 8px;">
+                    <div class="setting-info">
+                      <div class="setting-name" style="font-size: 13px;">Жай Режим (/slowmode)</div>
+                    </div>
+                    <label class="switch">
+                      <input type="checkbox" id="cmd_toggle_slowmode" checked>
+                      <span class="slider"></span>
+                    </label>
+                  </div>
+
+                  <div class="setting-row" style="border: 1px solid rgba(255,255,255,0.05); padding: 10px; border-radius: 8px;">
+                    <div class="setting-info">
+                      <div class="setting-name" style="font-size: 13px;">Админ кылуу (/promote)</div>
+                    </div>
+                    <label class="switch">
+                      <input type="checkbox" id="cmd_toggle_promote" checked>
+                      <span class="slider"></span>
+                    </label>
+                  </div>
+
+                  <div class="setting-row" style="border: 1px solid rgba(255,255,255,0.05); padding: 10px; border-radius: 8px;">
+                    <div class="setting-info">
+                      <div class="setting-name" style="font-size: 13px;">Админден алуу (/demote)</div>
+                    </div>
+                    <label class="switch">
+                      <input type="checkbox" id="cmd_toggle_demote" checked>
+                      <span class="slider"></span>
+                    </label>
+                  </div>
+
+                  <div class="setting-row" style="border: 1px solid rgba(255,255,255,0.05); padding: 10px; border-radius: 8px;">
+                    <div class="setting-info">
+                      <div class="setting-name" style="font-size: 13px;">Эрежелер (/rules)</div>
+                    </div>
+                    <label class="switch">
+                      <input type="checkbox" id="cmd_toggle_rules" checked>
+                      <span class="slider"></span>
+                    </label>
+                  </div>
+
+                  <div class="setting-row" style="border: 1px solid rgba(255,255,255,0.05); padding: 10px; border-radius: 8px;">
+                    <div class="setting-info">
+                      <div class="setting-name" style="font-size: 13px;">Маалымат (/info)</div>
+                    </div>
+                    <label class="switch">
+                      <input type="checkbox" id="cmd_toggle_info" checked>
+                      <span class="slider"></span>
+                    </label>
+                  </div>
+
+                  <div class="setting-row" style="border: 1px solid rgba(255,255,255,0.05); padding: 10px; border-radius: 8px;">
+                    <div class="setting-info">
+                      <div class="setting-name" style="font-size: 13px;">Админдер (/admins)</div>
+                    </div>
+                    <label class="switch">
+                      <input type="checkbox" id="cmd_toggle_admins" checked>
+                      <span class="slider"></span>
+                    </label>
+                  </div>
+
+                  <div class="setting-row" style="border: 1px solid rgba(255,255,255,0.05); padding: 10px; border-radius: 8px;">
+                    <div class="setting-info">
+                      <div class="setting-name" style="font-size: 13px;">Менин профилим (/me)</div>
+                    </div>
+                    <label class="switch">
+                      <input type="checkbox" id="cmd_toggle_me" checked>
+                      <span class="slider"></span>
+                    </label>
+                  </div>
+
+                  <div class="setting-row" style="border: 1px solid rgba(255,255,255,0.05); padding: 10px; border-radius: 8px;">
+                    <div class="setting-info">
+                      <div class="setting-name" style="font-size: 13px;">Рейтинг (/top)</div>
+                    </div>
+                    <label class="switch">
+                      <input type="checkbox" id="cmd_toggle_top" checked>
+                      <span class="slider"></span>
+                    </label>
+                  </div>
+
+                  <div class="setting-row" style="border: 1px solid rgba(255,255,255,0.05); padding: 10px; border-radius: 8px;">
+                    <div class="setting-info">
+                      <div class="setting-name" style="font-size: 13px;">Шилтеме алуу (/link)</div>
+                    </div>
+                    <label class="switch">
+                      <input type="checkbox" id="cmd_toggle_link" checked>
+                      <span class="slider"></span>
+                    </label>
+                  </div>
+
+                  <div class="setting-row" style="border: 1px solid rgba(255,255,255,0.05); padding: 10px; border-radius: 8px;">
+                    <div class="setting-info">
+                      <div class="setting-name" style="font-size: 13px;">Бата берүү (/bata)</div>
+                    </div>
+                    <label class="switch">
+                      <input type="checkbox" id="cmd_toggle_bata" checked>
+                      <span class="slider"></span>
+                    </label>
+                  </div>
+
+                  <div class="setting-row" style="border: 1px solid rgba(255,255,255,0.05); padding: 10px; border-radius: 8px;">
+                    <div class="setting-info">
+                      <div class="setting-name" style="font-size: 13px;">РП Аракеттер (обнять...)</div>
+                    </div>
+                    <label class="switch">
+                      <input type="checkbox" id="cmd_toggle_rp" checked>
+                      <span class="slider"></span>
+                    </label>
+                  </div>
+
+                </div>
               </div>
             </div>
           </div>
@@ -1897,6 +2085,14 @@
       const locks = cfg.locks || {};
       ['text','links','photo','video','audio','voices','videonote','document','stickers','gifs','bots','commands','games','forwards','arabic','porn'].forEach(lock => {
         document.getElementById('lock_'+lock).checked = locks[lock] || false;
+      });
+
+      document.getElementById('linkWhitelist').value = (cfg.linkWhitelist || []).join(', ');
+
+      const disabledCmds = cfg.disabledCommands || {};
+      ['ban','mute','kick','warn','purge','del','slowmode','promote','demote','rules','info','admins','me','top','link','bata','rp'].forEach(cmd => {
+        const el = document.getElementById('cmd_toggle_' + cmd);
+        if (el) el.checked = !disabledCmds[cmd];
       });
 
       document.getElementById('warnLimit').value = cfg.warnLimit || 3;
@@ -2416,6 +2612,15 @@
       if (!appData.config.locks) appData.config.locks = {};
       ['text','links','photo','video','audio','voices','videonote','document','stickers','gifs','bots','commands','games','forwards','arabic','porn'].forEach(lock => {
         appData.config.locks[lock] = document.getElementById('lock_'+lock).checked;
+      });
+
+      appData.config.linkWhitelist = document.getElementById('linkWhitelist').value.split(',')
+        .map(x => x.trim().toLowerCase())
+        .filter(x => x.length > 0);
+
+      if (!appData.config.disabledCommands) appData.config.disabledCommands = {};
+      ['ban','mute','kick','warn','purge','del','slowmode','promote','demote','rules','info','admins','me','top','link','bata','rp'].forEach(cmd => {
+        appData.config.disabledCommands[cmd] = !document.getElementById('cmd_toggle_' + cmd).checked;
       });
 
       if (!appData.config.antiflood) appData.config.antiflood = {};

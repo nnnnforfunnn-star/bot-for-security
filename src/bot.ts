@@ -43,8 +43,29 @@ if (!config.BOT_TOKEN) {
 
 export const bot = new Bot(config.BOT_TOKEN);
 
+import { getGroupConfig } from "./utils/configManager.js";
+
 bot.catch(globalErrorHandler);
 bot.use(rateLimiter);
+
+// Middleware для проверки отключенных команд в группе
+bot.use(async (ctx, next) => {
+  if (ctx.chat && ctx.chat.type !== "private" && ctx.message?.text?.startsWith("/")) {
+    const fullCmd = ctx.message.text.split(" ")[0].substring(1);
+    const cmdName = fullCmd.split("@")[0].toLowerCase();
+
+    try {
+      const config = await getGroupConfig(ctx.chat.id);
+      if (config.disabledCommands && config.disabledCommands[cmdName] === true) {
+        // Команда отключена администратором чата через веб-панель
+        return; 
+      }
+    } catch (e) {
+      logger.error("Error checking disabled commands in middleware:", e);
+    }
+  }
+  await next();
+});
 
 // 1. Модераторские команды
 bot.command("mute", handleMuteCommand);
@@ -152,7 +173,16 @@ bot.on("message:text", async (ctx, next) => {
   if (ctx.message.reply_to_message) {
     const actionWords = ["обнять", "поцеловать", "ударить", "укусить", "убить", "дать пять", "погладить", "пнуть", "расстрелять"];
     for (const w of actionWords) {
-      if (text.startsWith(w)) return handleRpCommand(ctx);
+      if (text.startsWith(w)) {
+        try {
+          const groupCfg = await getGroupConfig(ctx.chat.id);
+          if (groupCfg.disabledCommands && groupCfg.disabledCommands["rp"] === true) {
+            await next();
+            return;
+          }
+        } catch (e) {}
+        return handleRpCommand(ctx);
+      }
     }
   }
   
