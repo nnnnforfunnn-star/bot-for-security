@@ -3,6 +3,7 @@ import { isUserSeniorAdminInChat } from "../src/utils/telegram.js";
 import { bot } from "../src/bot.js";
 import { banUser, muteUser } from "../src/utils/telegram.js";
 import { logAction } from "../src/utils/actionLogger.js";
+import { db } from "../src/utils/db.js";
 
 let isBotInitialized = false;
 
@@ -53,21 +54,61 @@ export default async function handler(req: any, res: any) {
 
     const { action, targetUserId, reason } = req.body;
 
-    const requiresTarget = ["ban", "mute", "unmute", "kick", "unban", "promote", "demote", "resetwarns"];
+    const requiresTarget = ["ban", "mute", "unmute", "kick", "unban", "promote", "demote", "resetwarns", "warn"];
     if (!action || (requiresTarget.includes(action) && !targetUserId)) {
       return res.status(400).json({ error: "Bad Request: missing action or targetUserId" });
     }
 
-    const targetName = "Колдонуучу"; // Fetch name if possible
+    let targetName = "Колдонуучу";
+    if (targetUserId) {
+      const info = await db.hgetall(`chat:${chatId}:user:${targetUserId}:info`);
+      if (info?.name) {
+        targetName = info.name;
+      }
+    }
 
     switch (action) {
+      case "warn": {
+        const { getGroupConfig } = await import("../src/utils/configManager.js");
+        const config = await getGroupConfig(chatId);
+        const warnLimit = config.warnLimit || 3;
+        const muteMinutes = config.muteDurationMinutes || 120;
+        const warnAction = config.warnAction || "mute";
+        
+        const warnKey = `chat:${chatId}:user:${targetUserId}:warns`;
+        const warns = await db.incr(warnKey);
+        
+        await logAction(bot.api, chatId, targetUserId, targetName, "Эскертүү (Warn)", `${reason || "Web Panel аркылуу"} (${warns}/${warnLimit})`, user.first_name || "Админ");
+
+        if (warns < warnLimit) {
+          await bot.api.sendMessage(chatId, `⚠️ **${warns}-эскертүү!** Урматтуу [${targetName}](tg://user?id=${targetUserId}), тайпанын эрежелерин бузбаңыз.\nСебеби: ${reason || "Администратор тарабынан"}`, { parse_mode: "Markdown" }).catch(() => {});
+        } else {
+          if (warnAction === "ban") {
+            await banUser(bot.api, chatId, targetUserId);
+            await logAction(bot.api, chatId, targetUserId, targetName, "Бан", "Эскертүүлөрдүн чегине жетти (Warn Limit)", user.first_name || "Админ");
+            await bot.api.sendMessage(chatId, `🚫 **Лимит толду!** [${targetName}](tg://user?id=${targetUserId}) тайпадан биротоло четтетилди (Бан).`, { parse_mode: "Markdown" }).catch(() => {});
+          } else if (warnAction === "kick") {
+            await bot.api.banChatMember(chatId, targetUserId).catch(() => {});
+            await bot.api.unbanChatMember(chatId, targetUserId).catch(() => {});
+            await logAction(bot.api, chatId, targetUserId, targetName, "Кик", "Эскертүүлөрдүн чегине жетти", user.first_name || "Админ");
+            await bot.api.sendMessage(chatId, `👢 **Лимит толду!** [${targetName}](tg://user?id=${targetUserId}) тайпадан чыгарылды (Кик).`, { parse_mode: "Markdown" }).catch(() => {});
+          } else {
+            await muteUser(bot.api, chatId, targetUserId, muteMinutes * 60);
+            await logAction(bot.api, chatId, targetUserId, targetName, "Мут", `Эскертүүлөрдүн чегине жетти (${muteMinutes} мүнөт)`, user.first_name || "Админ");
+            await bot.api.sendMessage(chatId, `🔇 **Лимит толду!** [${targetName}](tg://user?id=${targetUserId}) ${muteMinutes} мүнөткө жазуу укугунан ажыратылды.`, { parse_mode: "Markdown" }).catch(() => {});
+          }
+          await db.del(warnKey);
+        }
+        break;
+      }
       case "ban":
         await banUser(bot.api, chatId, targetUserId);
         await logAction(bot.api, chatId, targetUserId, targetName, "Бан", reason || "Web Panel аркылуу", user.first_name || "Админ");
         break;
       case "mute":
-        await muteUser(bot.api, chatId, targetUserId, 24 * 60 * 60);
-        await logAction(bot.api, chatId, targetUserId, targetName, "Мут", reason || "Web Panel аркылуу (24с)", user.first_name || "Админ");
+        const muteSeconds = parseInt(req.body.value, 10) || 24 * 60 * 60;
+        await muteUser(bot.api, chatId, targetUserId, muteSeconds);
+        await logAction(bot.api, chatId, targetUserId, targetName, "Мут", reason || `Web Panel аркылуу (${Math.round(muteSeconds/60)}м)`, user.first_name || "Админ");
         break;
       case "unmute":
         await bot.api.restrictChatMember(chatId, targetUserId, {
@@ -88,11 +129,35 @@ export default async function handler(req: any, res: any) {
         await logAction(bot.api, chatId, targetUserId, targetName, "Разбан", reason || "Web Panel аркылуу", user.first_name || "Админ");
         break;
       case "promote":
-        await bot.api.promoteChatMember(chatId, targetUserId, {
-          can_delete_messages: true, can_restrict_members: true,
-          can_pin_messages: true, can_invite_users: true,
-        });
-        await logAction(bot.api, chatId, targetUserId, targetName, "Promote", "Web Panel аркылуу админ кылынды", user.first_name || "Админ");
+        const roleType = req.body.value || "middle";
+        let rights = {
+          can_delete_messages: true,
+          can_restrict_members: false,
+          can_pin_messages: true,
+          can_invite_users: true,
+          can_change_info: false,
+        };
+        if (roleType === "middle") {
+          rights.can_restrict_members = true;
+        } else if (roleType === "senior") {
+          rights.can_restrict_members = true;
+          rights.can_change_info = true;
+        } else if (roleType === "coowner") {
+          rights = {
+            ...rights,
+            can_restrict_members: true,
+            can_change_info: true,
+            ...({
+              can_promote_members: false,
+              can_manage_video_chats: true,
+              can_post_messages: false,
+              can_edit_messages: false,
+              is_anonymous: false
+            } as any)
+          };
+        }
+        await bot.api.promoteChatMember(chatId, targetUserId, rights);
+        await logAction(bot.api, chatId, targetUserId, targetName, "Promote", `Web Panel: Админ кылынды (${roleType})`, user.first_name || "Админ");
         break;
       case "demote":
         await bot.api.promoteChatMember(chatId, targetUserId, {
@@ -103,7 +168,6 @@ export default async function handler(req: any, res: any) {
         await logAction(bot.api, chatId, targetUserId, targetName, "Demote", "Web Panel аркылуу укугу алынды", user.first_name || "Админ");
         break;
       case "resetwarns":
-        const { db } = await import("../src/utils/db.js");
         await db.del(`chat:${chatId}:user:${targetUserId}:warns`);
         await logAction(bot.api, chatId, targetUserId, targetName, "Тазалоо", "Web Panel: Эскертүүлөр тазаланды", user.first_name || "Админ");
         break;

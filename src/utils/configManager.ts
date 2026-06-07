@@ -61,6 +61,16 @@ export interface GroupConfig {
   
   // Rules
   rulesText: string;
+  
+  // Custom command configs
+  customCommands?: Record<string, {
+    alias?: string;
+    replyText?: string;
+    action?: "ban" | "mute" | "kick" | "warn" | "unban" | "unmute" | "unwarn" | "del" | "none";
+    muteDuration?: number;
+    warnCount?: number;
+    autoDelete?: boolean;
+  }>;
 }
 
 export const DEFAULT_CONFIG: GroupConfig = {

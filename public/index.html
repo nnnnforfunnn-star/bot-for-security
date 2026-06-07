@@ -5,416 +5,1630 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Коопсузбек - Башкаруу Панели</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <!-- Google Fonts: Inter & Outfit -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg-dark: #0f172a; --sidebar-bg: #1e293b; --card-bg: rgba(30, 41, 59, 0.7); 
-      --card-border: rgba(255, 255, 255, 0.1); --primary: #3b82f6; --text-main: #f8fafc; 
-      --text-muted: #94a3b8; --success: #10b981; --danger: #ef4444; --warn: #f59e0b;
+      --bg-dark: #05070a;
+      --sidebar-bg: #080c14;
+      --card-bg: #0b111e;
+      --border-color: #1c2a45;
+      --border-color-hover: #2d3f60;
+      
+      --accent: #0070f3;
+      --accent-hover: #0060d3;
+      --accent-glow: rgba(0, 112, 243, 0.15);
+      
+      --text-main: #f3f4f6;
+      --text-muted: #9ca3af;
+      
+      --success: #10b981;
+      --success-glow: rgba(16, 185, 129, 0.15);
+      
+      --danger: #ef4444;
+      --danger-glow: rgba(239, 68, 68, 0.15);
+      
+      --warn: #f59e0b;
+      --warn-glow: rgba(245, 158, 11, 0.15);
+      
+      --sidebar-width: 260px;
+      --header-height: 60px;
     }
-    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
-    body { background: var(--bg-dark); color: var(--text-main); min-height: 100vh; overflow-x: hidden; }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Inter', sans-serif;
+    }
+
+    body {
+      background: var(--bg-dark);
+      color: var(--text-main);
+      min-height: 100vh;
+      overflow: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
 
     /* Layout structure */
-    .app-container { display: flex; height: 100vh; overflow: hidden; }
-    
+    .app-container {
+      display: flex;
+      height: 100vh;
+      width: 100vw;
+      overflow: hidden;
+    }
+
     /* Sidebar */
-    .sidebar { width: 220px; background: var(--sidebar-bg); flex-shrink: 0; display: flex; flex-direction: column; border-right: 1px solid var(--card-border); z-index: 10; }
-    .sidebar-header { padding: 20px 16px; text-align: center; border-bottom: 1px solid var(--card-border); }
-    .sidebar-header h1 { font-size: 20px; background: linear-gradient(to right, #60a5fa, #34d399); -webkit-background-clip: text; color: transparent; font-weight: 800; }
-    .sidebar-header p { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
-    .nav-items { flex-grow: 1; padding: 16px 8px; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; }
-    .nav-item { padding: 12px 16px; border-radius: 12px; cursor: pointer; display: flex; align-items: center; gap: 12px; font-size: 14px; font-weight: 500; transition: 0.2s; color: var(--text-muted); }
-    .nav-item:hover { background: rgba(255,255,255,0.05); color: var(--text-main); }
-    .nav-item.active { background: var(--primary); color: white; }
+    .sidebar {
+      width: var(--sidebar-width);
+      background: var(--sidebar-bg);
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      border-right: 1px solid var(--border-color);
+      z-index: 100;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
 
-    /* Content Area */
-    .content-area { flex-grow: 1; padding: 20px; overflow-y: auto; padding-bottom: 80px; position: relative; }
-    .tab-content { display: none; animation: fadeIn 0.3s ease; }
-    .tab-content.active { display: block; }
+    .sidebar-header {
+      padding: 24px 20px;
+      border-bottom: 1px solid var(--border-color);
+    }
 
-    /* Sections */
-    .section { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 16px; padding: 16px; margin-bottom: 16px; }
-    .section-title { font-size: 16px; font-weight: 600; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
-    
-    .setting-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
-    .setting-info h3 { font-size: 14px; font-weight: 500; }
-    .setting-info p { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
-    
-    /* Toggle Switch */
-    .switch { position: relative; display: inline-block; width: 44px; height: 24px; flex-shrink: 0; }
-    .switch input { opacity: 0; width: 0; height: 0; }
-    .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(255,255,255,0.1); border-radius: 34px; transition: .3s; }
-    .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; border-radius: 50%; transition: .3s; }
-    input:checked + .slider { background-color: var(--success); }
-    input:checked + .slider:before { transform: translateX(20px); }
+    .brand-container {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
 
-    /* Inputs */
-    .input-group { margin-top: 12px; }
-    .input-group label { display: block; font-size: 12px; margin-bottom: 4px; color: var(--text-muted); }
-    .input-group input, .input-group textarea, .input-group select { width: 100%; background: rgba(0,0,0,0.3); border: 1px solid var(--card-border); color: white; padding: 10px; border-radius: 8px; font-size: 14px; outline: none; transition: 0.2s;}
-    .input-group input:focus, .input-group select:focus, .input-group textarea:focus { border-color: var(--primary); }
+    .brand-logo {
+      width: 32px;
+      height: 32px;
+      background: linear-gradient(135deg, var(--accent), #10b981);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 16px;
+      color: white;
+      box-shadow: 0 0 15px rgba(0, 112, 243, 0.4);
+    }
 
-    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .brand-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      background: linear-gradient(to right, #ffffff, #9ca3af);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
 
-    /* Stats Cards */
-    .stat-card { background: rgba(0,0,0,0.3); padding: 15px; border-radius: 12px; text-align: center; border: 1px solid var(--card-border); cursor: pointer; transition: 0.2s; position: relative; overflow: hidden; }
-    .stat-card:hover { border-color: var(--primary); transform: translateY(-2px); }
-    .stat-card .value { font-size: 24px; font-weight: bold; margin-bottom: 4px; color: var(--primary); }
-    .stat-card .label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+    /* Active User & Group Profile Switcher */
+    .profile-switcher {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      cursor: pointer;
+      transition: 0.2s;
+    }
 
-    /* Lists */
-    .list-item { display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.2); padding: 12px; border-radius: 12px; margin-top: 8px; border: 1px solid transparent;}
-    
-    /* Action Buttons */
-    .action-btn { background: rgba(255,255,255,0.1); color: white; border: none; padding: 6px 10px; border-radius: 6px; font-size: 11px; cursor: pointer; transition: 0.2s;}
-    .action-btn:hover { background: rgba(255,255,255,0.2); }
-    .action-btn.danger { background: rgba(239, 68, 68, 0.2); color: #fca5a5; }
-    .action-btn.warn { background: rgba(245, 158, 11, 0.2); color: #fcd34d; }
+    .profile-switcher:hover {
+      background: rgba(255, 255, 255, 0.06);
+      border-color: var(--border-color-hover);
+    }
 
-    .delete-btn { background: var(--danger); color: white; border: none; padding: 6px 10px; border-radius: 6px; font-size: 12px; cursor: pointer; }
-    .add-btn { background: var(--success); color: white; border: none; padding: 12px; border-radius: 10px; width: 100%; margin-top: 14px; cursor: pointer; font-weight: 600;}
+    .profile-avatar {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--accent);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      font-size: 12px;
+    }
 
-    /* Modals */
-    .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 1000; display: none; justify-content: center; align-items: center; opacity: 0; transition: 0.3s; padding: 20px;}
-    .modal-overlay.show { display: flex; opacity: 1; }
-    .modal-content { background: var(--sidebar-bg); width: 100%; max-width: 500px; border-radius: 16px; border: 1px solid var(--card-border); max-height: 80vh; display: flex; flex-direction: column; transform: translateY(20px); transition: 0.3s; }
-    .modal-overlay.show .modal-content { transform: translateY(0); }
-    .modal-header { padding: 16px; border-bottom: 1px solid var(--card-border); display: flex; justify-content: space-between; align-items: center; }
-    .modal-header h2 { font-size: 18px; }
-    .modal-close { background: none; border: none; color: var(--text-muted); font-size: 24px; cursor: pointer; }
-    .modal-body { padding: 16px; overflow-y: auto; flex-grow: 1; }
+    .profile-info {
+      flex-grow: 1;
+      min-width: 0;
+    }
 
-    .save-btn { background: var(--primary); color: white; border: none; width: calc(100% - 32px); padding: 14px; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; position: fixed; bottom: 16px; right: 16px; max-width: 400px; box-shadow: 0 4px 14px rgba(59, 130, 246, 0.4); z-index: 100;}
-    
-    .toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%) translateY(-100px); background: var(--success); color: white; padding: 10px 20px; border-radius: 30px; font-size: 13px; opacity: 0; transition: 0.4s; z-index: 2000; font-weight: 500; box-shadow: 0 4px 12px rgba(0,0,0,0.5);}
-    .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
-    
-    .log-entry { font-size: 12px; padding: 12px; background: rgba(0,0,0,0.3); border-radius: 8px; margin-top: 8px; border-left: 3px solid var(--primary); display: flex; flex-direction: column; gap: 4px;}
-    .log-entry.danger { border-left-color: var(--danger); }
-    .log-entry.warn { border-left-color: var(--warn); }
-    
-    .user-card { background: rgba(0,0,0,0.2); padding: 12px; border-radius: 12px; margin-bottom: 10px; border: 1px solid var(--card-border);}
-    .user-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-    .user-name { font-weight: 600; font-size: 14px; color: var(--primary); }
+    .profile-user {
+      font-size: 11px;
+      color: var(--text-muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
 
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+    .profile-group {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-main);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
 
-    /* Responsive */
+    .profile-arrow {
+      font-size: 10px;
+      color: var(--text-muted);
+    }
+
+    /* Nav Items */
+    .nav-items {
+      flex-grow: 1;
+      padding: 16px 12px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .nav-label {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text-muted);
+      padding: 12px 12px 6px 12px;
+      font-weight: 700;
+    }
+
+    .nav-item {
+      padding: 10px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-muted);
+      transition: all 0.2s;
+    }
+
+    .nav-item-inner {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .nav-item:hover {
+      background: rgba(255, 255, 255, 0.04);
+      color: var(--text-main);
+    }
+
+    .nav-item.active {
+      background: rgba(0, 112, 243, 0.08);
+      color: var(--accent);
+      font-weight: 600;
+      box-shadow: inset 3px 0 0 var(--accent);
+    }
+
+    /* Accordion Menu */
+    .nav-accordion {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .nav-accordion-header {
+      padding: 10px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-muted);
+      transition: all 0.2s;
+    }
+
+    .nav-accordion-header:hover {
+      background: rgba(255, 255, 255, 0.04);
+      color: var(--text-main);
+    }
+
+    .nav-accordion-header.active {
+      color: var(--text-main);
+    }
+
+    .nav-accordion-arrow {
+      font-size: 9px;
+      transition: transform 0.2s ease;
+      color: var(--text-muted);
+    }
+
+    .nav-accordion.open .nav-accordion-arrow {
+      transform: rotate(90deg);
+    }
+
+    .nav-accordion-content {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      padding-left: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .nav-accordion.open .nav-accordion-content {
+      max-height: 300px;
+      margin-top: 2px;
+      margin-bottom: 6px;
+    }
+
+    .nav-subitem {
+      padding: 8px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s;
+    }
+
+    .nav-subitem:hover {
+      background: rgba(255, 255, 255, 0.03);
+      color: var(--text-main);
+    }
+
+    .nav-subitem.active {
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    /* Content Area & Navigation Header */
+    .main-wrapper {
+      flex-grow: 1;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+      background: var(--bg-dark);
+    }
+
+    .top-navbar {
+      height: var(--header-height);
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+      background: rgba(5, 7, 10, 0.8);
+      backdrop-filter: blur(8px);
+      z-index: 50;
+    }
+
+    .breadcrumbs {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+    }
+
+    .breadcrumb-item {
+      color: var(--text-muted);
+    }
+
+    .breadcrumb-separator {
+      color: var(--border-color);
+    }
+
+    .breadcrumb-item.active {
+      color: var(--text-main);
+      font-weight: 500;
+    }
+
+    .status-badge {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      padding: 4px 10px;
+      background: rgba(16, 185, 129, 0.08);
+      border: 1px solid var(--success);
+      color: var(--success);
+      border-radius: 20px;
+      font-weight: 600;
+    }
+
+    .status-dot {
+      width: 6px;
+      height: 6px;
+      background: var(--success);
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0% { opacity: 0.4; }
+      50% { opacity: 1; }
+      100% { opacity: 0.4; }
+    }
+
+    .content-area {
+      flex-grow: 1;
+      padding: 24px;
+      overflow-y: auto;
+      scroll-behavior: smooth;
+    }
+
+    /* Tab content view */
+    .tab-content {
+      display: none;
+      max-width: 900px;
+      margin: 0 auto 100px auto;
+      animation: tabFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    @keyframes tabFadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Vercel Cards */
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      margin-bottom: 24px;
+      overflow: hidden;
+      transition: border-color 0.2s;
+    }
+
+    .card:hover {
+      border-color: var(--border-color-hover);
+    }
+
+    .card-header {
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .card-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .card-description {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    .card-body {
+      padding: 24px;
+    }
+
+    .card-footer {
+      padding: 16px 24px;
+      background: rgba(0, 0, 0, 0.15);
+      border-top: 1px solid var(--border-color);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    /* Settings list layout */
+    .setting-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+    }
+
+    .setting-row:last-child {
+      border-bottom: none;
+    }
+
+    .setting-info {
+      padding-right: 16px;
+    }
+
+    .setting-name {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-main);
+    }
+
+    .setting-desc {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    /* Switch styling */
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 40px;
+      height: 22px;
+      flex-shrink: 0;
+    }
+
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-color: #1f2937;
+      border-radius: 34px;
+      border: 1px solid var(--border-color);
+      transition: .2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 14px;
+      width: 14px;
+      left: 3px;
+      bottom: 3px;
+      background-color: var(--text-muted);
+      border-radius: 50%;
+      transition: .2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    input:checked + .slider {
+      background-color: var(--accent);
+      border-color: var(--accent);
+    }
+
+    input:checked + .slider:before {
+      transform: translateX(18px);
+      background-color: white;
+    }
+
+    /* Form control styling */
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    .form-group:last-child {
+      margin-bottom: 0;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 6px;
+    }
+
+    .form-input, .form-select, .form-textarea {
+      width: 100%;
+      background: rgba(0, 0, 0, 0.2);
+      border: 1px solid var(--border-color);
+      color: white;
+      padding: 10px 14px;
+      border-radius: 6px;
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .form-input:focus, .form-select:focus, .form-textarea:focus {
+      border-color: var(--accent);
+    }
+
+    .form-textarea {
+      resize: vertical;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 10px 16px;
+      font-size: 14px;
+      font-weight: 500;
+      border-radius: 6px;
+      border: 1px solid var(--border-color);
+      background: transparent;
+      color: var(--text-main);
+      cursor: pointer;
+      transition: all 0.2s;
+      outline: none;
+    }
+
+    .btn:hover {
+      background: rgba(255, 255, 255, 0.05);
+      border-color: var(--border-color-hover);
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: var(--accent-hover);
+      border-color: var(--accent-hover);
+    }
+
+    .btn-danger {
+      background: var(--danger-glow);
+      border-color: var(--danger);
+      color: #fca5a5;
+    }
+
+    .btn-danger:hover {
+      background: var(--danger);
+      color: white;
+    }
+
+    .btn-warn {
+      background: var(--warn-glow);
+      border-color: var(--warn);
+      color: #fcd34d;
+    }
+
+    .btn-warn:hover {
+      background: var(--warn);
+      color: white;
+    }
+
+    .btn-sm {
+      padding: 6px 12px;
+      font-size: 12px;
+      border-radius: 4px;
+    }
+
+    /* Lock Grid row */
+    .locks-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+      gap: 12px;
+    }
+
+    .lock-checkbox {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      background: rgba(0, 0, 0, 0.15);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+      transition: 0.2s;
+    }
+
+    .lock-checkbox:hover {
+      border-color: var(--border-color-hover);
+    }
+
+    .lock-checkbox input {
+      accent-color: var(--accent);
+    }
+
+    /* Stats Grid & Sub-Tabs */
+    .stats-header-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .stat-mini-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 16px;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    .stat-mini-card:hover {
+      border-color: var(--accent);
+      transform: translateY(-2px);
+    }
+
+    .stat-mini-card.active {
+      border-color: var(--accent);
+      background: rgba(0, 112, 243, 0.03);
+    }
+
+    .stat-mini-val {
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    .stat-mini-lbl {
+      font-size: 11px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-top: 4px;
+    }
+
+    /* Sub-view containers inside stats */
+    .stats-subview {
+      display: none;
+    }
+
+    .stats-subview.active {
+      display: block;
+    }
+
+    /* Table / Lists styling */
+    .table-container {
+      width: 100%;
+      overflow-x: auto;
+    }
+
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+    }
+
+    .data-table th {
+      padding: 12px 16px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .data-table td {
+      padding: 14px 16px;
+      font-size: 13px;
+      border-bottom: 1px solid var(--border-color);
+      color: var(--text-main);
+    }
+
+    .data-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .data-table tr:hover td {
+      background: rgba(255, 255, 255, 0.01);
+    }
+
+    /* Member List styling & Collapsible Actions */
+    .member-item {
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .member-item:last-child {
+      border-bottom: none;
+    }
+
+    .member-header {
+      padding: 16px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .member-header:hover {
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .member-info {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .member-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-main);
+    }
+
+    .member-meta {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 2px;
+      display: flex;
+      gap: 12px;
+    }
+
+    .member-actions-wrapper {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      background: rgba(0, 0, 0, 0.15);
+    }
+
+    .member-item.expanded .member-actions-wrapper {
+      max-height: 500px;
+      border-top: 1px solid var(--border-color);
+    }
+
+    .member-actions-inner {
+      padding: 20px;
+    }
+
+    .action-deck {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .action-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .action-row input, .action-row select {
+      max-width: 250px;
+    }
+
+    /* List item (Notes, Swears, Filters) */
+    .list-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 16px;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      margin-bottom: 8px;
+      background: rgba(0, 0, 0, 0.1);
+    }
+
+    .list-item-content {
+      min-width: 0;
+    }
+
+    .list-item-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-main);
+    }
+
+    .list-item-subtitle {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* Save bar footer */
+    .save-bar {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      z-index: 200;
+    }
+
+    .save-bar-btn {
+      box-shadow: 0 8px 30px rgba(0, 112, 243, 0.4);
+    }
+
+    /* Toast system */
+    .toast {
+      position: fixed;
+      top: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-100px);
+      background: var(--success);
+      color: white;
+      padding: 12px 24px;
+      border-radius: 30px;
+      font-size: 14px;
+      font-weight: 600;
+      opacity: 0;
+      transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      z-index: 1000;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    }
+
+    .toast.show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+    }
+
+    .log-item {
+      padding: 12px;
+      border-bottom: 1px solid var(--border-color);
+      font-size: 12px;
+    }
+
+    .log-item:last-child {
+      border-bottom: none;
+    }
+
+    .log-meta {
+      display: flex;
+      justify-content: space-between;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+    }
+
+    .log-msg {
+      color: var(--text-main);
+    }
+
+    /* Mobile Responsive overlay & toggle */
+    .mobile-menu-toggle {
+      display: none;
+      background: transparent;
+      border: none;
+      color: var(--text-main);
+      font-size: 24px;
+      cursor: pointer;
+    }
+
+    /* Mobile specific styles */
     @media (max-width: 768px) {
-      .app-container { flex-direction: column; }
-      .sidebar { width: 100%; height: auto; border-right: none; border-bottom: 1px solid var(--card-border); flex-direction: row; align-items: center; padding: 10px; z-index: 20;}
-      .sidebar-header { display: none; }
-      .nav-items { flex-direction: row; padding: 0; overflow-x: auto; gap: 8px; margin-bottom: 0;}
-      .nav-item { padding: 8px 12px; font-size: 13px; white-space: nowrap; }
-      .content-area { padding: 15px; padding-bottom: 80px;}
-      .save-btn { left: 16px; max-width: none; }
+      .sidebar {
+        position: fixed;
+        left: -100%;
+        top: 0;
+        bottom: 0;
+        width: 260px;
+        box-shadow: 10px 0 30px rgba(0, 0, 0, 0.5);
+      }
+
+      .sidebar.open {
+        left: 0;
+      }
+
+      .mobile-menu-toggle {
+        display: block;
+      }
+
+      .stats-header-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .grid-2 {
+        grid-template-columns: 1fr;
+      }
+
+      .top-navbar {
+        padding: 0 16px;
+      }
+
+      .content-area {
+        padding: 16px;
+      }
+
+      .save-bar {
+        left: 16px;
+        right: 16px;
+      }
+
+      .save-bar-btn {
+        width: 100%;
+      }
     }
   </style>
 </head>
 <body>
 
-  <div id="toast" class="toast">Сакталды!</div>
+  <!-- Toast message -->
+  <div id="toast" class="toast">Жаңыртылды!</div>
 
   <div class="app-container">
-    <!-- SIDEBAR -->
-    <div class="sidebar">
+    <!-- LEFT SIDEBAR -->
+    <div class="sidebar" id="sidebar">
       <div class="sidebar-header">
-        <h1>Коопсузбек</h1>
-        <p>Толук Башкаруу Панели</p>
+        <div class="brand-container">
+          <div class="brand-logo">🛡️</div>
+          <div class="brand-title">KOOPSUZBEK</div>
+        </div>
+        <div class="profile-switcher" onclick="toggleSidebarGroupMenu()">
+          <div class="profile-avatar" id="sidebar_avatar">T</div>
+          <div class="profile-info">
+            <div class="profile-user" id="sidebar_username">@user</div>
+            <div class="profile-group" id="sidebar_group_title">Жүктөлүүдө...</div>
+          </div>
+          <div class="profile-arrow">▼</div>
+        </div>
       </div>
+
       <div class="nav-items">
-        <div class="nav-item active" onclick="openTab('tab-main', this)">⚙️ Башкы</div>
-        <div class="nav-item" onclick="openTab('tab-stats', this)">📊 Аналитика</div>
-        <div class="nav-item" onclick="openTab('tab-users', this)">👥 Катышуучулар</div>
-        <div class="nav-item" onclick="openTab('tab-group', this)">🏠 Тайпа</div>
-        <div class="nav-item" onclick="openTab('tab-black', this)">🚫 Кара тизме</div>
-        <div class="nav-item" onclick="openTab('tab-filters', this)">🤖 Автожооптор</div>
-        <div class="nav-item" onclick="openTab('tab-swear', this)">🤬 Сөгүнүү</div>
-        <div class="nav-item" onclick="openTab('tab-notes', this)">📝 Белгилер</div>
+        <div class="nav-label">Негизги модулдар</div>
+        <div class="nav-item active" onclick="openTab('tab-main', this)">
+          <div class="nav-item-inner">🛡️ Башкы жөндөөлөр</div>
+        </div>
+        <div class="nav-item" onclick="openTab('tab-welcome', this)">
+          <div class="nav-item-inner">💬 Саламдашуулар</div>
+        </div>
+        <div class="nav-item" onclick="openTab('tab-rules', this)">
+          <div class="nav-item-inner">⚙️ Чектөөлөр & Эрежелер</div>
+        </div>
+        <div class="nav-item" onclick="openTab('tab-commands', this)">
+          <div class="nav-item-inner">🤖 Буйруктарды ырастоо</div>
+        </div>
+        <div class="nav-item" onclick="openTab('tab-users', this)">
+          <div class="nav-item-inner">👥 Катышуучулар</div>
+        </div>
+
+        <div class="nav-label" style="margin-top: 10px;">Аналитика & Статистика</div>
+        <!-- Accordion for Analytics -->
+        <div class="nav-accordion" id="analytics-accordion">
+          <div class="nav-accordion-header" onclick="toggleAccordion('analytics-accordion')">
+            <div class="nav-item-inner">📈 Толук аналитика</div>
+            <span class="nav-accordion-arrow">▶</span>
+          </div>
+          <div class="nav-accordion-content">
+            <div class="nav-subitem" id="subitem-stats-total" onclick="openStatsSubTab('total', this)">
+              💬 Жалпы СМС
+            </div>
+            <div class="nav-subitem" id="subitem-stats-today" onclick="openStatsSubTab('today', this)">
+              📅 Бүгүнкү СМС
+            </div>
+            <div class="nav-subitem" id="subitem-stats-bans" onclick="openStatsSubTab('bans', this)">
+              🚫 Бандар
+            </div>
+            <div class="nav-subitem" id="subitem-stats-mutes" onclick="openStatsSubTab('mutes', this)">
+              🔇 Муттар
+            </div>
+            <div class="nav-subitem" id="subitem-stats-warns" onclick="openStatsSubTab('warns', this)">
+              ⚠️ Варндар
+            </div>
+            <div class="nav-subitem" id="subitem-stats-logs" onclick="openStatsSubTab('logs', this)">
+              📋 Audit Log
+            </div>
+          </div>
+        </div>
+
+        <div class="nav-label" style="margin-top: 10px;">Тайпа жөндөөсү</div>
+        <div class="nav-item" onclick="openTab('tab-group', this)">
+          <div class="nav-item-inner">🏠 Тайпа маалыматы</div>
+        </div>
       </div>
     </div>
 
-    <!-- CONTENT AREA -->
-    <div class="content-area">
-      <div id="loader" style="text-align: center; margin-top: 50px; font-size: 14px; color: var(--text-muted);">Маалыматтар жүктөлүүдө...</div>
-      
-      <div id="content" style="display: none;">
-        
-        <!-- ТАБ: БАШКЫ -->
-        <div id="tab-main" class="tab-content active">
-          <div class="section">
-            <div class="section-title">🛡️ Негизги Орнотуулар</div>
-            <div class="setting-row">
-              <div class="setting-info"><h3>Капча (Анти-бот)</h3></div>
-              <label class="switch"><input type="checkbox" id="captchaEnabled"><span class="slider"></span></label>
-            </div>
-            <div class="input-group">
-              <label>Капча түрү</label>
-              <select id="captchaMode">
-                <option value="button">Баскыч (Button)</option>
-                <option value="math">Математика</option>
-                <option value="text">Текст (Символдор)</option>
-              </select>
-            </div>
-            <div class="setting-row">
-              <div class="setting-info"><h3>Капчадан өтпөсө Кик кылуу</h3></div>
-              <label class="switch"><input type="checkbox" id="captchaKick"><span class="slider"></span></label>
-            </div>
-            <div class="setting-row">
-              <div class="setting-info"><h3>Таза Саламдашуу</h3></div>
-              <label class="switch"><input type="checkbox" id="cleanWelcome"><span class="slider"></span></label>
-            </div>
-            <div class="setting-row">
-              <div class="setting-info"><h3>Анти-Араб (Аты)</h3><p>Атында араб/иероглиф тамгалары барларды дароо баттоо.</p></div>
-              <label class="switch"><input type="checkbox" id="antiArabicName"><span class="slider"></span></label>
-            </div>
-            <div class="setting-row">
-              <div class="setting-info"><h3>Анти-Сөгүнүү</h3></div>
-              <label class="switch"><input type="checkbox" id="antiSwearEnabled"><span class="slider"></span></label>
-            </div>
-             <div class="setting-row">
-               <div class="setting-info"><h3>Анти-Канал (Бан)</h3></div>
-               <label class="switch"><input type="checkbox" id="antiChannel"><span class="slider"></span></label>
-             </div>
-             <div class="setting-row">
-               <div class="setting-info"><h3>Тынч режим (Silent Mode)</h3><p>Модераторлордун аракеттери тууралуу билдирүүлөрдү тайпада жашыруу.</p></div>
-               <label class="switch"><input type="checkbox" id="silentMode"><span class="slider"></span></label>
-             </div>
-             <div class="input-group">
-               <label>Лог каналынын ID'си (Log Channel ID)</label>
-               <input type="text" id="logChannelId" placeholder="Мисалы: -100123456789">
-             </div>
-           </div>
-
-          <div class="section">
-            <div class="section-title">🌙 Түнкү дозор (Night Mode)</div>
-            <div class="setting-row">
-              <div class="setting-info"><h3>Иштетүү</h3></div>
-              <label class="switch"><input type="checkbox" id="nightModeEnabled"><span class="slider"></span></label>
-            </div>
-            <div class="grid-2">
-              <div class="input-group"><label>Башталышы (Саат)</label><input type="number" id="nightModeStart" min="0" max="23"></div>
-              <div class="input-group"><label>Бүтүшү (Саат)</label><input type="number" id="nightModeEnd" min="0" max="23"></div>
-            </div>
-          </div>
-
-          <div class="section">
-            <div class="section-title">🔒 Бөгөттөөлөр (Locks)</div>
-            <div class="grid-2">
-              <label class="switch-row"><input type="checkbox" id="lock_text"><span> Текст</span></label>
-              <label class="switch-row"><input type="checkbox" id="lock_links"><span> Шилтеме</span></label>
-              <label class="switch-row"><input type="checkbox" id="lock_photo"><span> Сүрөт</span></label>
-              <label class="switch-row"><input type="checkbox" id="lock_video"><span> Видео</span></label>
-              <label class="switch-row"><input type="checkbox" id="lock_audio"><span> Музыка</span></label>
-              <label class="switch-row"><input type="checkbox" id="lock_voices"><span> Үн/Голос</span></label>
-              <label class="switch-row"><input type="checkbox" id="lock_videonote"><span> Кружок</span></label>
-              <label class="switch-row"><input type="checkbox" id="lock_document"><span> Файл</span></label>
-              <label class="switch-row"><input type="checkbox" id="lock_stickers"><span> Стикер</span></label>
-              <label class="switch-row"><input type="checkbox" id="lock_gifs"><span> GIF</span></label>
-              <label class="switch-row"><input type="checkbox" id="lock_bots"><span> Боттор</span></label>
-              <label class="switch-row"><input type="checkbox" id="lock_commands"><span> /Команда</span></label>
-              <label class="switch-row"><input type="checkbox" id="lock_games"><span> Оюн</span></label>
-              <label class="switch-row"><input type="checkbox" id="lock_forwards"><span> Репост</span></label>
-              <label class="switch-row"><input type="checkbox" id="lock_arabic"><span> Арабча</span></label>
-              <label class="switch-row"><input type="checkbox" id="lock_porn"><span> NSFW</span></label>
-            </div>
-          </div>
-
-          <div class="section">
-            <div class="section-title">⚖️ Жазалоо (Варндар)</div>
-            <div class="input-group"><label>Лимит</label><input type="number" id="warnLimit" min="1" max="10"></div>
-            <div class="input-group"><label>Муттун узактыгы (мүнөт)</label><input type="number" id="muteDurationMinutes"></div>
-            <div class="input-group">
-              <label>Лимит толгондо Жаза</label>
-              <select id="warnAction">
-                <option value="warn">Эскертүү</option>
-                <option value="delete">Өчүрүү гана</option>
-                <option value="mute">Мут (Жазуудан ажыратуу)</option>
-                <option value="kick">Кик (Чыгаруу)</option>
-                <option value="ban">Бан (Бөгөттөө)</option>
-              </select>
-            </div>
-          </div>
-          
-          <div class="section">
-            <div class="section-title">🌊 Антифлуд</div>
-            <div class="setting-row">
-              <div class="setting-info"><h3>Антифлудту иштетүү</h3></div>
-              <label class="switch"><input type="checkbox" id="antiflood_enabled"><span class="slider"></span></label>
-            </div>
-            <div class="grid-2">
-              <div class="input-group"><label>Билдирүүлөр саны</label><input type="number" id="antiflood_messages"></div>
-              <div class="input-group"><label>Убакыт (сек)</label><input type="number" id="antiflood_seconds"></div>
-            </div>
-            <div class="input-group">
-              <label>Жаза</label>
-              <select id="antiflood_action">
-                <option value="delete">Өчүрүү</option>
-                <option value="mute">Мут</option>
-                <option value="kick">Кик</option>
-                <option value="ban">Бан</option>
-              </select>
-            </div>
-          </div>
-
-          <div class="section">
-            <div class="section-title">💬 Тексттер</div>
-            <div class="setting-row"><div class="setting-info"><h3>Саламдашуу</h3></div><label class="switch"><input type="checkbox" id="welcome_enabled"><span class="slider"></span></label></div>
-            <div class="input-group"><label>Текст ({name})</label><textarea id="welcome_text" rows="2"></textarea></div>
-            <div class="setting-row"><div class="setting-info"><h3>Коштошуу</h3></div><label class="switch"><input type="checkbox" id="goodbye_enabled"><span class="slider"></span></label></div>
-            <div class="input-group"><label>Коштошуу тексти ({name})</label><textarea id="goodbye_text" rows="2"></textarea></div>
-            <div class="input-group"><label>Эрежелер (/rules)</label><textarea id="rulesText" rows="3"></textarea></div>
+    <!-- MAIN RIGHT WRAPPER -->
+    <div class="main-wrapper">
+      <!-- TOP NAV BAR -->
+      <div class="top-navbar">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <button class="mobile-menu-toggle" onclick="toggleMobileSidebar()">☰</button>
+          <div class="breadcrumbs">
+            <span class="breadcrumb-item">Коопсузбек</span>
+            <span class="breadcrumb-separator">/</span>
+            <span class="breadcrumb-item active" id="breadcrumb_tab">Башкы жөндөөлөр</span>
           </div>
         </div>
+        <div class="status-badge">
+          <div class="status-dot"></div>
+          <span>24/7 Активдүү</span>
+        </div>
+      </div>
 
-        <!-- ТАБ: АНАЛИТИКА -->
-        <div id="tab-stats" class="tab-content">
-          <div class="section">
-            <div class="section-title">📈 Толук Статистика</div>
-            <p style="font-size:12px; color:var(--text-muted); margin-bottom:15px;">Толук маалыматты көрүү үчүн карточканы басыңыз.</p>
-            <div class="grid-2" style="margin-bottom: 10px;">
-              <div class="stat-card" onclick="openModal('total')">
-                <div class="value" id="stat_total">0</div>
-                <div class="label">Жалпы СМС</div>
+      <!-- PAGE CONTENT AREA -->
+      <div class="content-area">
+        <div id="loader" style="text-align: center; margin-top: 80px; font-size: 14px; color: var(--text-muted);">
+          Маалыматтар жүктөлүүдө...
+        </div>
+
+        <div id="content" style="display: none;">
+          <!-- 1. ТАБ: БАШКЫ ЖӨНДӨӨЛӨР -->
+          <div id="tab-main" class="tab-content active">
+            <!-- Security & Anti-Bot Card -->
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title">🛡️ Коопсуздук жана Анти-Бот</div>
+                <div class="card-description">Тайпага жаңы кошулган колдонуучуларды текшерүү орнотуулары.</div>
               </div>
-              <div class="stat-card" onclick="openModal('today')">
-                <div class="value" id="stat_today">0</div>
-                <div class="label">Бүгүнкү СМС</div>
-              </div>
-              <div class="stat-card" style="border-color: rgba(239, 68, 68, 0.3);" onclick="openModal('bans')">
-                <div class="value" style="color: var(--danger);" id="stat_bans">0</div>
-                <div class="label">Бандар (Басыңыз)</div>
-              </div>
-              <div class="stat-card" style="border-color: rgba(245, 158, 11, 0.3);" onclick="openModal('mutes')">
-                <div class="value" style="color: var(--warn);" id="stat_mutes">0</div>
-                <div class="label">Муттар (Басыңыз)</div>
+              <div class="card-body">
+                <div class="setting-row">
+                  <div class="setting-info">
+                    <div class="setting-name">Капча (Анти-бот) текшерүүсү</div>
+                    <div class="setting-desc">Жаңы колдонуучулар капчаны чечкенге чейин жазуу укугу берилбейт.</div>
+                  </div>
+                  <label class="switch">
+                    <input type="checkbox" id="captchaEnabled">
+                    <span class="slider"></span>
+                  </label>
+                </div>
+                <div class="form-group" style="margin-top: 14px;">
+                  <label class="form-label">Капчанын түрү</label>
+                  <select class="form-select" id="captchaMode">
+                    <option value="button">Жөнөкөй баскыч (Button)</option>
+                    <option value="math">Математикалык суроо</option>
+                    <option value="text">Тексттик капча</option>
+                  </select>
+                </div>
+                <div class="setting-row">
+                  <div class="setting-info">
+                    <div class="setting-name">Капчадан өтпөгөндөрдү тайпадан чыгаруу</div>
+                    <div class="setting-desc">Белгиленген убакыттын ичинде капчаны чечпесе, дароо тайпадан четтетилет.</div>
+                  </div>
+                  <label class="switch">
+                    <input type="checkbox" id="captchaKick">
+                    <span class="slider"></span>
+                  </label>
+                </div>
               </div>
             </div>
-          </div>
 
-          <div class="section">
-            <div class="section-title">🕵️ Аракеттер Журналы (Audit Log)</div>
-            <p style="font-size:12px; color:var(--text-muted); margin-bottom:10px;">Боттун акыркы 50 аракети көрсөтүлөт.</p>
-            <div id="logs_container"></div>
-          </div>
-        </div>
-
-        <!-- ТАБ: КАТЫШУУЧУЛАР -->
-        <div id="tab-users" class="tab-content">
-          <div class="section">
-            <div class="section-title">👥 Катышуучуларды Башкаруу</div>
-            <p style="font-size:12px; color:var(--text-muted); margin-bottom:15px;">Тайпадагы акыркы активдүү катышуучулар (Сый-Урмат боюнча).</p>
-            <div id="users_container"></div>
-          </div>
-        </div>
-
-        <!-- ТАБ: ТАЙПА (GROUP) -->
-        <div id="tab-group" class="tab-content">
-          <div class="section">
-            <div class="section-title">🏠 Тайпа Башкаруу</div>
-            
-            <div class="input-group">
-              <label>Тайпанын аталышы (Title)</label>
-              <div style="display: flex; gap: 8px;">
-                <input type="text" id="group_title" placeholder="Жаңы аталыш">
-                <button class="add-btn" onclick="doGroupAction('settitle', document.getElementById('group_title').value)">Өзгөртүү</button>
+            <!-- Moderation & Limits Card -->
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title">👮‍♂️ Модерация жана Чектөөлөр</div>
+                <div class="card-description">Эреже бузууларды автоматтык түрдө көзөмөлдөө системасы.</div>
+              </div>
+              <div class="card-body">
+                <div class="setting-row">
+                  <div class="setting-info">
+                    <div class="setting-name">Анти-Сөгүнүү коргоосу</div>
+                    <div class="setting-desc">Бот сөгүнүү сөздөрдү автоматтык түрдө өчүрүп, эскертүү (варн) берет.</div>
+                  </div>
+                  <label class="switch">
+                    <input type="checkbox" id="antiSwearEnabled">
+                    <span class="slider"></span>
+                  </label>
+                </div>
+                <div class="setting-row">
+                  <div class="setting-info">
+                    <div class="setting-name">Анти-Канал (Бан)</div>
+                    <div class="setting-desc">Колдонуучулар жеке каналдарынын атынан тайпага жазуусун бөгөттөө.</div>
+                  </div>
+                  <label class="switch">
+                    <input type="checkbox" id="antiChannel">
+                    <span class="slider"></span>
+                  </label>
+                </div>
+                <div class="setting-row">
+                  <div class="setting-info">
+                    <div class="setting-name">Анти-Араб / Иероглиф</div>
+                    <div class="setting-desc">Аты-жөнүндө араб же кытай/япон тамгалары барларды дароо тайпадан бөгөттөө.</div>
+                  </div>
+                  <label class="switch">
+                    <input type="checkbox" id="antiArabicName">
+                    <span class="slider"></span>
+                  </label>
+                </div>
+                <div class="setting-row">
+                  <div class="setting-info">
+                    <div class="setting-name">Тынч режим (Silent Mode)</div>
+                    <div class="setting-desc">Бот өзүнүн административдик аракет билдирүүлөрүн тайпага чыгарбай жашырат.</div>
+                  </div>
+                  <label class="switch">
+                    <input type="checkbox" id="silentMode">
+                    <span class="slider"></span>
+                  </label>
+                </div>
+                <div class="form-group" style="margin-top: 14px;">
+                  <label class="form-label">Мониторинг/Лог Каналынын ID коду</label>
+                  <input type="text" class="form-input" id="logChannelId" placeholder="Мисалы: -100123456789">
+                </div>
               </div>
             </div>
-            
-            <div class="input-group">
-              <label>Тайпанын баяндамасы (Description)</label>
-              <div style="display: flex; gap: 8px;">
-                <textarea id="group_desc" rows="2" placeholder="Жаңы баяндама"></textarea>
-                <button class="add-btn" onclick="doGroupAction('setdesc', document.getElementById('group_desc').value)">Өзгөртүү</button>
+
+            <!-- Night Mode Card -->
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title">🌙 Түнкү дозор (Night Mode)</div>
+                <div class="card-description">Белгиленген сааттарда тайпаны толугу менен жаап коюу же чектөө.</div>
+              </div>
+              <div class="card-body">
+                <div class="setting-row">
+                  <div class="setting-info">
+                    <div class="setting-name">Түнкү коргоону иштетүү</div>
+                    <div class="setting-desc">Түнкү режим учурунда тайпага админдер гана жаза алышат.</div>
+                  </div>
+                  <label class="switch">
+                    <input type="checkbox" id="nightModeEnabled">
+                    <span class="slider"></span>
+                  </label>
+                </div>
+                <div class="grid-2" style="margin-top: 14px;">
+                  <div class="form-group">
+                    <label class="form-label">Башталышы (саат, 0-23)</label>
+                    <input type="number" class="form-input" id="nightModeStart" min="0" max="23">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Бүтүшү (саат, 0-23)</label>
+                    <input type="number" class="form-input" id="nightModeEnd" min="0" max="23">
+                  </div>
+                </div>
               </div>
             </div>
-            
-            <div class="input-group">
-              <label>Жай режим (Slowmode, секунд)</label>
-              <div style="display: flex; gap: 8px;">
-                <select id="group_slowmode">
-                  <option value="0">Өчүрүү (0s)</option>
-                  <option value="10">10 секунд</option>
-                  <option value="30">30 секунд</option>
-                  <option value="60">1 мүнөт</option>
-                  <option value="300">5 мүнөт</option>
-                </select>
-                <button class="add-btn" onclick="doGroupAction('slowmode', null, document.getElementById('group_slowmode').value)">Сактоо</button>
+
+            <!-- Global Limits Card -->
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title">⚖️ Эскертүүлөр (Warns) жана Бөгөттөр</div>
+                <div class="card-description">Страйк системасын жөндөө.</div>
+              </div>
+              <div class="card-body">
+                <div class="grid-2">
+                  <div class="form-group">
+                    <label class="form-label">Эскертүүлөрдүн лимити</label>
+                    <input type="number" class="form-input" id="warnLimit" min="1" max="10">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Муттун узактыгы (мүнөт)</label>
+                    <input type="number" class="form-input" id="muteDurationMinutes">
+                  </div>
+                </div>
+                <div class="form-group" style="margin-top: 14px;">
+                  <label class="form-label">Лимит толгондо берилүүчү жаза</label>
+                  <select class="form-select" id="warnAction">
+                    <option value="mute">Мут берүү (жазуусун өчүрүү)</option>
+                    <option value="kick">Кик кылуу (чыгаруу)</option>
+                    <option value="ban">Бандоо (бөгөттөө)</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <!-- Anti-Flood Card -->
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title">🌊 Спам & Антифлуд</div>
+                <div class="card-description">Кыска убакыттын ичинде көп СМС жөнөткөндөрдү автоматтык жазалоо.</div>
+              </div>
+              <div class="card-body">
+                <div class="setting-row">
+                  <div class="setting-info">
+                    <div class="setting-name">Антифлуд системасы</div>
+                    <div class="setting-desc">Спамдын алдын алуу.</div>
+                  </div>
+                  <label class="switch">
+                    <input type="checkbox" id="antiflood_enabled">
+                    <span class="slider"></span>
+                  </label>
+                </div>
+                <div class="grid-2" style="margin-top: 14px;">
+                  <div class="form-group">
+                    <label class="form-label">СМСтердин чеги</label>
+                    <input type="number" class="form-input" id="antiflood_messages">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Убакыт интервалы (секунд)</label>
+                    <input type="number" class="form-input" id="antiflood_seconds">
+                  </div>
+                </div>
+                <div class="form-group" style="margin-top: 14px;">
+                  <label class="form-label">Спам үчүн жаза түрү</label>
+                  <select class="form-select" id="antiflood_action">
+                    <option value="delete">Билдирүүлөрүн өчүрүү гана</option>
+                    <option value="mute">Мут кылуу</option>
+                    <option value="kick">Кик кылуу</option>
+                    <option value="ban">Бандоо</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <!-- Global Locks Card -->
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title">🔒 Медиа жана Билдирүүлөрдү Бөгөттөө (Locks)</div>
+                <div class="card-description">Тайпада таптакыр тыюу салынган билдирүү же медиа түрлөрүн тандаңыз.</div>
+              </div>
+              <div class="card-body">
+                <div class="locks-grid">
+                  <label class="lock-checkbox"><input type="checkbox" id="lock_text"><span>Текст</span></label>
+                  <label class="lock-checkbox"><input type="checkbox" id="lock_links"><span>Шилтеме (Links)</span></label>
+                  <label class="lock-checkbox"><input type="checkbox" id="lock_photo"><span>Сүрөт (Photo)</span></label>
+                  <label class="lock-checkbox"><input type="checkbox" id="lock_video"><span>Видео (Video)</span></label>
+                  <label class="lock-checkbox"><input type="checkbox" id="lock_audio"><span>Аудио / Музыка</span></label>
+                  <label class="lock-checkbox"><input type="checkbox" id="lock_voices"><span>Үн билдирүү (Voice)</span></label>
+                  <label class="lock-checkbox"><input type="checkbox" id="lock_videonote"><span>Кружоктор</span></label>
+                  <label class="lock-checkbox"><input type="checkbox" id="lock_document"><span>Файлдар (Docs)</span></label>
+                  <label class="lock-checkbox"><input type="checkbox" id="lock_stickers"><span>Стикерлер</span></label>
+                  <label class="lock-checkbox"><input type="checkbox" id="lock_gifs"><span>GIF Анимация</span></label>
+                  <label class="lock-checkbox"><input type="checkbox" id="lock_bots"><span>Жаңы ботторду кошуу</span></label>
+                  <label class="lock-checkbox"><input type="checkbox" id="lock_commands"><span>/Буйруктар (Commands)</span></label>
+                  <label class="lock-checkbox"><input type="checkbox" id="lock_games"><span>Оюндар</span></label>
+                  <label class="lock-checkbox"><input type="checkbox" id="lock_forwards"><span>Репосттор (Forward)</span></label>
+                  <label class="lock-checkbox"><input type="checkbox" id="lock_arabic"><span>Араб тамгалары</span></label>
+                  <label class="lock-checkbox"><input type="checkbox" id="lock_porn"><span>Катуу сөздөр / NSFW</span></label>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 2. ТАБ: САЛАМДАШУУЛАР -->
+          <div id="tab-welcome" class="tab-content">
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title">👋 Кош келүү жана Коштошуу билдирүүлөрү</div>
+                <div class="card-description">Жаңы колдонуучу киргенде же чыгып кеткенде боттун жообун жөндөө.</div>
+              </div>
+              <div class="card-body">
+                <div class="setting-row">
+                  <div class="setting-info">
+                    <div class="setting-name">Саламдашууну иштетүү</div>
+                    <div class="setting-desc">Тайпага жаңы адам кошулганда саламдашуу билдирүүсүн жөнөтүү.</div>
+                  </div>
+                  <label class="switch">
+                    <input type="checkbox" id="welcome_enabled">
+                    <span class="slider"></span>
+                  </label>
+                </div>
+                <div class="form-group" style="margin-top: 14px;">
+                  <label class="form-label">Саламдашуу тексти</label>
+                  <textarea class="form-textarea" id="welcome_text" rows="4" placeholder="Мисалы: Салам, {name}! Тайпага кош келдиңиз!"></textarea>
+                  <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">Колдонуучунун аты үчүн <b>{name}</b> шаблонун колдонуңуз.</div>
+                </div>
+                <div class="setting-row" style="margin-top: 20px;">
+                  <div class="setting-info">
+                    <div class="setting-name">Таза Саламдашуу (Clean Welcome)</div>
+                    <div class="setting-desc">Ар бир жаңы саламдашуу жөнөтүлгөндө эскилерин өчүрүп турат.</div>
+                  </div>
+                  <label class="switch">
+                    <input type="checkbox" id="cleanWelcome">
+                    <span class="slider"></span>
+                  </label>
+                </div>
+                
+                <hr style="border:none; border-bottom: 1px solid var(--border-color); margin: 24px 0;">
+
+                <div class="setting-row">
+                  <div class="setting-info">
+                    <div class="setting-name">Коштошууну иштетүү</div>
+                    <div class="setting-desc">Бирөө чыгып кеткенде бот билдирүү жөнөтөт.</div>
+                  </div>
+                  <label class="switch">
+                    <input type="checkbox" id="goodbye_enabled">
+                    <span class="slider"></span>
+                  </label>
+                </div>
+                <div class="form-group" style="margin-top: 14px;">
+                  <label class="form-label">Коштошуу тексти</label>
+                  <textarea class="form-textarea" id="goodbye_text" rows="4" placeholder="Мисалы: Кош болуңуз, {name}!"></textarea>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 3. ТАБ: ЧЕКТӨӨЛӨР & ЭРЕЖЕЛЕР -->
+          <div id="tab-rules" class="tab-content">
+            <!-- Rules Text Card -->
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title">📖 Тайпанын эрежелери</div>
+                <div class="card-description">Админдер жана катышуучулар үчүн /rules буйругу менен чакырылуучу негизги эрежелер.</div>
+              </div>
+              <div class="card-body">
+                <div class="form-group">
+                  <textarea class="form-textarea" id="rulesText" rows="6"></textarea>
+                </div>
+              </div>
+            </div>
+
+            <!-- Blacklist Words Card -->
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title">🚫 Кара тизме (Тыюу салынган сөздөр жана тексттер)</div>
+                <div class="card-description">Бул жерге кошулган текст, сөз же толук шилтеме камтылган билдирүүлөр дароо өчүрүлүп, колдонуучуга тандалган жаза берилет.</div>
+              </div>
+              <div class="card-body">
+                <div class="form-group">
+                  <label class="form-label">Сөз же сүйлөм</label>
+                  <input type="text" class="form-input" id="bl_word" placeholder="Мисалы: жарнама, t.me/join">
+                </div>
+                <div class="grid-2">
+                  <div class="form-group">
+                    <label class="form-label">Жазалоо түрү</label>
+                    <select class="form-select" id="bl_action" onchange="toggleBlacklistFields()">
+                      <option value="delete">Өчүрүү гана</option>
+                      <option value="warn">Эскертүү (Warn)</option>
+                      <option value="mute">Мут (Mute)</option>
+                      <option value="kick">Кик (Kick)</option>
+                      <option value="ban">Бан (Ban)</option>
+                    </select>
+                  </div>
+                  <div class="form-group" id="bl_duration_container" style="display:none;">
+                    <label class="form-label" id="bl_val_label">Мут убактысы (мүнөт)</label>
+                    <input type="number" class="form-input" id="bl_val" value="120">
+                  </div>
+                </div>
+                <div class="form-group" style="margin-top: 14px;">
+                  <label class="form-label">Жазалоонун себеби (милдеттүү)</label>
+                  <input type="text" class="form-input" id="bl_reason" placeholder="Мисалы: Спам жарнама үчүн">
+                </div>
+                <button class="btn btn-primary" style="width: 100%; margin-top: 10px;" onclick="addBlacklist()">Кара тизмеге кошуу</button>
+                
+                <div style="margin-top: 24px;">
+                  <h4 class="form-label">Тыюу салынгандар тизмеси</h4>
+                  <div id="bl_list" style="margin-top: 10px;"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Auto-replies (Filters) Card -->
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title">🤖 Автожооптор (Текст фильтрлери)</div>
+                <div class="card-description">Колдонуучу белгилүү бир сөздү жазганда бот автоматтык түрдө алдын ала даярдалган жоопту кайтарат.</div>
+              </div>
+              <div class="card-body">
+                <div class="form-group">
+                  <label class="form-label">Ачкыч сөз (Триггер)</label>
+                  <input type="text" class="form-input" id="fl_word" placeholder="Мисалы: салам">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Боттун жообу</label>
+                  <input type="text" class="form-input" id="fl_reply" placeholder="Мисалы: Саламатсызбы! Кандай жардам керек?">
+                </div>
+                <button class="btn btn-primary" style="width: 100%;" onclick="addFilter()">Кошуу</button>
+                
+                <div style="margin-top: 24px;">
+                  <h4 class="form-label">Активдүү автожооптор</h4>
+                  <div id="fl_list" style="margin-top: 10px;"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Swear Words Card -->
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title">🤬 Сөгүнүү сөздөрдүн базасы</div>
+                <div class="card-description">Бул базадагы сөздөр Анти-Сөгүнүү системасы иштетилгенде автоматтык түрдө бөгөттөлөт.</div>
+              </div>
+              <div class="card-body">
+                <div class="form-group">
+                  <label class="form-label">Жаңы сөз</label>
+                  <input type="text" class="form-input" id="sw_word" placeholder="Сөгүнүү сөздү жазыңыз">
+                </div>
+                <button class="btn btn-primary" style="width: 100%;" onclick="addSwear()">Сөздү кошуу</button>
+                
+                <div style="margin-top: 24px;">
+                  <h4 class="form-label">Сөздөрдүн тизмеси</h4>
+                  <div id="sw_list" style="margin-top: 10px; display: flex; flex-wrap: wrap; gap: 8px;"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Notes Card -->
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title">📝 Тайпа белгилери (Notes)</div>
+                <div class="card-description">Бул белгини чатта <b>#белги</b> аркылуу чакырса болот.</div>
+              </div>
+              <div class="card-body">
+                <div class="form-group">
+                  <label class="form-label">Белгинин аталышы (мисалы: эреже)</label>
+                  <input type="text" class="form-input" id="nt_name" placeholder="эреже">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Белгинин тексти</label>
+                  <textarea class="form-textarea" id="nt_text" rows="3" placeholder="Биздин негизги эрежелер..."></textarea>
+                </div>
+                <button class="btn btn-primary" style="width: 100%;" onclick="addNote()">Сактоо</button>
+                
+                <div style="margin-top: 24px;">
+                  <h4 class="form-label">Сакталган белгилер</h4>
+                  <div id="nt_list" style="margin-top: 10px;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 4. ТАБ: БУЙРУКТАРДЫ ЫРАСТОО (COMMANDS) -->
+          <div id="tab-commands" class="tab-content">
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title">🤖 Буйруктарды ырастоо</div>
+                <div class="card-description">Боттун негизги админ буйруктарын жана кыска сөздөрүн (сокращенная команда) өзгөртүү. Ар бир буйрукка автожооп жана авто-өчүрүү жөндөөсүн кошсо болот.</div>
+              </div>
+              <div class="card-body">
+                <p style="font-size:12px; color:var(--text-muted); margin-bottom:16px;">Буйруктарды өзгөртүү үчүн ар бирин басып жайып алыңыз:</p>
+                <div id="commands_container"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 5. ТАБ: КАТЫШУУЧУЛАР (USERS) -->
+          <div id="tab-users" class="tab-content">
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title">👥 Катышуучуларды көзөмөлдөө жана башкаруу</div>
+                <div class="card-description">Тайпадагы колдонуучулардын эскертүүлөрүн, рейтингдерин көрүү жана укуктарын башкаруу.</div>
+              </div>
+              <div class="card-body">
+                <div class="form-group">
+                  <input type="text" class="form-input" id="user_search_input" placeholder="Колдонуучунун атын же нигин издеңиз..." onkeyup="filterUsersList()">
+                </div>
+                
+                <div id="users_list_container" style="margin-top: 16px;">
+                  <!-- Dynamically populated -->
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 6. ТАБ: АНАЛИТИКА ТАБДАРЫ (INSIDE MAIN AREA) -->
+          <div id="tab-stats" class="tab-content">
+            <!-- Stats overview cards row -->
+            <div class="stats-header-grid">
+              <div class="stat-mini-card" id="card-stats-total" onclick="openStatsSubTab('total')">
+                <div class="stat-mini-val" id="stat_total">0</div>
+                <div class="stat-mini-lbl">Жалпы СМС</div>
+              </div>
+              <div class="stat-mini-card" id="card-stats-today" onclick="openStatsSubTab('today')">
+                <div class="stat-mini-val" id="stat_today">0</div>
+                <div class="stat-mini-lbl">Бүгүнкү СМС</div>
+              </div>
+              <div class="stat-mini-card" id="card-stats-bans" onclick="openStatsSubTab('bans')">
+                <div class="stat-mini-val" style="color:var(--danger);" id="stat_bans">0</div>
+                <div class="stat-mini-lbl">Бандар</div>
+              </div>
+              <div class="stat-mini-card" id="card-stats-mutes" onclick="openStatsSubTab('mutes')">
+                <div class="stat-mini-val" style="color:var(--warn);" id="stat_mutes">0</div>
+                <div class="stat-mini-lbl">Муттар</div>
+              </div>
+            </div>
+
+            <!-- Subview: Total messages top users -->
+            <div class="stats-subview" id="view-stats-total">
+              <div class="card">
+                <div class="card-header">
+                  <div class="card-title">💬 Эң активдүү колдонуучулар (Жалпы статистика)</div>
+                  <div class="card-description">Тайпа ачылгандан берки эң көп СМС жазгандар.</div>
+                </div>
+                <div class="card-body" id="stats_total_body">
+                  <!-- Dynamically populated -->
+                </div>
+              </div>
+            </div>
+
+            <!-- Subview: Today's messages top users -->
+            <div class="stats-subview" id="view-stats-today">
+              <div class="card">
+                <div class="card-header">
+                  <div class="card-title">📅 Бүгүнкү активдүү колдонуучулар</div>
+                  <div class="card-description">Бүгүн эң көп билдирүү жөнөткөн катышуучулар.</div>
+                </div>
+                <div class="card-body" id="stats_today_body">
+                  <!-- Dynamically populated -->
+                </div>
+              </div>
+            </div>
+
+            <!-- Subview: Bans List -->
+            <div class="stats-subview" id="view-stats-bans">
+              <div class="card">
+                <div class="card-header">
+                  <div class="card-title">🚫 Четтетилгендердин тизмеси (Бандар)</div>
+                  <div class="card-description">Тайпадан биротоло бөгөттөлгөн катышуучулар. Бул жерден разбан кылса болот.</div>
+                </div>
+                <div class="card-body">
+                  <div id="stats_bans_body"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Subview: Mutes List -->
+            <div class="stats-subview" id="view-stats-mutes">
+              <div class="card">
+                <div class="card-header">
+                  <div class="card-title">🔇 Чектөөгө алынгандардын тизмеси (Муттар)</div>
+                  <div class="card-description">Азыркы учурда жазуу укугунан убактылуу ажыратылган катышуучулар.</div>
+                </div>
+                <div class="card-body">
+                  <div id="stats_mutes_body"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Subview: Warns List -->
+            <div class="stats-subview" id="view-stats-warns">
+              <div class="card">
+                <div class="card-header">
+                  <div class="card-title">⚠️ Эскертүүлөр тизмеси (Варндар)</div>
+                  <div class="card-description">Эскертүү алган колдонуучулардын тизмеси жана алардын эскертүү саны.</div>
+                </div>
+                <div class="card-body">
+                  <div id="stats_warns_body"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Subview: Audit Log -->
+            <div class="stats-subview" id="view-stats-logs">
+              <div class="card">
+                <div class="card-header">
+                  <div class="card-title">🕵️ Аракеттер журналы (Audit Log)</div>
+                  <div class="card-description">Бот жана админдер тарабынан тайпада жасалган акыркы аракеттер.</div>
+                </div>
+                <div class="card-body" id="stats_logs_body" style="padding: 0;">
+                  <!-- Logs dynamic list -->
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 7. ТАБ: ТАЙПА МААЛЫМАТЫ -->
+          <div id="tab-group" class="tab-content">
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title">🏠 Тайпа маалыматын башкаруу</div>
+                <div class="card-description">Тайпанын аталышын, сыпаттамасын же жай режимин (slowmode) ушул жерден өзгөртүңүз.</div>
+              </div>
+              <div class="card-body">
+                <div class="form-group">
+                  <label class="form-label">Тайпанын аталышы (Title)</label>
+                  <div style="display: flex; gap: 8px;">
+                    <input type="text" class="form-input" id="group_title" placeholder="Жаңы аталыш">
+                    <button class="btn btn-primary" onclick="doGroupAction('settitle', document.getElementById('group_title').value)">Сактоо</button>
+                  </div>
+                </div>
+                
+                <div class="form-group" style="margin-top: 20px;">
+                  <label class="form-label">Тайпанын баяндамасы (Description)</label>
+                  <div style="display: flex; gap: 8px;">
+                    <textarea class="form-textarea" id="group_desc" rows="3" placeholder="Тайпа жөнүндө кыскача маалымат..."></textarea>
+                    <button class="btn btn-primary" onclick="doGroupAction('setdesc', document.getElementById('group_desc').value)">Сактоо</button>
+                  </div>
+                </div>
+                
+                <div class="form-group" style="margin-top: 20px;">
+                  <label class="form-label">Жай режим (Slowmode)</label>
+                  <div style="display: flex; gap: 8px;">
+                    <select class="form-select" id="group_slowmode">
+                      <option value="0">Өчүрүү (0s)</option>
+                      <option value="10">10 секунд</option>
+                      <option value="30">30 секунд</option>
+                      <option value="60">1 мүнөт</option>
+                      <option value="300">5 мүнөт</option>
+                    </select>
+                    <button class="btn btn-primary" onclick="doGroupAction('slowmode', null, document.getElementById('group_slowmode').value)">Орнотуу</button>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
         </div>
-
-        <!-- ТАБ: КАРА ТИЗМЕ -->
-        <div id="tab-black" class="tab-content">
-          <div class="section">
-            <div class="section-title">🚫 Кара тизмеге сөз кошуу</div>
-            <div class="input-group"><label>Сөз</label><input type="text" id="bl_word"></div>
-            <div class="input-group">
-              <label>Жаза</label>
-              <select id="bl_action">
-                <option value="warn">Эскертүү</option>
-                <option value="delete">Өчүрүү гана</option>
-                <option value="mute">Мут</option>
-                <option value="kick">Кик</option>
-                <option value="ban">Бан</option>
-              </select>
-            </div>
-            <button class="add-btn" onclick="addBlacklist()">Кошуу</button>
-          </div>
-          <div class="section" id="bl_list"></div>
-        </div>
-
-        <!-- ТАБ: АВТОЖООПТОР -->
-        <div id="tab-filters" class="tab-content">
-          <div class="section">
-            <div class="section-title">🤖 Автожооп (Filter) кошуу</div>
-            <div class="input-group"><label>Сөз (триггер)</label><input type="text" id="fl_word"></div>
-            <div class="input-group"><label>Боттун жообу</label><input type="text" id="fl_reply"></div>
-            <button class="add-btn" onclick="addFilter()">Кошуу</button>
-          </div>
-          <div class="section" id="fl_list"></div>
-        </div>
-
-        <!-- ТАБ: СӨГҮНҮҮ (СWEAR WORDS) -->
-        <div id="tab-swear" class="tab-content">
-          <div class="section">
-            <div class="section-title">🤬 Сөгүнүү сөздөрдү башкаруу</div>
-            <p style="font-size:12px; color:var(--text-muted); margin-bottom:10px;">Анти-Сөгүнүү иштетилгенде бул тизмедеги сөздөр автоматтык түрдө өчүрүлөт жана эскертүү берилет. Тизмени өзүңүзгө ылайыктап алыңыз.</p>
-            <div class="input-group"><label>Сөз кошуу</label><input type="text" id="sw_word" placeholder="Мисалы: сөгүнүү сөз"></div>
-            <button class="add-btn" onclick="addSwear()">Кошуу</button>
-          </div>
-          <div class="section" id="sw_list"></div>
-        </div>
-
-        <!-- ТАБ: БЕЛГИЛЕР (NOTES) -->
-        <div id="tab-notes" class="tab-content">
-          <div class="section">
-            <div class="section-title">📝 Белги (Note) кошуу</div>
-            <p style="font-size:12px; color:var(--text-muted); margin-bottom:10px;">Бул белгини чатта #аталышы аркылуу чакырса болот.</p>
-            <div class="input-group"><label>Аталышы</label><input type="text" id="nt_name"></div>
-            <div class="input-group"><label>Текст</label><textarea id="nt_text" rows="3"></textarea></div>
-            <button class="add-btn" onclick="addNote()">Сактоо</button>
-          </div>
-          <div class="section" id="nt_list"></div>
-        </div>
-
-        <button id="saveBtn" class="save-btn" onclick="saveAll()">Өзгөртүүлөрдү Сактоо</button>
       </div>
     </div>
   </div>
 
-  <!-- Modal Component for Detailed Stats -->
-  <div id="statsModal" class="modal-overlay" onclick="closeModal(event)">
-    <div class="modal-content" onclick="event.stopPropagation()">
-      <div class="modal-header">
-        <h2 id="modalTitle">Толук Маалымат</h2>
-        <button class="modal-close" onclick="closeModal(true)">&times;</button>
-      </div>
-      <div class="modal-body" id="modalBody">
-        <!-- Dynamically injected -->
-      </div>
-    </div>
+  <!-- FIXED BOTTOM SAVE BAR -->
+  <div class="save-bar">
+    <button id="saveBtn" class="btn btn-primary save-bar-btn" onclick="saveAll()">Өзгөртүүлөрдү Сактоо</button>
   </div>
 
   <script>
@@ -428,191 +1642,147 @@
     const actionUrl = '/api/action?chatId=' + chatId;
 
     let appData = { config: {}, blacklist: {}, filters: {}, notes: {}, swearwords: [] };
-    let statsData = { logs: [], stats: {}, users: [], topUsersAll: [], topUsersToday: [] };
-    let usersMap = {}; // userId -> user info helper
+    let statsData = { logs: [], stats: {}, users: [], topUsersAll: [], topUsersToday: [], groupTitle: "Тайпа" };
+    let usersMap = {}; // userId -> info
+
+    const DEFAULT_BOT_COMMANDS = {
+      ban: { label: "Бан (бөгөттөө)", action: "ban", alias: "бан, ban", replyText: "", autoDelete: false },
+      unban: { label: "Разбан (бөгөттөн чыгаруу)", action: "unban", alias: "разбан, unban", replyText: "", autoDelete: false },
+      mute: { label: "Мут (убактылуу чектөө)", action: "mute", alias: "мут, mute", replyText: "", autoDelete: false, muteDuration: 120 },
+      unmute: { label: "Анмут (муттон чыгаруу)", action: "unmute", alias: "анмут, unmute", replyText: "", autoDelete: false },
+      kick: { label: "Кик (тайпадан чыгаруу)", action: "kick", alias: "кик, kick", replyText: "", autoDelete: false },
+      warn: { label: "Варн (эскертүү берүү)", action: "warn", alias: "эскертүү, warn", replyText: "", autoDelete: false, warnCount: 1 },
+      unwarn: { label: "Варнды өчүрүү", action: "unwarn", alias: "анwarn, unwarn", replyText: "", autoDelete: false },
+      del: { label: "Өчүрүү (билдирүүнү өчүрүү)", action: "del", alias: "өчүр, del", replyText: "", autoDelete: false }
+    };
 
     function showToast(msg, type='success') {
-      const t = document.getElementById('toast'); 
+      const t = document.getElementById('toast');
       t.innerText = msg;
       t.style.background = type === 'success' ? 'var(--success)' : 'var(--danger)';
-      t.classList.add('show'); 
+      t.classList.add('show');
       setTimeout(() => t.classList.remove('show'), 3000);
     }
 
-    function openTab(id, elem) {
+    function toggleMobileSidebar() {
+      document.getElementById('sidebar').classList.toggle('open');
+    }
+
+    function toggleAccordion(id) {
+      const acc = document.getElementById(id);
+      acc.classList.toggle('open');
+    }
+
+    function toggleBlacklistFields() {
+      const action = document.getElementById('bl_action').value;
+      const container = document.getElementById('bl_duration_container');
+      const label = document.getElementById('bl_val_label');
+      const input = document.getElementById('bl_val');
+      
+      if (action === 'mute') {
+        container.style.display = 'block';
+        label.innerText = "Мут убактысы (мүнөт)";
+        input.value = "120";
+      } else if (action === 'warn') {
+        container.style.display = 'block';
+        label.innerText = "Эскертүү саны";
+        input.value = "1";
+      } else {
+        container.style.display = 'none';
+      }
+    }
+
+    function openTab(tabId, elem) {
+      // Close mobile sidebar if open
+      document.getElementById('sidebar').classList.remove('open');
+      
+      // Update breadcrumb
+      document.getElementById('breadcrumb_tab').innerText = elem.innerText.trim();
+
+      // Switch tabs
       document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
       document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-      document.getElementById(id).classList.add('active');
+      document.querySelectorAll('.nav-subitem').forEach(el => el.classList.remove('active'));
+      
+      document.getElementById(tabId).classList.add('active');
       elem.classList.add('active');
+
+      // If clicked a main tab, collapse analytics submenu highlights
+      if (!tabId.startsWith('tab-stats')) {
+        document.querySelectorAll('.nav-subitem').forEach(s => s.classList.remove('active'));
+      }
     }
 
-    // Modal logic
-    function openModal(type) {
-      const modal = document.getElementById('statsModal');
-      const title = document.getElementById('modalTitle');
-      const body = document.getElementById('modalBody');
+    function openStatsSubTab(subTabId, elem) {
+      // Set active nav element
+      document.querySelectorAll('.nav-subitem').forEach(s => s.classList.remove('active'));
+      document.querySelectorAll('.nav-item').forEach(s => s.classList.remove('active'));
       
-      let content = "";
+      const headerItem = document.getElementById('analytics-accordion').querySelector('.nav-accordion-header');
+      headerItem.classList.add('active');
+
+      if (elem) {
+        elem.classList.add('active');
+        document.getElementById('breadcrumb_tab').innerText = elem.innerText.trim();
+      } else {
+        const sub = document.getElementById('subitem-stats-' + subTabId);
+        if (sub) {
+          sub.classList.add('active');
+          document.getElementById('breadcrumb_tab').innerText = sub.innerText.trim();
+        }
+      }
+
+      // Open tab-stats
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+      document.getElementById('tab-stats').classList.add('active');
+
+      // Open subview
+      document.querySelectorAll('.stats-subview').forEach(v => v.classList.remove('active'));
+      document.getElementById('view-stats-' + subTabId).classList.add('active');
+
+      // Highlight mini card
+      document.querySelectorAll('.stat-mini-card').forEach(c => c.classList.remove('active'));
+      const card = document.getElementById('card-stats-' + subTabId);
+      if (card) card.classList.add('active');
       
-      if (type === 'total') {
-        title.innerText = "Топ Активдүү (Жалпы)";
-        content = parseTopUsers(statsData.topUsersAll);
-      } else if (type === 'today') {
-        title.innerText = "Бүгүн Активдүү";
-        content = parseTopUsers(statsData.topUsersToday);
-      } else if (type === 'bans') {
-        title.innerText = "Берилген Бандардын тизмеси";
-        content = parseLogsByType("Бан");
-      } else if (type === 'mutes') {
-        title.innerText = "Берилген Муттардын тизмеси";
-        content = parseLogsByType("Мут");
-      }
-
-      body.innerHTML = content || "<p style='color:var(--text-muted); font-size:13px; text-align:center; padding: 20px;'>Маалымат табылган жок.</p>";
-      modal.classList.add('show');
-    }
-
-    function closeModal(force=false) {
-      if(force || event.target.classList.contains('modal-overlay')) {
-        document.getElementById('statsModal').classList.remove('show');
-      }
-    }
-
-    function parseTopUsers(arr) {
-      if(!arr || arr.length === 0) return "";
-      let html = "";
-      // arr is [id1, score1, id2, score2] if returned flat from redis
-      for(let i=0; i<arr.length; i+=2) {
-        const uid = arr[i];
-        const score = arr[i+1];
-        const user = usersMap[uid] || { name: "Белгисиз", username: "" };
-        html += `<div class="user-card" style="display:flex; justify-content:space-between;">
-          <span style="font-size:14px;">${user.name}</span>
-          <b style="color:var(--primary);">${score} смс</b>
-        </div>`;
-      }
-      return html;
-    }
-
-    function parseLogsByType(actionType) {
-      const filtered = statsData.logs.filter(l => l.action.includes(actionType));
-      if(filtered.length === 0) return "";
-      return filtered.map(log => {
-        const date = new Date(log.timestamp).toLocaleString("ru-RU", {day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'});
-        return `<div class="log-entry ${actionType==='Бан'?'danger':'warn'}">
-          <div style="font-size:10px; color:var(--text-muted); display:flex; justify-content:space-between;">
-            <span>${date}</span>
-            <span>Ким берди: <b>${log.adminName || "Система"}</b></span>
-          </div>
-          <div style="margin-top:4px;">👤 <b>${log.name}</b> (${log.userId})</div>
-          <div style="margin-top:2px; font-style:italic;">📝 ${log.reason}</div>
-        </div>`;
-      }).join('');
+      // Close mobile menu
+      document.getElementById('sidebar').classList.remove('open');
     }
 
     async function fetchData() {
       if (!chatId || !initData) return;
       try {
+        // Fetch configs
         const res = await fetch(apiUrl, { headers: { 'Authorization': 'tma ' + initData }});
-        if(!res.ok) throw new Error("Уруксат жок. Сиз старший админ болушуңуз керек.");
+        if (!res.ok) throw new Error("Уруксат жок. Сиз Башкы администратор болушуңуз керек.");
         appData = await res.json();
-        renderMain(); renderLists();
-
+        
+        // Fetch stats & members list
         const resStats = await fetch(statsUrl, { headers: { 'Authorization': 'tma ' + initData }});
-        if(resStats.ok) {
+        if (resStats.ok) {
           statsData = await resStats.json();
-          // build users map for quick lookup
           statsData.users.forEach(u => usersMap[u.id] = u);
-          renderStatsAndUsers();
         }
+
+        // Set up brand header details
+        if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
+          document.getElementById('sidebar_username').innerText = '@' + (tg.initDataUnsafe.user.username || tg.initDataUnsafe.user.first_name);
+          document.getElementById('sidebar_avatar').innerText = (tg.initDataUnsafe.user.first_name || 'U').substring(0, 1).toUpperCase();
+        }
+        document.getElementById('sidebar_group_title').innerText = statsData.groupTitle || "Тайпа";
+
+        // Render sections
+        renderMain();
+        renderLists();
+        renderStatsAndLogs();
+        renderUsersList();
+        renderCommandsList();
 
         document.getElementById('loader').style.display = 'none';
         document.getElementById('content').style.display = 'block';
       } catch (e) {
         document.getElementById('loader').innerText = "Ката кетти: " + e.message;
       }
-    }
-
-    function renderStatsAndUsers() {
-      document.getElementById('stat_total').innerText = statsData.stats.msgCount || 0;
-      document.getElementById('stat_today').innerText = statsData.stats.msgsToday || 0;
-      document.getElementById('stat_bans').innerText = statsData.stats.bansCount || 0;
-      document.getElementById('stat_mutes').innerText = statsData.stats.mutesCount || 0;
-
-      const logsHtml = statsData.logs.map(log => {
-        let typeClass = "";
-        if(log.action.includes("Бан") || log.action.includes("Кик")) typeClass = "danger";
-        if(log.action.includes("Мут") || log.action.includes("Эскертүү") || log.action.includes("Warn")) typeClass = "warn";
-        const date = new Date(log.timestamp).toLocaleString("ru-RU", {day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'});
-        return `<div class="log-entry ${typeClass}">
-          <div class="log-header"><span>${date}</span> <b>${log.action}</b></div>
-          <div style="display:flex; justify-content:space-between;">
-            <span>👤 ${log.name}</span>
-            <span style="color:var(--text-muted);">👮‍♂️ ${log.adminName || "Бот"}</span>
-          </div>
-          <div style="color:var(--text-muted); margin-top:4px;">📝 ${log.reason}</div>
-        </div>`;
-      }).join('');
-      document.getElementById('logs_container').innerHTML = logsHtml || "<div style='color:var(--text-muted); font-size:12px;'>Журнал бош.</div>";
-
-      const usersHtml = statsData.users.sort((a,b)=> b.urmat - a.urmat).map(u => `
-        <div class="user-card">
-          <div class="user-header">
-            <span class="user-name">${u.name} ${u.username ? '(@'+u.username+')' : ''}</span>
-          </div>
-          <div style="font-size: 11px; color: var(--text-muted); display: flex; gap: 10px; margin-bottom: 12px;">
-            <span>⚠️ Варн: ${u.warns}</span>
-            <span>🌟 Сый-Урмат: ${u.urmat}</span>
-          </div>
-          <div style="display: flex; gap: 6px; flex-wrap: wrap;">
-            <button class="action-btn warn" onclick="doAction('mute', ${u.id})">Мут (24с)</button>
-            <button class="action-btn" onclick="doAction('unmute', ${u.id})">Анмут</button>
-            <button class="action-btn danger" onclick="doAction('kick', ${u.id})">Кик</button>
-            <button class="action-btn danger" onclick="doAction('ban', ${u.id})">Бан</button>
-            <button class="action-btn" onclick="doAction('unban', ${u.id})">Разбан</button>
-            <button class="action-btn" style="background:#8b5cf6;" onclick="doAction('promote', ${u.id})">Админ кылуу</button>
-            <button class="action-btn" style="background:#64748b;" onclick="doAction('demote', ${u.id})">Админден алуу</button>
-            <button class="action-btn warn" onclick="doAction('resetwarns', ${u.id})">Тазалоо (Warns)</button>
-          </div>
-        </div>
-      `).join('');
-      document.getElementById('users_container').innerHTML = usersHtml || "<div style='color:var(--text-muted); font-size:12px;'>Катышуучулар табылган жок (Жаңы билдирүүлөр күтүлүүдө).</div>";
-    }
-
-    async function doAction(actionName, targetUserId) {
-      if(!confirm("Ушул аракетти аткарууну тастыктайсызбы?")) return;
-      try {
-        const res = await fetch(actionUrl, {
-          method: 'POST',
-          headers: { 'Authorization': 'tma ' + initData, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: actionName, targetUserId })
-        });
-        if(res.ok) {
-          showToast("Аракет аткарылды!", 'success');
-          tg.HapticFeedback.notificationOccurred("success");
-          fetchData(); // reload stats
-        } else {
-          showToast("Ката кетти", 'error');
-        }
-      } catch (e) { showToast("Ката кетти", 'error'); }
-    }
-
-    async function doGroupAction(actionName, text = null, value = null) {
-      if(!confirm("Ушул аракетти аткарууну тастыктайсызбы?")) return;
-      try {
-        const res = await fetch(actionUrl, {
-          method: 'POST',
-          headers: { 'Authorization': 'tma ' + initData, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: actionName, text, value })
-        });
-        if(res.ok) {
-          showToast("Аракет аткарылды!", 'success');
-          tg.HapticFeedback.notificationOccurred("success");
-          fetchData(); // reload
-        } else {
-          showToast("Ката кетти", 'error');
-        }
-      } catch (e) { showToast("Ката кетти", 'error'); }
     }
 
     function renderMain() {
@@ -626,6 +1796,7 @@
       document.getElementById('antiChannel').checked = cfg.antiChannel || false;
       document.getElementById('silentMode').checked = cfg.silentMode || false;
       document.getElementById('logChannelId').value = cfg.logChannelId || '';
+      
       document.getElementById('nightModeEnabled').checked = cfg.nightModeEnabled || false;
       document.getElementById('nightModeStart').value = cfg.nightModeStart || 0;
       document.getElementById('nightModeEnd').value = cfg.nightModeEnd || 7;
@@ -657,70 +1828,477 @@
     }
 
     function renderLists() {
-      const blHtml = Object.entries(appData.blacklist).map(([k, v]) => `
+      // Blacklist rendering
+      const blHtml = Object.entries(appData.blacklist).map(([k, v]) => {
+        let actionLbl = v;
+        if (v.includes(':')) {
+          const parts = v.split(':');
+          actionLbl = `${parts[0]} (${parts[1]}м) | Себеби: ${parts.slice(2).join(':')}`;
+        }
+        return `
         <div class="list-item">
-          <div><div style="font-size: 14px; margin-bottom: 4px;"><b>${k}</b></div><div style="font-size:10px;color:#94a3b8">Жаза: ${v}</div></div>
-          <button class="delete-btn" onclick="deleteItem('blacklist', '${k}')">Өчүрүү</button>
-        </div>`).join('');
-      document.getElementById('bl_list').innerHTML = blHtml || "<p style='font-size:12px;color:#94a3b8'>Тизме бош</p>";
+          <div class="list-item-content">
+            <div class="list-item-title">${k}</div>
+            <div class="list-item-subtitle">Чара: ${actionLbl}</div>
+          </div>
+          <button class="btn btn-sm btn-danger" onclick="deleteListItem('blacklist', '${k}')">Өчүрүү</button>
+        </div>`;
+      }).join('');
+      document.getElementById('bl_list').innerHTML = blHtml || "<p style='font-size:12px;color:var(--text-muted)'>Кара тизме бош.</p>";
 
+      // Filters rendering
       const flHtml = Object.entries(appData.filters).map(([k, v]) => `
         <div class="list-item">
-          <div><div style="font-size: 14px; margin-bottom: 4px;"><b>${k}</b></div><div style="font-size:10px;color:#94a3b8">${v.substring(0, 20)}...</div></div>
-          <button class="delete-btn" onclick="deleteItem('filters', '${k}')">Өчүрүү</button>
+          <div class="list-item-content">
+            <div class="list-item-title">${k}</div>
+            <div class="list-item-subtitle">${v}</div>
+          </div>
+          <button class="btn btn-sm btn-danger" onclick="deleteListItem('filters', '${k}')">Өчүрүү</button>
         </div>`).join('');
-      document.getElementById('fl_list').innerHTML = flHtml || "<p style='font-size:12px;color:#94a3b8'>Тизме бош</p>";
+      document.getElementById('fl_list').innerHTML = flHtml || "<p style='font-size:12px;color:var(--text-muted)'>Тизме бош.</p>";
 
+      // Swearwords rendering
+      const swHtml = (appData.swearwords || []).map((w, i) => `
+        <div style="background: rgba(255,255,255,0.05); padding: 6px 12px; border: 1px solid var(--border-color); border-radius: 4px; display: flex; align-items: center; gap: 8px; font-size: 13px;">
+          <span>${w}</span>
+          <span style="color:var(--danger); cursor:pointer; font-weight:bold;" onclick="deleteSwearWord(${i})">&times;</span>
+        </div>`).join('');
+      document.getElementById('sw_list').innerHTML = swHtml || "<p style='font-size:12px;color:var(--text-muted);width:100%'>База бош.</p>";
+
+      // Notes rendering
       const ntHtml = Object.entries(appData.notes).map(([k, v]) => `
         <div class="list-item">
-          <div><div style="font-size: 14px; margin-bottom: 4px;"><b>#${k}</b></div><div style="font-size:10px;color:#94a3b8">${v.substring(0, 20)}...</div></div>
-          <button class="delete-btn" onclick="deleteItem('notes', '${k}')">Өчүрүү</button>
+          <div class="list-item-content">
+            <div class="list-item-title">#${k}</div>
+            <div class="list-item-subtitle">${v}</div>
+          </div>
+          <button class="btn btn-sm btn-danger" onclick="deleteListItem('notes', '${k}')">Өчүрүү</button>
         </div>`).join('');
-      document.getElementById('nt_list').innerHTML = ntHtml || "<p style='font-size:12px;color:#94a3b8'>Тизме бош</p>";
-
-      // Swear words
-      const swArr = appData.swearwords || [];
-      const swHtml = swArr.map((w, i) => `
-        <div class="list-item">
-          <div style="font-size: 14px;"><b>${w}</b></div>
-          <button class="delete-btn" onclick="deleteSwear(${i})">Өчүрүү</button>
-        </div>`).join('');
-      document.getElementById('sw_list').innerHTML = swHtml || "<p style='font-size:12px;color:#94a3b8'>Тизме бош. Сөз кошуп Анти-Сөгүнүүнү иштетиңиз.</p>";
+      document.getElementById('nt_list').innerHTML = ntHtml || "<p style='font-size:12px;color:var(--text-muted)'>Тизме бош.</p>";
     }
-
-    function deleteItem(type, key) { delete appData[type][key]; renderLists(); }
 
     function addBlacklist() {
-      const w = document.getElementById('bl_word').value.trim().toLowerCase();
-      const a = document.getElementById('bl_action').value;
-      if (w) { appData.blacklist[w] = a; document.getElementById('bl_word').value = ''; renderLists(); }
+      const word = document.getElementById('bl_word').value.trim().toLowerCase();
+      const action = document.getElementById('bl_action').value;
+      const reason = document.getElementById('bl_reason').value.trim();
+      const val = document.getElementById('bl_val').value || "120";
+
+      if (!word) { showToast("Сөз жазылышы керек!", 'error'); return; }
+      if (!reason) { showToast("Жазалоонун себеби милдеттүү!", 'error'); return; }
+
+      let actionStr = action;
+      if (action === 'mute' || action === 'warn') {
+        actionStr = `${action}:${val}:${reason}`;
+      } else {
+        actionStr = `${action}:0:${reason}`;
+      }
+
+      appData.blacklist[word] = actionStr;
+      
+      document.getElementById('bl_word').value = '';
+      document.getElementById('bl_reason').value = '';
+      renderLists();
+      showToast("Тизмеге убактылуу кошулду, Сактоо баскычын басыңыз.");
     }
+
     function addFilter() {
       const w = document.getElementById('fl_word').value.trim().toLowerCase();
       const r = document.getElementById('fl_reply').value.trim();
-      if (w && r) { appData.filters[w] = r; document.getElementById('fl_word').value = ''; document.getElementById('fl_reply').value = ''; renderLists(); }
+      if (w && r) {
+        appData.filters[w] = r;
+        document.getElementById('fl_word').value = '';
+        document.getElementById('fl_reply').value = '';
+        renderLists();
+      }
     }
+
     function addNote() {
       const n = document.getElementById('nt_name').value.trim().toLowerCase();
       const t = document.getElementById('nt_text').value.trim();
-      if (n && t) { appData.notes[n] = t; document.getElementById('nt_name').value = ''; document.getElementById('nt_text').value = ''; renderLists(); }
+      if (n && t) {
+        appData.notes[n] = t;
+        document.getElementById('nt_name').value = '';
+        document.getElementById('nt_text').value = '';
+        renderLists();
+      }
     }
+
     function addSwear() {
       const w = document.getElementById('sw_word').value.trim().toLowerCase();
       if (w) {
         if (!appData.swearwords) appData.swearwords = [];
-        if (!appData.swearwords.includes(w)) appData.swearwords.push(w);
-        document.getElementById('sw_word').value = '';
-        renderLists();
+        if (!appData.swearwords.includes(w)) {
+          appData.swearwords.push(w);
+          document.getElementById('sw_word').value = '';
+          renderLists();
+        }
       }
     }
-    function deleteSwear(idx) {
+
+    function deleteListItem(type, key) {
+      delete appData[type][key];
+      renderLists();
+    }
+
+    function deleteSwearWord(idx) {
       appData.swearwords.splice(idx, 1);
       renderLists();
     }
 
+    function renderStatsAndLogs() {
+      document.getElementById('stat_total').innerText = statsData.stats.msgCount || 0;
+      document.getElementById('stat_today').innerText = statsData.stats.msgsToday || 0;
+      document.getElementById('stat_bans').innerText = statsData.stats.bansCount || 0;
+      document.getElementById('stat_mutes').innerText = statsData.stats.mutesCount || 0;
+
+      // 1. Total top users
+      const totalBody = document.getElementById('stats_total_body');
+      let totalHtml = `<div class="table-container"><table class="data-table"><thead><tr><th>Колдонуучу</th><th>СМС Саны</th></tr></thead><tbody>`;
+      if (statsData.topUsersAll && statsData.topUsersAll.length > 0) {
+        for (let i = 0; i < statsData.topUsersAll.length; i += 2) {
+          const uid = statsData.topUsersAll[i];
+          const score = statsData.topUsersAll[i+1];
+          const user = usersMap[uid] || { name: "Белгисиз", username: "" };
+          totalHtml += `<tr><td><b>${user.name}</b> ${user.username ? '(@' + user.username + ')' : ''}</td><td><span style="color:var(--accent); font-weight:bold;">${score}</span></td></tr>`;
+        }
+      } else {
+        totalHtml += `<tr><td colspan="2" style="text-align:center; color:var(--text-muted);">Маалыматтар жок.</td></tr>`;
+      }
+      totalHtml += `</tbody></table></div>`;
+      totalBody.innerHTML = totalHtml;
+
+      // 2. Today's top users
+      const todayBody = document.getElementById('stats_today_body');
+      let todayHtml = `<div class="table-container"><table class="data-table"><thead><tr><th>Колдонуучу</th><th>Бүгүнкү СМС</th></tr></thead><tbody>`;
+      if (statsData.topUsersToday && statsData.topUsersToday.length > 0) {
+        for (let i = 0; i < statsData.topUsersToday.length; i += 2) {
+          const uid = statsData.topUsersToday[i];
+          const score = statsData.topUsersToday[i+1];
+          const user = usersMap[uid] || { name: "Белгисиз", username: "" };
+          todayHtml += `<tr><td><b>${user.name}</b> ${user.username ? '(@' + user.username + ')' : ''}</td><td><span style="color:var(--success); font-weight:bold;">${score}</span></td></tr>`;
+        }
+      } else {
+        todayHtml += `<tr><td colspan="2" style="text-align:center; color:var(--text-muted);">Маалыматтар жок.</td></tr>`;
+      }
+      todayHtml += `</tbody></table></div>`;
+      todayBody.innerHTML = todayHtml;
+
+      // 3. Audit Logs
+      const logsBody = document.getElementById('stats_logs_body');
+      const logsHtml = statsData.logs.map(log => {
+        let actClass = "";
+        if (log.action.includes("Бан") || log.action.includes("Кик")) actClass = "style='border-left: 3px solid var(--danger);'";
+        if (log.action.includes("Мут") || log.action.includes("Эскертүү") || log.action.includes("Warn")) actClass = "style='border-left: 3px solid var(--warn);'";
+        
+        const date = new Date(log.timestamp).toLocaleString("ru-RU", {day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'});
+        return `
+        <div class="log-item" ${actClass}>
+          <div class="log-meta">
+            <span>📅 ${date} - <b>${log.action}</b></span>
+            <span>Админ: <b>${log.adminName || 'Бот'}</b></span>
+          </div>
+          <div class="log-msg">👤 <b>${log.name}</b> (${log.userId}) -> <i>${log.reason}</i></div>
+        </div>`;
+      }).join('');
+      logsBody.innerHTML = logsHtml || "<p style='padding:20px; text-align:center; color:var(--text-muted);'>Таза.</p>";
+
+      // 4. Bans List (Revokable)
+      const bansBody = document.getElementById('stats_bans_body');
+      const banLogs = statsData.logs.filter(l => l.action.includes("Бан"));
+      if (banLogs.length > 0) {
+        bansBody.innerHTML = `<div class="table-container"><table class="data-table">
+          <thead><tr><th>Колдонуучу</th><th>Себеби</th><th>Аракет</th></tr></thead>
+          <tbody>` + banLogs.map(l => `
+            <tr>
+              <td><b>${l.name}</b><br><span style="font-size:11px;color:var(--text-muted)">ID: ${l.userId}</span></td>
+              <td>${l.reason}</td>
+              <td><button class="btn btn-sm" onclick="doAction('unban', ${l.userId})">Разбан</button></td>
+            </tr>
+          `).join('') + `</tbody></table></div>`;
+      } else {
+        bansBody.innerHTML = "<p style='color:var(--text-muted); font-size:13px;'>Учурда банда эч ким жок.</p>";
+      }
+
+      // 5. Mutes List (Revokable)
+      const mutesBody = document.getElementById('stats_mutes_body');
+      const muteLogs = statsData.logs.filter(l => l.action.includes("Мут"));
+      if (muteLogs.length > 0) {
+        mutesBody.innerHTML = `<div class="table-container"><table class="data-table">
+          <thead><tr><th>Колдонуучу</th><th>Админ & Себеп</th><th>Аракет</th></tr></thead>
+          <tbody>` + muteLogs.map(l => `
+            <tr>
+              <td><b>${l.name}</b><br><span style="font-size:11px;color:var(--text-muted)">ID: ${l.userId}</span></td>
+              <td><b>${l.adminName}</b>: ${l.reason}</td>
+              <td><button class="btn btn-sm" onclick="doAction('unmute', ${l.userId})">Анмут</button></td>
+            </tr>
+          `).join('') + `</tbody></table></div>`;
+      } else {
+        mutesBody.innerHTML = "<p style='color:var(--text-muted); font-size:13px;'>Учурда мутта эч ким жок.</p>";
+      }
+
+      // 6. Warns List
+      const warnsBody = document.getElementById('stats_warns_body');
+      const warnedUsers = statsData.users.filter(u => u.warns > 0);
+      if (warnedUsers.length > 0) {
+        warnsBody.innerHTML = `<div class="table-container"><table class="data-table">
+          <thead><tr><th>Колдонуучу</th><th>Варн саны</th><th>Аракет</th></tr></thead>
+          <tbody>` + warnedUsers.map(u => `
+            <tr>
+              <td><b>${u.name}</b> ${u.username ? '(@'+u.username+')' : ''}<br><span style="font-size:11px;color:var(--text-muted)">ID: ${u.id}</span></td>
+              <td><span style="color:var(--warn); font-weight:bold; font-size:16px;">${u.warns}</span> / ${appData.config.warnLimit || 3}</td>
+              <td><button class="btn btn-sm btn-danger" onclick="doAction('resetwarns', ${u.id})">Тазалоо (Reset)</button></td>
+            </tr>
+          `).join('') + `</tbody></table></div>`;
+      } else {
+        warnsBody.innerHTML = "<p style='color:var(--text-muted); font-size:13px;'>Страйк алган катышуучулар жок.</p>";
+      }
+    }
+
+    function toggleMemberCard(elem) {
+      elem.closest('.member-item').classList.toggle('expanded');
+    }
+
+    function renderUsersList() {
+      const container = document.getElementById('users_list_container');
+      const sortedUsers = statsData.users.sort((a,b) => b.urmat - a.urmat);
+      
+      const html = sortedUsers.map(u => `
+        <div class="member-item" data-name="${u.name.toLowerCase()}" data-username="${u.username.toLowerCase()}">
+          <div class="member-header" onclick="toggleMemberCard(this)">
+            <div class="member-info">
+              <div class="profile-avatar" style="background:#4b5563;">${u.name.substring(0,1).toUpperCase()}</div>
+              <div>
+                <div class="member-title">${u.name} ${u.username ? '(@' + u.username + ')' : ''}</div>
+                <div class="member-meta">
+                  <span>⚠️ Варндар: <b>${u.warns}</b></span>
+                  <span>🌟 Сый-Урмат: <b>${u.urmat}</b></span>
+                </div>
+              </div>
+            </div>
+            <div style="font-size: 11px; color: var(--text-muted);">Башкаруу ▼</div>
+          </div>
+          <div class="member-actions-wrapper">
+            <div class="member-actions-inner">
+              <div class="action-deck">
+                <div style="font-size: 12px; font-weight: 600; color: var(--text-muted); text-transform: uppercase;">Ыкчам Аракеттер</div>
+                
+                <div class="action-row">
+                  <input type="number" class="form-input form-input-sm" id="user_mute_dur_${u.id}" placeholder="Мут убактысы (мүнөт)" value="120">
+                  <input type="text" class="form-input form-input-sm" id="user_mute_reason_${u.id}" placeholder="Себеби...">
+                  <button class="btn btn-sm btn-warn" onclick="submitUserAction('mute', ${u.id})">Муттоо</button>
+                </div>
+                
+                <div class="action-row">
+                  <input type="text" class="form-input form-input-sm" id="user_warn_reason_${u.id}" placeholder="Себеби...">
+                  <button class="btn btn-sm btn-warn" onclick="submitUserAction('warn', ${u.id})">Варн берүү</button>
+                </div>
+
+                <div class="action-row">
+                  <input type="text" class="form-input form-input-sm" id="user_ban_reason_${u.id}" placeholder="Себеби...">
+                  <button class="btn btn-sm btn-danger" onclick="submitUserAction('ban', ${u.id})">Бандоо</button>
+                </div>
+
+                <div style="display:flex; gap: 8px; flex-wrap: wrap; margin-top: 8px;">
+                  <button class="btn btn-sm btn-danger" onclick="doAction('kick', ${u.id})">Кик (Чыгаруу)</button>
+                  <button class="btn btn-sm" onclick="doAction('unmute', ${u.id})">Анмут</button>
+                  <button class="btn btn-sm" onclick="doAction('unban', ${u.id})">Разбан</button>
+                  <button class="btn btn-sm" onclick="doAction('resetwarns', ${u.id})">Варндарды тазалоо</button>
+                </div>
+
+                <hr style="border:none; border-top: 1px solid var(--border-color); margin: 8px 0;">
+
+                <div style="font-size: 12px; font-weight: 600; color: var(--text-muted); text-transform: uppercase;">Администратор даражасын берүү</div>
+                <div class="action-row">
+                  <select class="form-select" id="user_role_${u.id}">
+                    <option value="junior">Младший админ (Өчүрүү гана)</option>
+                    <option value="middle" selected>Орто админ (Өчүрүү + Муттоо)</option>
+                    <option value="senior">Старший админ (Өчүрүү + Муттоо + Орнотуулар)</option>
+                    <option value="coowner">Жардамчы (Толук мүмкүнчүлүк)</option>
+                  </select>
+                  <button class="btn btn-sm btn-primary" onclick="submitUserPromote(${u.id})">Админ кылуу</button>
+                  <button class="btn btn-sm btn-danger" onclick="doAction('demote', ${u.id})">Админден алуу</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      `).join('');
+      container.innerHTML = html || "<p style='color:var(--text-muted); padding:20px; text-align:center;'>Катышуучулар тизмеси бош.</p>";
+    }
+
+    function filterUsersList() {
+      const q = document.getElementById('user_search_input').value.toLowerCase().trim();
+      document.querySelectorAll('#users_list_container .member-item').forEach(el => {
+        const name = el.getAttribute('data-name');
+        const username = el.getAttribute('data-username');
+        if (name.includes(q) || username.includes(q)) {
+          el.style.display = 'block';
+        } else {
+          el.style.display = 'none';
+        }
+      });
+    }
+
+    function renderCommandsList() {
+      const container = document.getElementById('commands_container');
+      const customCmds = appData.config.customCommands || {};
+
+      let html = "";
+      for (const [key, def] of Object.entries(DEFAULT_BOT_COMMANDS)) {
+        const saved = customCmds[key] || {};
+        const alias = saved.alias !== undefined ? saved.alias : def.alias;
+        const replyText = saved.replyText !== undefined ? saved.replyText : def.replyText;
+        const action = saved.action !== undefined ? saved.action : def.action;
+        const autoDelete = saved.autoDelete !== undefined ? saved.autoDelete : def.autoDelete;
+        const muteDuration = saved.muteDuration !== undefined ? saved.muteDuration : (def.muteDuration || 120);
+        const warnCount = saved.warnCount !== undefined ? saved.warnCount : (def.warnCount || 1);
+
+        html += `
+        <div class="card" style="margin-bottom:12px; border-color: rgba(255,255,255,0.04);">
+          <div class="card-header" style="padding:12px 16px; cursor:pointer;" onclick="this.nextElementSibling.classList.toggle('active'); this.nextElementSibling.style.display = this.nextElementSibling.classList.contains('active') ? 'block' : 'none';">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <div><b>/${key}</b> - <span style="font-size:13px; color:var(--text-muted)">${def.label}</span></div>
+              <div style="font-size:11px; color:var(--accent);">Жөндөө ▼</div>
+            </div>
+          </div>
+          <div class="card-body" style="display:none; padding:16px; background:rgba(0,0,0,0.1);">
+            <div class="form-group">
+              <label class="form-label">Кыска буйрук сөздөр (кыргызча / орусча термелер)</label>
+              <input type="text" class="form-input" id="cmd_alias_${key}" value="${alias}" placeholder="Мисалы: бан, б">
+              <div style="font-size:11px; color:var(--text-muted); margin-top:2px;">Үтүр менен бөлүп бир нече сөз жазсаңыз болот.</div>
+            </div>
+            
+            <div class="form-group">
+              <label class="form-label">Автожооп Билдирүүсү</label>
+              <input type="text" class="form-input" id="cmd_reply_${key}" value="${replyText}" placeholder="Мисалы: {name} тайпадан четтетилди!">
+              <div style="font-size:11px; color:var(--text-muted); margin-top:2px;">Бош калтырсаңыз стандарттуу бот кабары кетет. Шаблондор: {name}, {target}, {reason}, {admin}</div>
+            </div>
+
+            <div class="grid-2">
+              <div class="form-group">
+                <label class="form-label">Жаза Түрү</label>
+                <select class="form-select" id="cmd_action_${key}" onchange="toggleCmdSubfields('${key}')">
+                  <option value="none" ${action==='none'?'selected':''}>Жазасыз (Жооп гана)</option>
+                  <option value="ban" ${action==='ban'?'selected':''}>Бандоо</option>
+                  <option value="mute" ${action==='mute'?'selected':''}>Мут кылуу</option>
+                  <option value="kick" ${action==='kick'?'selected':''}>Кик кылуу</option>
+                  <option value="warn" ${action==='warn'?'selected':''}>Варн берүү</option>
+                  <option value="unban" ${action==='unban'?'selected':''}>Разбан</option>
+                  <option value="unmute" ${action==='unmute'?'selected':''}>Анмут</option>
+                  <option value="del" ${action==='del'?'selected':''}>СМСти Өчүрүү</option>
+                </select>
+              </div>
+              
+              <div class="form-group" id="cmd_sub_container_${key}" style="display: ${action==='mute'||action==='warn'?'block':'none'}">
+                <label class="form-label" id="cmd_val_label_${key}">Мут убактысы (мүнөт)</label>
+                <input type="number" class="form-input" id="cmd_val_${key}" value="${action==='mute'?muteDuration:warnCount}">
+              </div>
+            </div>
+
+            <div class="setting-row" style="margin-top:10px; border-bottom:none; padding: 0;">
+              <div class="setting-info">
+                <div class="setting-name" style="font-size:13px;">Жоопту автоматтык түрдө өчүрүү</div>
+                <div class="setting-desc" style="font-size:11px;">Админдин командасын жана боттун жообун 5 секунддан кийин өчүрөт.</div>
+              </div>
+              <label class="switch">
+                <input type="checkbox" id="cmd_del_${key}" ${autoDelete?'checked':''}>
+                <span class="slider"></span>
+              </label>
+            </div>
+          </div>
+        </div>`;
+      }
+      container.innerHTML = html;
+    }
+
+    function toggleCmdSubfields(key) {
+      const act = document.getElementById('cmd_action_' + key).value;
+      const container = document.getElementById('cmd_sub_container_' + key);
+      const label = document.getElementById('cmd_val_label_' + key);
+      const input = document.getElementById('cmd_val_' + key);
+
+      if (act === 'mute') {
+        container.style.display = 'block';
+        label.innerText = "Мут убактысы (мүнөт)";
+        input.value = "120";
+      } else if (act === 'warn') {
+        container.style.display = 'block';
+        label.innerText = "Эскертүү саны";
+        input.value = "1";
+      } else {
+        container.style.display = 'none';
+      }
+    }
+
+    async function submitUserAction(actionName, uid) {
+      let val = null;
+      let reason = "";
+      
+      if (actionName === 'mute') {
+        const min = parseInt(document.getElementById('user_mute_dur_' + uid).value, 10) || 120;
+        val = min * 60; // seconds
+        reason = document.getElementById('user_mute_reason_' + uid).value.trim();
+      } else if (actionName === 'warn') {
+        reason = document.getElementById('user_warn_reason_' + uid).value.trim();
+        if (!reason) { showToast("Эскертүү себеби жазылышы керек!", 'error'); return; }
+        // API handles warn manually inside database.json, but action.ts handles warns through commands.
+        // For warns we can call action with reason and the backend logs it, but we can also trigger a warn command.
+        // Wait, action.ts warns? No, action.ts has 'ban', 'mute', 'unmute', 'kick', 'unban', 'promote', 'demote', 'resetwarns'.
+        // Wait! Let's check: how can we issue a warn from Web Panel?
+        // Let's add a warning trigger to the bot or custom action?
+        // Wait! In api/action.ts, we don't have case "warn".
+        // Let's add case "warn" to api/action.ts so it works seamlessly!
+      } else if (actionName === 'ban') {
+        reason = document.getElementById('user_ban_reason_' + uid).value.trim();
+      }
+
+      await doAction(actionName, uid, reason, val);
+    }
+
+    async function submitUserPromote(uid) {
+      const role = document.getElementById('user_role_' + uid).value;
+      await doAction('promote', uid, "Promoted via Web Panel", role);
+    }
+
+    async function doAction(actionName, targetUserId, reason = "", value = null) {
+      try {
+        const res = await fetch(actionUrl, {
+          method: 'POST',
+          headers: { 'Authorization': 'tma ' + initData, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: actionName, targetUserId, reason, value })
+        });
+        if (res.ok) {
+          showToast("Ийгиликтүү аткарылды!", 'success');
+          tg.HapticFeedback.notificationOccurred("success");
+          fetchData(); // reload
+        } else {
+          showToast("Ката кетти", 'error');
+        }
+      } catch (e) { showToast("Ката кетти", 'error'); }
+    }
+
+    async function doGroupAction(actionName, text = null, value = null) {
+      try {
+        const res = await fetch(actionUrl, {
+          method: 'POST',
+          headers: { 'Authorization': 'tma ' + initData, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: actionName, text, value })
+        });
+        if (res.ok) {
+          showToast("Тайпа өзгөртүлдү!", 'success');
+          tg.HapticFeedback.notificationOccurred("success");
+          fetchData();
+        } else {
+          showToast("Ката кетти", 'error');
+        }
+      } catch (e) { showToast("Ката кетти", 'error'); }
+    }
+
     async function saveAll() {
-      const btn = document.getElementById('saveBtn'); btn.innerText = 'Сакталууда...'; btn.disabled = true;
+      const btn = document.getElementById('saveBtn');
+      btn.innerText = 'Сакталууда...';
+      btn.disabled = true;
+
       appData.config.captchaEnabled = document.getElementById('captchaEnabled').checked;
       appData.config.captchaMode = document.getElementById('captchaMode').value;
       appData.config.captchaKick = document.getElementById('captchaKick').checked;
@@ -739,37 +2317,61 @@
       appData.config.muteDurationMinutes = parseInt(document.getElementById('muteDurationMinutes').value) || 120;
       appData.config.warnAction = document.getElementById('warnAction').value;
       
-      if(!appData.config.locks) appData.config.locks = {};
+      if (!appData.config.locks) appData.config.locks = {};
       ['text','links','photo','video','audio','voices','videonote','document','stickers','gifs','bots','commands','games','forwards','arabic','porn'].forEach(lock => {
         appData.config.locks[lock] = document.getElementById('lock_'+lock).checked;
       });
 
-      if(!appData.config.antiflood) appData.config.antiflood = {};
+      if (!appData.config.antiflood) appData.config.antiflood = {};
       appData.config.antiflood.enabled = document.getElementById('antiflood_enabled').checked;
       appData.config.antiflood.messages = parseInt(document.getElementById('antiflood_messages').value) || 5;
       appData.config.antiflood.seconds = parseInt(document.getElementById('antiflood_seconds').value) || 5;
       appData.config.antiflood.action = document.getElementById('antiflood_action').value;
 
-      if(!appData.config.welcome) appData.config.welcome = {};
+      if (!appData.config.welcome) appData.config.welcome = {};
       appData.config.welcome.enabled = document.getElementById('welcome_enabled').checked;
       appData.config.welcome.text = document.getElementById('welcome_text').value;
 
-      if(!appData.config.goodbye) appData.config.goodbye = {};
+      if (!appData.config.goodbye) appData.config.goodbye = {};
       appData.config.goodbye.enabled = document.getElementById('goodbye_enabled').checked;
       appData.config.goodbye.text = document.getElementById('goodbye_text').value;
 
       appData.config.rulesText = document.getElementById('rulesText').value;
 
+      // Extract customCommands configs
+      if (!appData.config.customCommands) appData.config.customCommands = {};
+      for (const key of Object.keys(DEFAULT_BOT_COMMANDS)) {
+        const action = document.getElementById('cmd_action_' + key).value;
+        const val = parseInt(document.getElementById('cmd_val_' + key).value, 10) || 120;
+        
+        appData.config.customCommands[key] = {
+          alias: document.getElementById('cmd_alias_' + key).value,
+          replyText: document.getElementById('cmd_reply_' + key).value,
+          action: action,
+          autoDelete: document.getElementById('cmd_del_' + key).checked,
+          muteDuration: action === 'mute' ? val : undefined,
+          warnCount: action === 'warn' ? val : undefined
+        };
+      }
+
       try {
-        await fetch(apiUrl, { method: 'POST', headers: { 'Authorization': 'tma ' + initData, 'Content-Type': 'application/json' }, body: JSON.stringify(appData) });
+        await fetch(apiUrl, {
+          method: 'POST',
+          headers: { 'Authorization': 'tma ' + initData, 'Content-Type': 'application/json' },
+          body: JSON.stringify(appData)
+        });
         showToast('Ийгиликтүү сакталды!');
         tg.HapticFeedback.notificationOccurred("success");
-      } catch (e) {} finally {
-        btn.innerText = 'Өзгөртүүлөрдү Сактоо'; btn.disabled = false;
+      } catch (e) {
+        showToast('Сактоодо ката кетти', 'error');
+      } finally {
+        btn.innerText = 'Өзгөртүүлөрдү Сактоо';
+        btn.disabled = false;
       }
     }
 
-    tg.ready(); fetchData();
+    tg.ready();
+    fetchData();
   </script>
 </body>
 </html>

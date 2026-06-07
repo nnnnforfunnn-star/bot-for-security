@@ -127,6 +127,18 @@ export const db = {
     } catch (e) { return 0; }
   },
 
+  async incrby(key: string, increment: number): Promise<number> {
+    try {
+      const tcp = await getRedisTCPClient();
+      if (tcp) return await tcp.incrBy(key, increment);
+      if (upstashClient) return await upstashClient.incrby(key, increment);
+      const val = (memCache.get(key) || 0) + increment;
+      memCache.set(key, val);
+      saveLocalDB();
+      return val;
+    } catch (e) { return 0; }
+  },
+
   async del(key: string): Promise<void> {
     try {
       const tcp = await getRedisTCPClient();

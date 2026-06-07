@@ -2,6 +2,7 @@ import { Context, NextFunction, InlineKeyboard } from "grammy";
 import { getGroupConfig, updateGroupConfig } from "../utils/configManager.js";
 import { isUserAdmin, isUserAdminInChat, isUserSeniorAdminInChat } from "../utils/telegram.js";
 import { logger } from "../utils/logger.js";
+import { db } from "../utils/db.js";
 
 /**
  * Команда /settings для вызова панели управления.
@@ -24,7 +25,12 @@ export async function adminPanelCommand(ctx: Context) {
   const deepLink = `https://t.me/${botInfo.username}?start=settings_${ctx.chat.id}`;
 
   const keyboard = new InlineKeyboard().url("⚙️ Жөндөөлөргө өтүү", deepLink);
-  await ctx.reply(`Урматтуу админ, тайпанын коопсуздугу үчүн жөндөөлөр жеке кат (PM) аркылуу гана өзгөртүлөт. Төмөнкү баскычты басыңыз:`, { reply_markup: keyboard });
+  const replyMsg = await ctx.reply(`Урматтуу админ, тайпанын коопсуздугу үчүн жөндөөлөр жеке кат (PM) аркылуу гана өзгөртүлөт. Төмөнкү баскычты басыңыз:`, { reply_markup: keyboard });
+
+  // Сохраняем ID сообщений для автоматического удаления
+  if (ctx.message?.message_id && replyMsg.message_id) {
+    await db.set(`chat:${ctx.chat.id}:admin:${ctx.from?.id}:settings_msgs`, [ctx.message.message_id, replyMsg.message_id], 300);
+  }
 }
 
 import { config as botConfig } from "../config.js";

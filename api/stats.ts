@@ -87,12 +87,22 @@ export default async function handler(req: any, res: any) {
         });
       }
 
+      // 4. Group details
+      let groupTitle = "Тайпа";
+      try {
+        const chat = await bot.api.getChat(chatId);
+        if (chat && ("title" in chat)) {
+          groupTitle = chat.title as string;
+        }
+      } catch (e) {}
+
       return res.status(200).json({ 
         logs, 
         stats: { msgCount, bansCount, mutesCount, msgsToday },
         users: usersInfo,
         topUsersAll: topUsersAllTimeRaw,
-        topUsersToday: topUsersTodayRaw
+        topUsersToday: topUsersTodayRaw,
+        groupTitle
       });
     }
 

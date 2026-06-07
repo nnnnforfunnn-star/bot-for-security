@@ -3,6 +3,7 @@ import { config } from "./config.js";
 import { logger } from "./utils/logger.js";
 import { globalErrorHandler } from "./middlewares/errorHandler.js";
 import { rateLimiter } from "./middlewares/rateLimiter.js";
+import { db } from "./utils/db.js";
 import { joinHandler, captchaCallbackHandler } from "./handlers/joinHandler.js";
 import { messageHandler } from "./handlers/messageHandler.js";
 import { adminPanelCommand, adminPanelCallback, sendAdminPanel } from "./handlers/adminPanel.js";
@@ -205,6 +206,20 @@ bot.command("start", async (ctx) => {
         const isAdmin = await isUserSeniorAdminInChat(ctx.api, chatId, ctx.from.id);
         if (isAdmin) {
           await sendAdminPanel(ctx, chatId, false);
+
+          // Автоматически удаляем сообщения команды /settings в чате группы
+          try {
+            const msgsKey = `chat:${chatId}:admin:${ctx.from.id}:settings_msgs`;
+            const msgs = await db.get<number[]>(msgsKey);
+            if (msgs && Array.isArray(msgs)) {
+              for (const msgId of msgs) {
+                await ctx.api.deleteMessage(chatId, msgId).catch(() => {});
+              }
+              await db.del(msgsKey);
+            }
+          } catch (e) {
+            logger.warn("Не удалось удалить сообщения /settings", { error: e as any });
+          }
         } else {
           await ctx.reply("Кечиресиз, Web-Панельди ачуу үчүн сиз тайпанын ээси (creator) же толук укуктуу старший админ болушуңуз керек!");
         }
