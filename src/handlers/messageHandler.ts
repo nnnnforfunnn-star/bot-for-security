@@ -447,10 +447,9 @@ export async function messageHandler(ctx: Context, next: NextFunction): Promise<
     try {
       const filters = await db.hgetall(`chat:${chatId}:filters`);
       if (filters) {
-        const words = lowerText.split(/\s+/);
-        for (const word of words) {
-          if (filters[word]) {
-            await ctx.reply(filters[word]);
+        for (const trigger of Object.keys(filters)) {
+          if (lowerText.includes(trigger.toLowerCase())) {
+            await ctx.reply(filters[trigger]);
             break;
           }
         }

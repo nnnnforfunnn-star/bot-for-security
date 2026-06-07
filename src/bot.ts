@@ -141,10 +141,8 @@ import {
 bot.on("message:text", async (ctx, next) => {
   const text = ctx.message.text.toLowerCase().trim();
   
-  if (text.startsWith("#")) {
+  if (text.includes("#")) {
     await getNoteCommand(ctx, true);
-    // don't return here so normal message processing happens too, or maybe return?
-    // usually notes should not stop message processing
   }
 
   // RP Actions Check

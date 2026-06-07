@@ -37,23 +37,30 @@ export async function saveNoteCommand(ctx: Context) {
 export async function getNoteCommand(ctx: Context, isHashtag: boolean = false) {
   if (!ctx.chat || ctx.chat.type === "private") return;
   
-  let name = "";
+  const notes = await db.hgetall(`chat:${ctx.chat.id}:notes`);
+  if (!notes) return;
+
   if (isHashtag) {
-    const match = ctx.message?.text?.match(/^#(\S+)/);
-    if (match) name = match[1].toLowerCase();
+    const words = (ctx.message?.text || ctx.message?.caption || "").split(/\s+/);
+    for (const w of words) {
+      if (w.startsWith("#")) {
+        const name = w.substring(1).toLowerCase().replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g,"");
+        if (notes[name]) {
+          await ctx.reply(notes[name]);
+          return;
+        }
+      }
+    }
   } else {
     const match = ctx.message?.text?.match(/^\/get\s+(\S+)/i);
-    if (match) name = match[1].toLowerCase();
-  }
-
-  if (!name) return;
-
-  const notes = await db.hgetall(`chat:${ctx.chat.id}:notes`);
-  if (notes && notes[name]) {
-    await ctx.reply(notes[name]);
-  } else if (!isHashtag) {
-    // Reply only if it was explicit /get
-    await ctx.reply(`❌ **${name}** белгиси табылган жок.`, { parse_mode: "Markdown" });
+    if (match) {
+      const name = match[1].toLowerCase();
+      if (notes[name]) {
+        await ctx.reply(notes[name]);
+      } else {
+        await ctx.reply(`❌ **${name}** белгиси табылган жок.`, { parse_mode: "Markdown" });
+      }
+    }
   }
 }
 
