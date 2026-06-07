@@ -19,6 +19,8 @@ export interface GroupConfig {
   antiArabicName: boolean;
   silentMode: boolean;
   logChannelId: string;
+  lockdownMode: boolean;
+  disableFilters: boolean;
   
   // Locks Module
   locks: {
@@ -92,6 +94,8 @@ export const DEFAULT_CONFIG: GroupConfig = {
   antiArabicName: false,
   silentMode: false,
   logChannelId: "",
+  lockdownMode: false,
+  disableFilters: false,
   
   locks: {
     text: false,

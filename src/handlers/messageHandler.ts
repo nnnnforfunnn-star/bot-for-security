@@ -52,6 +52,15 @@ export async function messageHandler(ctx: Context, next: NextFunction): Promise<
   
   if (!userId) return next();
 
+  const config = await getGroupConfig(chatId);
+  const isAdmin = await isUserAdmin(ctx);
+
+  // --- LOCKDOWN MODE (Чукул кырдаал режими) ---
+  if (config.lockdownMode && !isAdmin) {
+    await ctx.deleteMessage().catch(() => {});
+    return;
+  }
+
   // Analytics Tracking
   const today = new Date().toISOString().split("T")[0];
   await db.incr(`chat:${chatId}:stats:messages_count`);
@@ -62,11 +71,23 @@ export async function messageHandler(ctx: Context, next: NextFunction): Promise<
   await db.zincrby(`chat:${chatId}:stats:top_users`, 1, userId);
   await db.zincrby(`chat:${chatId}:stats:top_users:${today}`, 1, userId);
 
-  const isAdmin = await isUserAdmin(ctx);
   const text = ctx.message.text || ctx.message.caption || "";
   const lowerText = text.toLowerCase().trim();
 
-  const config = await getGroupConfig(chatId);
+  // 0. Автожооптор (Filters) - Текшерүү баарына тиешелүү, эгер өчүрүлбөсө
+  if (text && !config.disableFilters) {
+    try {
+      const filters = await db.hgetall(`chat:${chatId}:filters`);
+      if (filters) {
+        for (const trigger of Object.keys(filters)) {
+          if (lowerText.includes(trigger.toLowerCase())) {
+            await ctx.reply(filters[trigger]);
+            break;
+          }
+        }
+      }
+    } catch (e) {}
+  }
 
   // 0. Текстовые команды администратора (например, отправка "бан" ответом на сообщение)
   if (isAdmin && ctx.message.reply_to_message) {
@@ -440,21 +461,6 @@ export async function messageHandler(ctx: Context, next: NextFunction): Promise<
         await ctx.reply(`📉 [${name}](tg://user?id=${userId}), [${targetUser.first_name}](tg://user?id=${targetUser.id}) аттуу колдонуучунун рейтингин түшүрдү.\nЖаңы деңгээли: **${urmat}**`, { parse_mode: "Markdown" });
       }
     }
-  }
-
-  // 5. Автожооптор (Filters)
-  if (text) {
-    try {
-      const filters = await db.hgetall(`chat:${chatId}:filters`);
-      if (filters) {
-        for (const trigger of Object.keys(filters)) {
-          if (lowerText.includes(trigger.toLowerCase())) {
-            await ctx.reply(filters[trigger]);
-            break;
-          }
-        }
-      }
-    } catch (e) {}
   }
 
   await next();

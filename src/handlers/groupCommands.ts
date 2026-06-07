@@ -2,6 +2,7 @@ import { Context } from "grammy";
 import { isUserAdmin } from "../utils/telegram.js";
 import { db } from "../utils/db.js";
 import { logAction } from "../utils/actionLogger.js";
+import { updateGroupConfig } from "../utils/configManager.js";
 
 /**
  * Партия 1: Команды управления группой (12 команд)
@@ -245,4 +246,30 @@ export async function linkCommand(ctx: Context) {
     const link = await ctx.api.exportChatInviteLink(ctx.chat.id);
     await ctx.reply(`🔗 **Тайпанын шилтемеси:**\n${link}`, { parse_mode: "Markdown" });
   } catch (e) { await ctx.reply("❌ Ката кетти. Боттун шилтеме түзүү укугу болушу керек."); }
+}
+
+// 13. /lockdown — Чатты өзгөчө кырдаалда бөгөттөө
+export async function lockdownCommand(ctx: Context) {
+  if (!ctx.chat || ctx.chat.type === "private" || !(await isUserAdmin(ctx))) return;
+
+  try {
+    await updateGroupConfig(ctx.chat.id, { lockdownMode: true });
+    await logAction(ctx.api, ctx.chat.id, 0, "Группа", "Lockdown", "Чукул кырдаал режими иштетилди", ctx.from?.first_name || "Админ");
+    await ctx.reply("🚨 **ЧУКУЛ КЫРДААЛ РЕЖИМИ ИШКЕ КИРДИ!**\n\nАдминистраторлордон башка эч ким билдирүү жөнөтө албайт. Бардык билдирүүлөр автоматтык түрдө өчүрүлөт.", { parse_mode: "Markdown" });
+  } catch (e) {
+    await ctx.reply("❌ Ката кетти.");
+  }
+}
+
+// 14. /unlockdown — Бөгөттөн чыгаруу
+export async function unlockdownCommand(ctx: Context) {
+  if (!ctx.chat || ctx.chat.type === "private" || !(await isUserAdmin(ctx))) return;
+
+  try {
+    await updateGroupConfig(ctx.chat.id, { lockdownMode: false });
+    await logAction(ctx.api, ctx.chat.id, 0, "Группа", "Unlockdown", "Чукул кырдаал режими өчүрүлдү", ctx.from?.first_name || "Админ");
+    await ctx.reply("✅ **Өзгөчө кырдаал режими аяктады!**\n\nТайпа кадимкидей иштей баштады. Бардык чектөөлөр алынды.", { parse_mode: "Markdown" });
+  } catch (e) {
+    await ctx.reply("❌ Ката кетти.");
+  }
 }

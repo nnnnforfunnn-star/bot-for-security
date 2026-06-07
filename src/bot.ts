@@ -27,7 +27,8 @@ import {
 import {
   promoteCommand, demoteCommand, tmuteCommand, tbanCommand,
   slowmodeCommand, setPhotoCommand, setTitleCommand, setDescCommand,
-  adminsCommand, infoCommand, resetWarnsCommand, linkCommand
+  adminsCommand, infoCommand, resetWarnsCommand, linkCommand,
+  lockdownCommand, unlockdownCommand
 } from "./handlers/groupCommands.js";
 import {
   silentCommand, logChannelCommand, unpinAllCommand, warnLimitCommand,
@@ -74,6 +75,8 @@ bot.command("admins", adminsCommand);
 bot.command("info", infoCommand);
 bot.command("resetwarns", resetWarnsCommand);
 bot.command("link", linkCommand);
+bot.command("lockdown", lockdownCommand);
+bot.command("unlockdown", unlockdownCommand);
 
 // 1.6 Жаңы жөндөө командалары
 bot.command("silent", silentCommand);
