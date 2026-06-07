@@ -1138,6 +1138,16 @@
                     <span class="slider"></span>
                   </label>
                 </div>
+                <div class="form-group" style="margin-top: 14px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 14px;">
+                  <label class="form-label">Lockdown учурундагы жаза</label>
+                  <select class="form-select" id="lockdownAction">
+                    <option value="delete">Өчүрүү гана</option>
+                    <option value="mute">Өчүрүү + Муттоо</option>
+                    <option value="warn">Өчүрүү + Эскертүү (Варн)</option>
+                    <option value="kick">Өчүрүү + Кик кылуу</option>
+                    <option value="ban">Өчүрүү + Бандоо</option>
+                  </select>
+                </div>
               </div>
             </div>
 
@@ -1175,6 +1185,10 @@
                     <input type="checkbox" id="captchaKick">
                     <span class="slider"></span>
                   </label>
+                </div>
+                <div class="form-group" style="margin-top: 14px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 14px;">
+                  <label class="form-label">Капча убактысы (секунд)</label>
+                  <input type="number" class="form-input" id="captchaTime" min="10" max="600" placeholder="Стандарттуу: 120">
                 </div>
               </div>
             </div>
@@ -1230,6 +1244,38 @@
                   <label class="form-label">Мониторинг/Лог Каналынын ID коду</label>
                   <input type="text" class="form-input" id="logChannelId" placeholder="Мисалы: -100123456789">
                 </div>
+                <div class="grid-2" style="margin-top: 14px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 14px;">
+                  <div class="form-group">
+                    <label class="form-label">Сөгүнүү үчүн жаза</label>
+                    <select class="form-select" id="swearAction">
+                      <option value="delete">Билдирүүсүн өчүрүү гана</option>
+                      <option value="warn">Эскертүү (Варн)</option>
+                      <option value="mute">Муттоо</option>
+                      <option value="kick">Кик кылуу</option>
+                      <option value="ban">Бандоо</option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Араб арибиндеги аттар үчүн жаза</label>
+                    <select class="form-select" id="arabicAction">
+                      <option value="delete">Билдирүүсүн өчүрүү гана</option>
+                      <option value="warn">Эскертүү (Варн)</option>
+                      <option value="mute">Муттоо</option>
+                      <option value="kick">Кик кылуу</option>
+                      <option value="ban">Бандоо</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="form-group" style="margin-top: 14px;">
+                  <label class="form-label">Каналдын атынан жазгандар үчүн жаза</label>
+                  <select class="form-select" id="channelAction">
+                    <option value="delete">Билдирүүсүн өчүрүү гана</option>
+                    <option value="warn">Эскертүү (Варн)</option>
+                    <option value="mute">Муттоо</option>
+                    <option value="kick">Кик кылуу</option>
+                    <option value="ban">Бандоо</option>
+                  </select>
+                </div>
               </div>
             </div>
 
@@ -1260,6 +1306,16 @@
                     <input type="number" class="form-input" id="nightModeEnd" min="0" max="23">
                   </div>
                 </div>
+                <div class="form-group" style="margin-top: 14px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 14px;">
+                  <label class="form-label">Түнкү режимдеги жаза</label>
+                  <select class="form-select" id="nightModeAction">
+                    <option value="delete">Билдирүүсүн өчүрүү гана</option>
+                    <option value="mute">Өчүрүү + Муттоо</option>
+                    <option value="warn">Өчүрүү + Эскертүү (Варн)</option>
+                    <option value="kick">Өчүрүү + Кик кылуу</option>
+                    <option value="ban">Өчүрүү + Бандоо</option>
+                  </select>
+                </div>
               </div>
             </div>
 
@@ -1287,6 +1343,11 @@
                     <option value="kick">Кик кылуу (чыгаруу)</option>
                     <option value="ban">Бандоо (бөгөттөө)</option>
                   </select>
+                </div>
+                <div class="form-group" style="margin-top: 14px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 14px;">
+                  <label class="form-label">Эскертүүлөрдүн мөөнөтү (күн)</label>
+                  <input type="number" class="form-input" id="warnExpireDays" min="0" placeholder="0 = мөөнөтү бүтпөйт">
+                  <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">Ар бир эскертүү ушул убакыттан кийин автоматтык түрдө өчүрүлөт.</div>
                 </div>
               </div>
             </div>
@@ -1327,6 +1388,10 @@
                     <option value="ban">Бандоо</option>
                   </select>
                 </div>
+                <div class="form-group" style="margin-top: 14px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 14px;">
+                  <label class="form-label">Муттун узактыгы (мүнөт)</label>
+                  <input type="number" class="form-input" id="floodMuteDuration" min="1" placeholder="Стандарттуу: 120">
+                </div>
               </div>
             </div>
 
@@ -1359,6 +1424,16 @@
                   <label class="form-label">🔗 Уруксат берилген шилтемелер (Link Whitelist)</label>
                   <input type="text" class="form-input" id="linkWhitelist" placeholder="Мисалы: google.com, t.me, youtube.com">
                   <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">Шилтемелер бөгөттөлгөн учурда да бул домендерге уруксат берилет. Үтүр менен бөлүңүз.</div>
+                </div>
+                <div class="form-group" style="margin-top: 14px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 14px;">
+                  <label class="form-label">Бөгөттөлгөн нерсени жөнөткөндө жаза</label>
+                  <select class="form-select" id="locksAction">
+                    <option value="delete">Билдирүүсүн өчүрүү гана</option>
+                    <option value="warn">Өчүрүү + Эскертүү (Варн)</option>
+                    <option value="mute">Өчүрүү + Муттоо</option>
+                    <option value="kick">Өчүрүү + Кик кылуу</option>
+                    <option value="ban">Өчүрүү + Бандоо</option>
+                  </select>
                 </div>
               </div>
             </div>
@@ -1905,20 +1980,28 @@
       const cfg = appData.config;
       document.getElementById('lockdownMode').checked = cfg.lockdownMode || false;
       document.getElementById('disableFilters').checked = cfg.disableFilters || false;
+      document.getElementById('lockdownAction').value = cfg.lockdownAction || 'delete';
 
       document.getElementById('captchaEnabled').checked = cfg.captchaEnabled || false;
       document.getElementById('captchaMode').value = cfg.captchaMode || 'math';
       document.getElementById('captchaKick').checked = cfg.captchaKick || false;
+      document.getElementById('captchaTime').value = cfg.captchaTime || 120;
       document.getElementById('cleanWelcome').checked = cfg.cleanWelcome || false;
+      
       document.getElementById('antiArabicName').checked = cfg.antiArabicName || false;
       document.getElementById('antiSwearEnabled').checked = cfg.antiSwearEnabled || false;
       document.getElementById('antiChannel').checked = cfg.antiChannel || false;
       document.getElementById('silentMode').checked = cfg.silentMode || false;
       document.getElementById('logChannelId').value = cfg.logChannelId || '';
+
+      document.getElementById('swearAction').value = cfg.swearAction || 'warn';
+      document.getElementById('arabicAction').value = cfg.arabicAction || 'ban';
+      document.getElementById('channelAction').value = cfg.channelAction || 'ban';
       
       document.getElementById('nightModeEnabled').checked = cfg.nightModeEnabled || false;
       document.getElementById('nightModeStart').value = cfg.nightModeStart || 0;
       document.getElementById('nightModeEnd').value = cfg.nightModeEnd || 7;
+      document.getElementById('nightModeAction').value = cfg.nightModeAction || 'delete';
       
       const locks = cfg.locks || {};
       ['text','links','photo','video','audio','voices','videonote','document','stickers','gifs','bots','commands','games','forwards','arabic','porn'].forEach(lock => {
@@ -1926,18 +2009,19 @@
       });
 
       document.getElementById('linkWhitelist').value = (cfg.linkWhitelist || []).join(', ');
-
-
+      document.getElementById('locksAction').value = cfg.locksAction || 'delete';
 
       document.getElementById('warnLimit').value = cfg.warnLimit || 3;
       document.getElementById('muteDurationMinutes').value = cfg.muteDurationMinutes || 120;
       document.getElementById('warnAction').value = cfg.warnAction || 'mute';
+      document.getElementById('warnExpireDays').value = cfg.warnExpireDays || 0;
       
       const flood = cfg.antiflood || {};
       document.getElementById('antiflood_enabled').checked = flood.enabled || false;
       document.getElementById('antiflood_messages').value = flood.messages || 5;
       document.getElementById('antiflood_seconds').value = flood.seconds || 5;
       document.getElementById('antiflood_action').value = flood.action || 'mute';
+      document.getElementById('floodMuteDuration').value = cfg.floodMuteDuration || 120;
       
       const welcome = cfg.welcome || {};
       document.getElementById('welcome_enabled').checked = welcome.enabled || false;
@@ -2433,23 +2517,31 @@
       appData.config.captchaEnabled = document.getElementById('captchaEnabled').checked;
       appData.config.captchaMode = document.getElementById('captchaMode').value;
       appData.config.captchaKick = document.getElementById('captchaKick').checked;
+      appData.config.captchaTime = parseInt(document.getElementById('captchaTime').value) || 120;
       appData.config.cleanWelcome = document.getElementById('cleanWelcome').checked;
       appData.config.antiArabicName = document.getElementById('antiArabicName').checked;
       appData.config.antiSwearEnabled = document.getElementById('antiSwearEnabled').checked;
       appData.config.antiChannel = document.getElementById('antiChannel').checked;
       appData.config.silentMode = document.getElementById('silentMode').checked;
       appData.config.logChannelId = document.getElementById('logChannelId').value.trim();
+
+      appData.config.swearAction = document.getElementById('swearAction').value;
+      appData.config.arabicAction = document.getElementById('arabicAction').value;
+      appData.config.channelAction = document.getElementById('channelAction').value;
       
       appData.config.lockdownMode = document.getElementById('lockdownMode').checked;
+      appData.config.lockdownAction = document.getElementById('lockdownAction').value;
       appData.config.disableFilters = document.getElementById('disableFilters').checked;
       
       appData.config.nightModeEnabled = document.getElementById('nightModeEnabled').checked;
       appData.config.nightModeStart = parseInt(document.getElementById('nightModeStart').value) || 0;
       appData.config.nightModeEnd = parseInt(document.getElementById('nightModeEnd').value) || 7;
+      appData.config.nightModeAction = document.getElementById('nightModeAction').value;
 
       appData.config.warnLimit = parseInt(document.getElementById('warnLimit').value) || 3;
       appData.config.muteDurationMinutes = parseInt(document.getElementById('muteDurationMinutes').value) || 120;
       appData.config.warnAction = document.getElementById('warnAction').value;
+      appData.config.warnExpireDays = parseInt(document.getElementById('warnExpireDays').value) || 0;
       
       if (!appData.config.locks) appData.config.locks = {};
       ['text','links','photo','video','audio','voices','videonote','document','stickers','gifs','bots','commands','games','forwards','arabic','porn'].forEach(lock => {
@@ -2459,6 +2551,7 @@
       appData.config.linkWhitelist = document.getElementById('linkWhitelist').value.split(',')
         .map(x => x.trim().toLowerCase())
         .filter(x => x.length > 0);
+      appData.config.locksAction = document.getElementById('locksAction').value;
 
       if (!appData.config.disabledCommands) appData.config.disabledCommands = {};
       for (const key of Object.keys(DEFAULT_BOT_COMMANDS)) {
@@ -2473,6 +2566,7 @@
       appData.config.antiflood.messages = parseInt(document.getElementById('antiflood_messages').value) || 5;
       appData.config.antiflood.seconds = parseInt(document.getElementById('antiflood_seconds').value) || 5;
       appData.config.antiflood.action = document.getElementById('antiflood_action').value;
+      appData.config.floodMuteDuration = parseInt(document.getElementById('floodMuteDuration').value) || 120;
 
       if (!appData.config.welcome) appData.config.welcome = {};
       appData.config.welcome.enabled = document.getElementById('welcome_enabled').checked;

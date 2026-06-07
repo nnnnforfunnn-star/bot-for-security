@@ -24,6 +24,16 @@ export interface GroupConfig {
   disabledCommands?: Record<string, boolean>;
   linkWhitelist?: string[];
   
+  // Advanced Granular Actions
+  lockdownAction?: "delete" | "mute" | "warn" | "kick" | "ban";
+  swearAction?: "delete" | "warn" | "mute" | "kick" | "ban";
+  arabicAction?: "delete" | "warn" | "mute" | "kick" | "ban";
+  channelAction?: "delete" | "warn" | "mute" | "kick" | "ban";
+  nightModeAction?: "delete" | "mute" | "warn" | "kick" | "ban";
+  warnExpireDays?: number;
+  floodMuteDuration?: number;
+  locksAction?: "delete" | "warn" | "mute";
+
   // Locks Module
   locks: {
     text: boolean;
@@ -100,6 +110,15 @@ export const DEFAULT_CONFIG: GroupConfig = {
   disableFilters: false,
   disabledCommands: {},
   linkWhitelist: [],
+  
+  lockdownAction: "delete",
+  swearAction: "warn",
+  arabicAction: "ban",
+  channelAction: "ban",
+  nightModeAction: "delete",
+  warnExpireDays: 0,
+  floodMuteDuration: 120,
+  locksAction: "delete",
   
   locks: {
     text: false,

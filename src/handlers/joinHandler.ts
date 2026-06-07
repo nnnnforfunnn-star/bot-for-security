@@ -24,33 +24,14 @@ export async function joinHandler(ctx: Context, next: NextFunction): Promise<voi
 
     if (!config.captchaEnabled) continue;
 
-    // Генерируем простую математическую капчу
-    const a = Math.floor(Math.random() * 5) + 1; // 1-5
-    const b = Math.floor(Math.random() * 5) + 1; // 1-5
-    const answer = a + b;
-    
-    // Генерируем ложные варианты ответа
-    const false1 = answer + 1;
-    const false2 = answer - 1 <= 0 ? answer + 2 : answer - 1;
-    
-    // Перемешиваем варианты
-    const options = [
-      { text: `${answer}`, isCorrect: true },
-      { text: `${false1}`, isCorrect: false },
-      { text: `${false2}`, isCorrect: false }
-    ].sort(() => Math.random() - 0.5);
+    const mode = config.captchaMode || "button";
+    let keyboard = new InlineKeyboard();
 
-    const keyboard = new InlineKeyboard()
-      .text(options[0].text, `cpt:${member.id}:${options[0].isCorrect ? 1 : 0}`)
-      .text(options[1].text, `cpt:${member.id}:${options[1].isCorrect ? 1 : 0}`)
-      .text(options[2].text, `cpt:${member.id}:${options[2].isCorrect ? 1 : 0}`);
-
-    // Переводим пользователя в режим Read Only (только чтение)
     try {
-      await ctx.api.restrictChatMember(
-        chatId,
-        member.id,
-        {
+      if (mode === "button") {
+        keyboard = new InlineKeyboard().text("✅ Мен адаммын / Я человек", `cpt:${member.id}:1`);
+        
+        await ctx.api.restrictChatMember(chatId, member.id, {
           can_send_messages: false,
           can_send_audios: false,
           can_send_documents: false,
@@ -61,15 +42,96 @@ export async function joinHandler(ctx: Context, next: NextFunction): Promise<voi
           can_send_polls: false,
           can_send_other_messages: false,
           can_add_web_page_previews: false,
-        }
-      );
+        });
 
-      await ctx.reply(
-        `👋 Кош келдиңиз, [${member.first_name}](tg://user?id=${member.id})!\n` +
-        `Биздин тайпада ботторго тыюу салынган. Сураныч, төмөнкү математикалык суроого жооп бериңиз:\n\n` +
-        `**${a} + ${b} = ?**`,
-        { reply_markup: keyboard, parse_mode: "Markdown" }
-      );
+        await ctx.reply(
+          `👋 Кош келдиңиз, [${member.first_name}](tg://user?id=${member.id})!\n` +
+          `Сураныч, төмөнкү баскычты басып, адам экениңизди далилдеңиз:`,
+          { reply_markup: keyboard, parse_mode: "Markdown" }
+        );
+      } else if (mode === "math") {
+        const a = Math.floor(Math.random() * 5) + 1; // 1-5
+        const b = Math.floor(Math.random() * 5) + 1; // 1-5
+        const answer = a + b;
+        const false1 = answer + 1;
+        const false2 = answer - 1 <= 0 ? answer + 2 : answer - 1;
+        
+        const options = [
+          { text: `${answer}`, isCorrect: true },
+          { text: `${false1}`, isCorrect: false },
+          { text: `${false2}`, isCorrect: false }
+        ].sort(() => Math.random() - 0.5);
+
+        keyboard = new InlineKeyboard()
+          .text(options[0].text, `cpt:${member.id}:${options[0].isCorrect ? 1 : 0}`)
+          .text(options[1].text, `cpt:${member.id}:${options[1].isCorrect ? 1 : 0}`)
+          .text(options[2].text, `cpt:${member.id}:${options[2].isCorrect ? 1 : 0}`);
+
+        await ctx.api.restrictChatMember(chatId, member.id, {
+          can_send_messages: false,
+          can_send_audios: false,
+          can_send_documents: false,
+          can_send_photos: false,
+          can_send_videos: false,
+          can_send_video_notes: false,
+          can_send_voice_notes: false,
+          can_send_polls: false,
+          can_send_other_messages: false,
+          can_add_web_page_previews: false,
+        });
+
+        await ctx.reply(
+          `👋 Кош келдиңиз, [${member.first_name}](tg://user?id=${member.id})!\n` +
+          `Биздин тайпада ботторго тыюу салынган. Сураныч, төмөнкү математикалык суроого жооп бериңиз:\n\n` +
+          `**${a} + ${b} = ?**`,
+          { reply_markup: keyboard, parse_mode: "Markdown" }
+        );
+      } else {
+        // Text Captcha
+        const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+        let answer = "";
+        for (let i = 0; i < 4; i++) {
+          answer += chars.charAt(Math.floor(Math.random() * chars.length));
+        }
+        
+        let false1 = "";
+        let false2 = "";
+        for (let i = 0; i < 4; i++) {
+          false1 += chars.charAt(Math.floor(Math.random() * chars.length));
+          false2 += chars.charAt(Math.floor(Math.random() * chars.length));
+        }
+        
+        const options = [
+          { text: answer, isCorrect: true },
+          { text: false1, isCorrect: false },
+          { text: false2, isCorrect: false }
+        ].sort(() => Math.random() - 0.5);
+
+        keyboard = new InlineKeyboard()
+          .text(options[0].text, `cpt:${member.id}:${options[0].isCorrect ? 1 : 0}`)
+          .text(options[1].text, `cpt:${member.id}:${options[1].isCorrect ? 1 : 0}`)
+          .text(options[2].text, `cpt:${member.id}:${options[2].isCorrect ? 1 : 0}`);
+
+        await ctx.api.restrictChatMember(chatId, member.id, {
+          can_send_messages: false,
+          can_send_audios: false,
+          can_send_documents: false,
+          can_send_photos: false,
+          can_send_videos: false,
+          can_send_video_notes: false,
+          can_send_voice_notes: false,
+          can_send_polls: false,
+          can_send_other_messages: false,
+          can_add_web_page_previews: false,
+        });
+
+        await ctx.reply(
+          `👋 Кош келдиңиз, [${member.first_name}](tg://user?id=${member.id})!\n` +
+          `Сураныч, төмөндөгү текстке дал келген баскычты тандаңыз:\n\n` +
+          `**${answer.split("").join(" ")}**`,
+          { reply_markup: keyboard, parse_mode: "Markdown" }
+        );
+      }
     } catch (e) {
       logger.error(`Ошибка при установке капчи для ${member.id}`, e);
     }
@@ -128,8 +190,21 @@ export async function captchaCallbackHandler(ctx: Context, next: NextFunction): 
       await ctx.answerCallbackQuery("Кечиресиз, ката кетти.");
     }
   } else {
-    // Неправильный ответ -> Оставляем в Read Only и говорим, что неверно
-    await ctx.answerCallbackQuery("❌ Жооп туура эмес. Сиз бот окшойсуз.");
-    // Опционально: можно кикнуть пользователя, но гуманнее просто оставить Read Only.
+    // Неправильный ответ
+    await ctx.answerCallbackQuery("❌ Жооп туура эмес!");
+    try {
+      const config = await getGroupConfig(query.message!.chat.id);
+      if (config.captchaKick) {
+        // Выгоняем (бан + разбан для мягкого кика)
+        await ctx.api.banChatMember(query.message!.chat.id, targetUserId).catch(() => {});
+        await ctx.api.unbanChatMember(query.message!.chat.id, targetUserId).catch(() => {});
+        
+        if (query.message) {
+          await ctx.api.deleteMessage(query.message.chat.id, query.message.message_id).catch(() => {});
+        }
+      }
+    } catch (e) {
+      logger.error("Ошибка при обработке неверного ответа капчи", e);
+    }
   }
 }

@@ -55,6 +55,15 @@ async function handleWarn(ctx: Context, userId: number, chatId: number, name: st
   const warnKey = `chat:${chatId}:user:${userId}:warns`;
   const warns = await db.incrby(warnKey, warnIncrement);
   
+  try {
+    const config = await getGroupConfig(chatId);
+    if (config.warnExpireDays && config.warnExpireDays > 0) {
+      await db.expire(warnKey, config.warnExpireDays * 86400);
+    }
+  } catch (e) {
+    logger.error("Error setting warn expiration:", e);
+  }
+  
   await logAction(ctx.api, chatId, userId, name, "Эскертүү (Warn)", `${reason} (${warns}/${warnLimit})`, adminName);
 
   if (warns < warnLimit) {
@@ -92,9 +101,37 @@ export async function messageHandler(ctx: Context, next: NextFunction): Promise<
   const config = await getGroupConfig(chatId);
   const isAdmin = await isUserAdmin(ctx);
 
+  const executeViolation = async (action: string, reason: string) => {
+    try {
+      await ctx.deleteMessage().catch(() => {});
+      if (action === "warn") {
+        await handleWarn(ctx, userId, chatId, name, reason, config.muteDurationMinutes, config.warnLimit, config.warnAction);
+      } else if (action === "mute") {
+        const dur = config.muteDurationMinutes || 120;
+        await muteUser(ctx.api, chatId, userId, dur * 60);
+        await logAction(ctx.api, chatId, userId, name, "Мут", `${reason} (${dur} мүнөт)`, "Система (Бот)");
+        await ctx.reply(`🔇 [${name}](tg://user?id=${userId}) ${reason} үчүн жазуу укугунан ажыратылды (${dur} мүнөт).`, { parse_mode: "Markdown" });
+      } else if (action === "kick") {
+        await ctx.api.banChatMember(chatId, userId).catch(() => {});
+        await ctx.api.unbanChatMember(chatId, userId).catch(() => {});
+        await logAction(ctx.api, chatId, userId, name, "Кик", reason, "Система (Бот)");
+        await ctx.reply(`👢 [${name}](tg://user?id=${userId}) ${reason} үчүн чыгарылды.`, { parse_mode: "Markdown" });
+      } else if (action === "ban") {
+        await banUser(ctx.api, chatId, userId);
+        await logAction(ctx.api, chatId, userId, name, "Бан", reason, "Система (Бот)");
+        await ctx.reply(`🚫 [${name}](tg://user?id=${userId}) ${reason} үчүн бөгөттөлдү.`, { parse_mode: "Markdown" });
+      } else {
+        await logAction(ctx.api, chatId, userId, name, "Өчүрүү", reason, "Система (Бот)");
+      }
+    } catch (e) {
+      logger.error("Error executing violation action:", e);
+    }
+  };
+
   // --- LOCKDOWN MODE (Чукул кырдаал режими) ---
   if (config.lockdownMode && !isAdmin) {
-    await ctx.deleteMessage().catch(() => {});
+    const act = config.lockdownAction || "delete";
+    await executeViolation(act, "Өзгөчө кырдаал режими (Lockdown)");
     return;
   }
 
@@ -292,8 +329,11 @@ export async function messageHandler(ctx: Context, next: NextFunction): Promise<
   // --- Anti-Channel (Запрет писать от имени канала) ---
   if (config.antiChannel && ctx.message?.sender_chat?.type === "channel") {
     if (!ctx.message.is_automatic_forward) {
+      const act = config.channelAction || "ban";
       await ctx.deleteMessage().catch(() => {});
-      await ctx.api.banChatSenderChat(chatId, ctx.message.sender_chat.id).catch(() => {});
+      if (act === "ban") {
+        await ctx.api.banChatSenderChat(chatId, ctx.message.sender_chat.id).catch(() => {});
+      }
       return;
     }
   }
@@ -311,7 +351,10 @@ export async function messageHandler(ctx: Context, next: NextFunction): Promise<
     if (msgCount > config.antiflood.messages) {
       await ctx.deleteMessage().catch(() => {});
       const action = config.antiflood.action;
-      if (action === "mute") await muteUser(ctx.api, chatId, userId, 60 * 60); // 1 hour
+      if (action === "mute") {
+        const floodMute = config.floodMuteDuration || 120;
+        await muteUser(ctx.api, chatId, userId, floodMute * 60);
+      }
       if (action === "ban") await banUser(ctx.api, chatId, userId);
       if (action === "kick") {
         await ctx.api.banChatMember(chatId, userId).catch(() => {});
@@ -325,47 +368,55 @@ export async function messageHandler(ctx: Context, next: NextFunction): Promise<
   }
 
   // 2. Locks Module (Жесткие блокировки)
-  if (!shouldDelete) {
-    if (config.locks?.links && ctx.message.entities?.some(e => e.type === "url" || e.type === "text_link")) {
+  if (config.locks) {
+    let lockViolated = false;
+    let lockReason = "";
+
+    if (config.locks.links && ctx.message.entities?.some(e => e.type === "url" || e.type === "text_link")) {
       const whitelist = config.linkWhitelist || [];
       const allWhitelisted = isLinkWhitelisted(text, ctx.message.entities, whitelist);
       if (!allWhitelisted) {
-        shouldDelete = true;
-        warnReason = "Шилтемелер (Links) бөгөттөлгөн.";
+        lockViolated = true; lockReason = "Шилтемелер (Links) бөгөттөлгөн.";
       }
-    } else if (config.locks?.forwards && ctx.message.forward_origin) {
-      shouldDelete = true; warnReason = "Башка каналдан репост кылуу бөгөттөлгөн.";
-    } else if (config.locks?.media && (ctx.message.photo || ctx.message.video || ctx.message.document)) {
-      shouldDelete = true; warnReason = "Медиа жөнөтүү бөгөттөлгөн.";
-    } else if (config.locks?.photo && ctx.message.photo) {
-      shouldDelete = true; warnReason = "Сүрөт жөнөтүү бөгөттөлгөн.";
-    } else if (config.locks?.video && ctx.message.video) {
-      shouldDelete = true; warnReason = "Видео жөнөтүү бөгөттөлгөн.";
-    } else if (config.locks?.audio && ctx.message.audio) {
-      shouldDelete = true; warnReason = "Аудио жөнөтүү бөгөттөлгөн.";
-    } else if (config.locks?.document && ctx.message.document) {
-      shouldDelete = true; warnReason = "Файл/Документ жөнөтүү бөгөттөлгөн.";
-    } else if (config.locks?.stickers && ctx.message.sticker) {
-      shouldDelete = true; warnReason = "Стикерлер бөгөттөлгөн.";
-    } else if (config.locks?.gifs && ctx.message.animation) {
-      shouldDelete = true; warnReason = "GIF анимациялар бөгөттөлгөн.";
-    } else if (config.locks?.voices && ctx.message.voice) {
-      shouldDelete = true; warnReason = "Үн билдирүүлөр бөгөттөлгөн.";
-    } else if (config.locks?.videonote && ctx.message.video_note) {
-      shouldDelete = true; warnReason = "Кружоктор бөгөттөлгөн.";
-    } else if (config.locks?.games && ctx.message.game) {
-      shouldDelete = true; warnReason = "Оюндар бөгөттөлгөн.";
-    } else if (config.locks?.commands && text?.startsWith("/")) {
-      shouldDelete = true; warnReason = "Буйруктар бөгөттөлгөн.";
-    } else if (config.locks?.text && text && !ctx.message.photo && !ctx.message.video && !ctx.message.document && !ctx.message.voice && !ctx.message.video_note && !ctx.message.animation) {
-      shouldDelete = true; warnReason = "Жөнөкөй текст жазуу бөгөттөлгөн.";
-    } else if (config.locks?.arabic && text && /[\u0600-\u06FF]/.test(text)) {
-      shouldDelete = true; warnReason = "Араб ариби бөгөттөлгөн.";
+    } else if (config.locks.forwards && ctx.message.forward_origin) {
+      lockViolated = true; lockReason = "Башка каналдан репост кылуу бөгөттөлгөн.";
+    } else if (config.locks.media && (ctx.message.photo || ctx.message.video || ctx.message.document)) {
+      lockViolated = true; lockReason = "Медиа жөнөтүү бөгөттөлгөн.";
+    } else if (config.locks.photo && ctx.message.photo) {
+      lockViolated = true; lockReason = "Сүрөт жөнөтүү бөгөттөлгөн.";
+    } else if (config.locks.video && ctx.message.video) {
+      lockViolated = true; lockReason = "Видео жөнөтүү бөгөттөлгөн.";
+    } else if (config.locks.audio && ctx.message.audio) {
+      lockViolated = true; lockReason = "Аудио жөнөтүү бөгөттөлгөн.";
+    } else if (config.locks.document && ctx.message.document) {
+      lockViolated = true; lockReason = "Файл/Документ жөнөтүү бөгөттөлгөн.";
+    } else if (config.locks.stickers && ctx.message.sticker) {
+      lockViolated = true; lockReason = "Стикерлер бөгөттөлгөн.";
+    } else if (config.locks.gifs && ctx.message.animation) {
+      lockViolated = true; lockReason = "GIF анимациялар бөгөттөлгөн.";
+    } else if (config.locks.voices && ctx.message.voice) {
+      lockViolated = true; lockReason = "Үн билдирүүлөр бөгөттөлгөн.";
+    } else if (config.locks.videonote && ctx.message.video_note) {
+      lockViolated = true; lockReason = "Кружоктор бөгөттөлгөн.";
+    } else if (config.locks.games && ctx.message.game) {
+      lockViolated = true; lockReason = "Оюндар бөгөттөлгөн.";
+    } else if (config.locks.commands && text?.startsWith("/")) {
+      lockViolated = true; lockReason = "Буйруктар бөгөттөлгөн.";
+    } else if (config.locks.text && text && !ctx.message.photo && !ctx.message.video && !ctx.message.document && !ctx.message.voice && !ctx.message.video_note && !ctx.message.animation) {
+      lockViolated = true; lockReason = "Жөнөкөй текст жазуу бөгөттөлгөн.";
+    } else if (config.locks.arabic && text && /[\u0600-\u06FF]/.test(text)) {
+      lockViolated = true; lockReason = "Араб ариби бөгөттөлгөн.";
+    }
+
+    if (lockViolated) {
+      const act = config.locksAction || "delete";
+      await executeViolation(act, lockReason);
+      return;
     }
   }
 
   // 3. Blacklist
-  if (!shouldDelete && text) {
+  if (text) {
     try {
       const blacklist = await db.hgetall(`chat:${chatId}:blacklist`);
       if (blacklist) {
@@ -418,21 +469,20 @@ export async function messageHandler(ctx: Context, next: NextFunction): Promise<
     } catch(e) {}
   }
 
-  // Остальные старые проверки: Ночной дозор, Мат, Спам, Имя и т.д.
+  // 4. Anti-Arabic Name
   if (config.antiArabicName) {
     const fullName = `${ctx.from.first_name} ${ctx.from.last_name || ""}`;
     if (ARABIC_HIEROGLYPH_REGEX.test(fullName)) {
       try {
-        await ctx.deleteMessage();
-        await banUser(ctx.api, chatId, userId);
-        await logAction(ctx.api, chatId, userId, name, "Бан", "Атында араб/иероглиф тамгалары бар", "Система (Бот)");
-        await ctx.reply(`❌ [${name}](tg://user?id=${userId}) четтетилди. Атында араб/иероглиф тамгалары бар.`, { parse_mode: "Markdown" });
+        const act = config.arabicAction || "ban";
+        await executeViolation(act, "Атында араб/иероглиф тамгалары бар");
         return;
       } catch (e) {}
     }
   }
 
-  if (!shouldDelete && config.nightModeEnabled) {
+  // 5. Night Mode (Түнкү дозор)
+  if (config.nightModeEnabled) {
     const utcHour = new Date().getUTCHours();
     const bishkekHour = (utcHour + 6) % 24;
     const hasMediaOrLink = ctx.message.photo || ctx.message.video || ctx.message.document || ctx.message.entities?.some(e => e.type === "url" || e.type === "text_link" || e.type === "mention");
@@ -448,45 +498,41 @@ export async function messageHandler(ctx: Context, next: NextFunction): Promise<
     }
 
     if (isNight && hasMediaOrLink) {
-      shouldDelete = true; warnReason = "Түнкү дозор: Шилтеме/Медиа жөнөтүүгө болбойт.";
+      const act = config.nightModeAction || "delete";
+      await executeViolation(act, "Түнкү дозор: Шилтеме/Медиа жөнөтүүгө болбойт.");
+      return;
     }
   }
 
-  if (!shouldDelete && config.quarantineEnabled) {
+  // 6. Quarantine (Карантин)
+  if (config.quarantineEnabled) {
     const hasLinkOrForward = ctx.message.forward_origin || ctx.message.entities?.some(e => e.type === "url" || e.type === "text_link");
     if (hasLinkOrForward) {
       const joinDate = await db.get<number>(`chat:${chatId}:user:${userId}:joinDate`);
       if (joinDate) {
         const hoursSinceJoin = (Date.now() - joinDate) / (1000 * 60 * 60);
         if (hoursSinceJoin < 24) {
-          shouldDelete = true; warnReason = "Карантин: 24 саат ичинде шилтеме жөнөтүүгө болбойт.";
+          await executeViolation("delete", "Карантин: 24 саат ичинде шилтеме жөнөтүүгө болбойт.");
+          return;
         }
       }
     }
   }
 
-  // Swear filter now uses the configurable swear list from DB
-  if (!shouldDelete && config.antiSwearEnabled && text) {
+  // 7. Swear Filter (Анти-Сөгүнүү)
+  if (config.antiSwearEnabled && text) {
     try {
       const swearList = await db.smembers(`chat:${chatId}:swearwords`);
       if (swearList && swearList.length > 0) {
         for (const sw of swearList) {
           if (lowerText.includes(sw.toLowerCase())) {
-            shouldDelete = true;
-            warnReason = `Сөгүнүү же адепсиз сөз: ${sw}`;
-            break;
+            const act = config.swearAction || "warn";
+            await executeViolation(act, `Сөгүнүү же адепсиз сөз: ${sw}`);
+            return;
           }
         }
       }
     } catch (e) {}
-  }
-
-  if (shouldDelete) {
-    try {
-      await ctx.deleteMessage();
-      await handleWarn(ctx, userId, chatId, name, warnReason, config.muteDurationMinutes, config.warnLimit, config.warnAction);
-    } catch (e) {}
-    return;
   }
 
   // 4. Карма (Рахмат / + / -)
