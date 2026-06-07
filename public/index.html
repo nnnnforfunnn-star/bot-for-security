@@ -1554,229 +1554,6 @@
                 <div id="commands_container"></div>
               </div>
             </div>
-
-            <!-- Command Toggle Manager Card -->
-            <div class="card" style="margin-top: 24px;">
-              <div class="card-header">
-                <div class="card-title">⚙️ Буйруктарды жандыруу жана өчүрүү</div>
-                <div class="card-description">Боттун кээ бир функцияларын же буйруктарын тайпа үчүн толугу менен өчүрүп койсо болот.</div>
-              </div>
-              <div class="card-body">
-                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 14px;">
-                  
-                  <div class="setting-row" style="border: 1px solid rgba(255,255,255,0.05); padding: 10px; border-radius: 8px;">
-                    <div class="setting-info">
-                      <div class="setting-name" style="font-size: 13px;">Бан (/ban)</div>
-                    </div>
-                    <label class="switch">
-                      <input type="checkbox" id="cmd_toggle_ban" checked>
-                      <span class="slider"></span>
-                    </label>
-                  </div>
-
-                  <div class="setting-row" style="border: 1px solid rgba(255,255,255,0.05); padding: 10px; border-radius: 8px;">
-                    <div class="setting-info">
-                      <div class="setting-name" style="font-size: 13px;">Мут (/mute)</div>
-                    </div>
-                    <label class="switch">
-                      <input type="checkbox" id="cmd_toggle_mute" checked>
-                      <span class="slider"></span>
-                    </label>
-                  </div>
-
-                  <div class="setting-row" style="border: 1px solid rgba(255,255,255,0.05); padding: 10px; border-radius: 8px;">
-                    <div class="setting-info">
-                      <div class="setting-name" style="font-size: 13px;">Кик (/kick)</div>
-                    </div>
-                    <label class="switch">
-                      <input type="checkbox" id="cmd_toggle_kick" checked>
-                      <span class="slider"></span>
-                    </label>
-                  </div>
-
-                  <div class="setting-row" style="border: 1px solid rgba(255,255,255,0.05); padding: 10px; border-radius: 8px;">
-                    <div class="setting-info">
-                      <div class="setting-name" style="font-size: 13px;">Варн (/warn)</div>
-                    </div>
-                    <label class="switch">
-                      <input type="checkbox" id="cmd_toggle_warn" checked>
-                      <span class="slider"></span>
-                    </label>
-                  </div>
-
-                  <div class="setting-row" style="border: 1px solid rgba(255,255,255,0.05); padding: 10px; border-radius: 8px;">
-                    <div class="setting-info">
-                      <div class="setting-name" style="font-size: 13px;">Тазалоо (/purge)</div>
-                    </div>
-                    <label class="switch">
-                      <input type="checkbox" id="cmd_toggle_purge" checked>
-                      <span class="slider"></span>
-                    </label>
-                  </div>
-
-                  <div class="setting-row" style="border: 1px solid rgba(255,255,255,0.05); padding: 10px; border-radius: 8px;">
-                    <div class="setting-info">
-                      <div class="setting-name" style="font-size: 13px;">Өчүрүү (/del)</div>
-                    </div>
-                    <label class="switch">
-                      <input type="checkbox" id="cmd_toggle_del" checked>
-                      <span class="slider"></span>
-                    </label>
-                  </div>
-
-                  <div class="setting-row" style="border: 1px solid rgba(255,255,255,0.05); padding: 10px; border-radius: 8px;">
-                    <div class="setting-info">
-                      <div class="setting-name" style="font-size: 13px;">Жай Режим (/slowmode)</div>
-                    </div>
-                    <label class="switch">
-                      <input type="checkbox" id="cmd_toggle_slowmode" checked>
-                      <span class="slider"></span>
-                    </label>
-                  </div>
-
-                  <div class="setting-row" style="border: 1px solid rgba(255,255,255,0.05); padding: 10px; border-radius: 8px;">
-                    <div class="setting-info">
-                      <div class="setting-name" style="font-size: 13px;">Админ кылуу (/promote)</div>
-                    </div>
-                    <label class="switch">
-                      <input type="checkbox" id="cmd_toggle_promote" checked>
-                      <span class="slider"></span>
-                    </label>
-                  </div>
-
-                  <div class="setting-row" style="border: 1px solid rgba(255,255,255,0.05); padding: 10px; border-radius: 8px;">
-                    <div class="setting-info">
-                      <div class="setting-name" style="font-size: 13px;">Админден алуу (/demote)</div>
-                    </div>
-                    <label class="switch">
-                      <input type="checkbox" id="cmd_toggle_demote" checked>
-                      <span class="slider"></span>
-                    </label>
-                  </div>
-
-                  <div class="setting-row" style="border: 1px solid rgba(255,255,255,0.05); padding: 10px; border-radius: 8px;">
-                    <div class="setting-info">
-                      <div class="setting-name" style="font-size: 13px;">Эрежелер (/rules)</div>
-                    </div>
-                    <label class="switch">
-                      <input type="checkbox" id="cmd_toggle_rules" checked>
-                      <span class="slider"></span>
-                    </label>
-                  </div>
-
-                  <div class="setting-row" style="border: 1px solid rgba(255,255,255,0.05); padding: 10px; border-radius: 8px;">
-                    <div class="setting-info">
-                      <div class="setting-name" style="font-size: 13px;">Маалымат (/info)</div>
-                    </div>
-                    <label class="switch">
-                      <input type="checkbox" id="cmd_toggle_info" checked>
-                      <span class="slider"></span>
-                    </label>
-                  </div>
-
-                  <div class="setting-row" style="border: 1px solid rgba(255,255,255,0.05); padding: 10px; border-radius: 8px;">
-                    <div class="setting-info">
-                      <div class="setting-name" style="font-size: 13px;">Админдер (/admins)</div>
-                    </div>
-                    <label class="switch">
-                      <input type="checkbox" id="cmd_toggle_admins" checked>
-                      <span class="slider"></span>
-                    </label>
-                  </div>
-
-                  <div class="setting-row" style="border: 1px solid rgba(255,255,255,0.05); padding: 10px; border-radius: 8px;">
-                    <div class="setting-info">
-                      <div class="setting-name" style="font-size: 13px;">Менин профилим (/me)</div>
-                    </div>
-                    <label class="switch">
-                      <input type="checkbox" id="cmd_toggle_me" checked>
-                      <span class="slider"></span>
-                    </label>
-                  </div>
-
-                  <div class="setting-row" style="border: 1px solid rgba(255,255,255,0.05); padding: 10px; border-radius: 8px;">
-                    <div class="setting-info">
-                      <div class="setting-name" style="font-size: 13px;">Рейтинг (/top)</div>
-                    </div>
-                    <label class="switch">
-                      <input type="checkbox" id="cmd_toggle_top" checked>
-                      <span class="slider"></span>
-                    </label>
-                  </div>
-
-                  <div class="setting-row" style="border: 1px solid rgba(255,255,255,0.05); padding: 10px; border-radius: 8px;">
-                    <div class="setting-info">
-                      <div class="setting-name" style="font-size: 13px;">Шилтеме алуу (/link)</div>
-                    </div>
-                    <label class="switch">
-                      <input type="checkbox" id="cmd_toggle_link" checked>
-                      <span class="slider"></span>
-                    </label>
-                  </div>
-
-                  <div class="setting-row" style="border: 1px solid rgba(255,255,255,0.05); padding: 10px; border-radius: 8px;">
-                    <div class="setting-info">
-                      <div class="setting-name" style="font-size: 13px;">Бата берүү (/bata)</div>
-                    </div>
-                    <label class="switch">
-                      <input type="checkbox" id="cmd_toggle_bata" checked>
-                      <span class="slider"></span>
-                    </label>
-                  </div>
-
-                  <div class="setting-row" style="border: 1px solid rgba(255,255,255,0.05); padding: 10px; border-radius: 8px;">
-                    <div class="setting-info">
-                      <div class="setting-name" style="font-size: 13px;">РП Аракеттер (обнять...)</div>
-                    </div>
-                    <label class="switch">
-                      <input type="checkbox" id="cmd_toggle_rp" checked>
-                      <span class="slider"></span>
-                    </label>
-                  </div>
-
-                  <div class="setting-row" style="border: 1px solid rgba(255,255,255,0.05); padding: 10px; border-radius: 8px;">
-                    <div class="setting-info">
-                      <div class="setting-name" style="font-size: 13px;">Өзүн чыгаруу (/kickme)</div>
-                    </div>
-                    <label class="switch">
-                      <input type="checkbox" id="cmd_toggle_kickme" checked>
-                      <span class="slider"></span>
-                    </label>
-                  </div>
-
-                  <div class="setting-row" style="border: 1px solid rgba(255,255,255,0.05); padding: 10px; border-radius: 8px;">
-                    <div class="setting-info">
-                      <div class="setting-name" style="font-size: 13px;">Баарын унчукпоо (/muteall)</div>
-                    </div>
-                    <label class="switch">
-                      <input type="checkbox" id="cmd_toggle_muteall" checked>
-                      <span class="slider"></span>
-                    </label>
-                  </div>
-
-                  <div class="setting-row" style="border: 1px solid rgba(255,255,255,0.05); padding: 10px; border-radius: 8px;">
-                    <div class="setting-info">
-                      <div class="setting-name" style="font-size: 13px;">Чатты ачуу (/unmuteall)</div>
-                    </div>
-                    <label class="switch">
-                      <input type="checkbox" id="cmd_toggle_unmuteall" checked>
-                      <span class="slider"></span>
-                    </label>
-                  </div>
-
-                  <div class="setting-row" style="border: 1px solid rgba(255,255,255,0.05); padding: 10px; border-radius: 8px;">
-                    <div class="setting-info">
-                      <div class="setting-name" style="font-size: 13px;">Зомбилерди өчүрүү (/zombies)</div>
-                    </div>
-                    <label class="switch">
-                      <input type="checkbox" id="cmd_toggle_zombies" checked>
-                      <span class="slider"></span>
-                    </label>
-                  </div>
-
-                </div>
-              </div>
-            </div>
           </div>
 
           <!-- 5. ТАБ: КАТЫШУУЧУЛАР (USERS) -->
@@ -1971,7 +1748,28 @@
       kick: { label: "Кик (тайпадан чыгаруу)", action: "kick", alias: "кик, kick", replyText: "", autoDelete: false },
       warn: { label: "Варн (эскертүү берүү)", action: "warn", alias: "эскертүү, warn", replyText: "", autoDelete: false, warnCount: 1 },
       unwarn: { label: "Варнды өчүрүү", action: "unwarn", alias: "анwarn, unwarn", replyText: "", autoDelete: false },
-      del: { label: "Өчүрүү (билдирүүнү өчүрүү)", action: "del", alias: "өчүр, del", replyText: "", autoDelete: false }
+      warns: { label: "Эскертүү санын көрүү", action: "warns", alias: "эскертүүлөр, warns", replyText: "", autoDelete: false },
+      del: { label: "Өчүрүү (билдирүүнү өчүрүү)", action: "del", alias: "өчүр, del", replyText: "", autoDelete: false },
+      purge: { label: "Тазалоо (бир нече билдирүүнү өчүрүү)", action: "purge", alias: "тазалоо, purge", replyText: "", autoDelete: false },
+      report: { label: "Админдерге кабарлоо (Репорт)", action: "report", alias: "репорт, report", replyText: "", autoDelete: false },
+      pin: { label: "Билдирүүнү кадап коюу (Пин)", action: "pin", alias: "када, pin", replyText: "", autoDelete: false },
+      unpin: { label: "Билдирүүнү кадоодон чыгаруу (Анпин)", action: "unpin", alias: "анпин, unpin", replyText: "", autoDelete: false },
+      slowmode: { label: "Жай Режим (Slowmode)", action: "slowmode", alias: "жайрежим, slowmode", replyText: "", autoDelete: false },
+      promote: { label: "Админ даражасын берүү", action: "promote", alias: "админ кыл, promote", replyText: "", autoDelete: false },
+      demote: { label: "Админден алуу", action: "demote", alias: "админден ал, demote", replyText: "", autoDelete: false },
+      rules: { label: "Тайпа эрежелери", action: "rules", alias: "эрежелер, rules", replyText: "", autoDelete: false },
+      info: { label: "Катышуучу жөнүндө маалымат", action: "info", alias: "инфо, info", replyText: "", autoDelete: false },
+      admins: { label: "Администраторлор тизмеси", action: "admins", alias: "админдер, admins", replyText: "", autoDelete: false },
+      me: { label: "Менин профилим", action: "me", alias: "мен, me", replyText: "", autoDelete: false },
+      top: { label: "Сый-урмат рейтинги", action: "top", alias: "топ, top", replyText: "", autoDelete: false },
+      link: { label: "Тайпа шилтемесин алуу", action: "link", alias: "шилтеме, link", replyText: "", autoDelete: false },
+      bata: { label: "Бата берүү", action: "bata", alias: "бата, bata", replyText: "", autoDelete: false },
+      rp: { label: "РП Аракеттер (кучактоо, өпүү, ...)", action: "rp", alias: "рп, rp", replyText: "", autoDelete: false },
+      kickme: { label: "Өзүн чаттан чыгаруу", action: "kickme", alias: "чыгуу, kickme", replyText: "", autoDelete: false },
+      muteall: { label: "Тайпада жазууну толук бөгөттөө", action: "muteall", alias: "жабуу, muteall", replyText: "", autoDelete: false },
+      unmuteall: { label: "Чатты ачуу (Бөгөттү алуу)", action: "unmuteall", alias: "ачуу, unmuteall", replyText: "", autoDelete: false },
+      zombies: { label: "Өчүрүлгөн аккаунттарды тазалоо", action: "zombies", alias: "зомби, zombies", replyText: "", autoDelete: false },
+      id: { label: "ID маалыматтарын алуу", action: "id", alias: "ид, id", replyText: "", autoDelete: false }
     };
 
     function showToast(msg, type='success') {
@@ -2129,11 +1927,7 @@
 
       document.getElementById('linkWhitelist').value = (cfg.linkWhitelist || []).join(', ');
 
-      const disabledCmds = cfg.disabledCommands || {};
-      ['ban','mute','kick','warn','purge','del','slowmode','promote','demote','rules','info','admins','me','top','link','bata','rp','kickme','muteall','unmuteall','zombies'].forEach(cmd => {
-        const el = document.getElementById('cmd_toggle_' + cmd);
-        if (el) el.checked = !disabledCmds[cmd];
-      });
+
 
       document.getElementById('warnLimit').value = cfg.warnLimit || 3;
       document.getElementById('muteDurationMinutes').value = cfg.muteDurationMinutes || 120;
@@ -2471,6 +2265,7 @@
     function renderCommandsList() {
       const container = document.getElementById('commands_container');
       const customCmds = appData.config.customCommands || {};
+      const disabledCmds = appData.config.disabledCommands || {};
 
       let html = "";
       for (const [key, def] of Object.entries(DEFAULT_BOT_COMMANDS)) {
@@ -2481,13 +2276,20 @@
         const autoDelete = saved.autoDelete !== undefined ? saved.autoDelete : def.autoDelete;
         const muteDuration = saved.muteDuration !== undefined ? saved.muteDuration : (def.muteDuration || 120);
         const warnCount = saved.warnCount !== undefined ? saved.warnCount : (def.warnCount || 1);
+        const isEnabled = disabledCmds[key] !== true;
 
         html += `
         <div class="card" style="margin-bottom:12px; border-color: rgba(255,255,255,0.04);">
-          <div class="card-header" style="padding:12px 16px; cursor:pointer;" onclick="this.nextElementSibling.classList.toggle('active'); this.nextElementSibling.style.display = this.nextElementSibling.classList.contains('active') ? 'block' : 'none';">
-            <div style="display:flex; justify-content:space-between; align-items:center;">
+          <div class="card-header" style="padding:12px 16px; cursor:pointer;" onclick="if(event.target.tagName !== 'INPUT' && !event.target.classList.contains('slider') && !event.target.classList.contains('switch')) { this.nextElementSibling.classList.toggle('active'); this.nextElementSibling.style.display = this.nextElementSibling.classList.contains('active') ? 'block' : 'none'; }">
+            <div style="display:flex; justify-content:space-between; align-items:center; width: 100%;">
               <div><b>/${key}</b> - <span style="font-size:13px; color:var(--text-muted)">${def.label}</span></div>
-              <div style="font-size:11px; color:var(--accent);">Жөндөө ▼</div>
+              <div style="display:flex; align-items:center; gap:12px;" onclick="event.stopPropagation();">
+                <label class="switch" style="transform: scale(0.8); margin: 0;">
+                  <input type="checkbox" id="cmd_toggle_${key}" ${isEnabled ? 'checked' : ''}>
+                  <span class="slider"></span>
+                </label>
+                <div style="font-size:11px; color:var(--accent);">Жөндөө ▼</div>
+              </div>
             </div>
           </div>
           <div class="card-body" style="display:none; padding:16px; background:rgba(0,0,0,0.1);">
@@ -2519,7 +2321,7 @@
               </div>
               
               <div class="form-group" id="cmd_sub_container_${key}" style="display: ${action==='mute'||action==='warn'?'block':'none'}">
-                <label class="form-label" id="cmd_val_label_${key}">Мут убактысы (мүнөт)</label>
+                <label class="form-label" id="cmd_val_label_${key}">${action==='mute'?'Мут убактысы (мүнөт)':'Эскертүү саны'}</label>
                 <input type="number" class="form-input" id="cmd_val_${key}" value="${action==='mute'?muteDuration:warnCount}">
               </div>
             </div>
@@ -2659,9 +2461,12 @@
         .filter(x => x.length > 0);
 
       if (!appData.config.disabledCommands) appData.config.disabledCommands = {};
-      ['ban','mute','kick','warn','purge','del','slowmode','promote','demote','rules','info','admins','me','top','link','bata','rp','kickme','muteall','unmuteall','zombies'].forEach(cmd => {
-        appData.config.disabledCommands[cmd] = !document.getElementById('cmd_toggle_' + cmd).checked;
-      });
+      for (const key of Object.keys(DEFAULT_BOT_COMMANDS)) {
+        const el = document.getElementById('cmd_toggle_' + key);
+        if (el) {
+          appData.config.disabledCommands[key] = !el.checked;
+        }
+      }
 
       if (!appData.config.antiflood) appData.config.antiflood = {};
       appData.config.antiflood.enabled = document.getElementById('antiflood_enabled').checked;
