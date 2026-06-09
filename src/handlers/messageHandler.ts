@@ -9,8 +9,9 @@ import { logAction } from "../utils/actionLogger.js";
 import { zombiesCommand, muteallCommand, unmuteallCommand, pinCommand, unpinCommand, kickmeCommand, idCommand, warnsCommand, unwarnCommand } from "./modCommands.js";
 import { rulesCommand, meCommand, purgeCommand, reportCommand } from "./adminCommands.js";
 import { linkCommand, adminsCommand, infoCommand, slowmodeCommand, promoteCommand, demoteCommand } from "./groupCommands.js";
-import { topUrmatCommand } from "./funHandler.js";
+import { topUrmatCommand, bataCommand } from "./funHandler.js";
 import { handleMuteCommand, handleUnmuteCommand, handleBanCommand, handleUnbanCommand } from "./commandHandler.js";
+import { adminPanelCommand } from "./adminPanel.js";
 
 const commandHandlers: Record<string, (ctx: Context) => Promise<any>> = {
   zombies: zombiesCommand,
@@ -290,6 +291,84 @@ export async function messageHandler(ctx: Context, next: NextFunction): Promise<
         }
       }
     } catch (e) {}
+  }
+
+  // 0. Встроенные сокращенные текстовые команды (Кыргызские / Русские алиасы)
+  const builtinCommandAliases: Record<string, { handler: (ctx: Context) => Promise<any>; requiresAdmin: boolean }> = {
+    "эрежелер": { handler: rulesCommand, requiresAdmin: false },
+    "эреже": { handler: rulesCommand, requiresAdmin: false },
+    "rules": { handler: rulesCommand, requiresAdmin: false },
+    
+    "админдер": { handler: adminsCommand, requiresAdmin: false },
+    "admins": { handler: adminsCommand, requiresAdmin: false },
+    
+    "репорт": { handler: reportCommand, requiresAdmin: false },
+    "report": { handler: reportCommand, requiresAdmin: false },
+    "жалоо": { handler: reportCommand, requiresAdmin: false },
+    
+    "топ": { handler: topUrmatCommand, requiresAdmin: false },
+    "top": { handler: topUrmatCommand, requiresAdmin: false },
+    
+    "бата": { handler: bataCommand, requiresAdmin: false },
+    "bata": { handler: bataCommand, requiresAdmin: false },
+    
+    "мен": { handler: meCommand, requiresAdmin: false },
+    "профиль": { handler: meCommand, requiresAdmin: false },
+    "профилим": { handler: meCommand, requiresAdmin: false },
+    "me": { handler: meCommand, requiresAdmin: false },
+    
+    "ид": { handler: idCommand, requiresAdmin: false },
+    "id": { handler: idCommand, requiresAdmin: false },
+    
+    "эскертүүлөр": { handler: warnsCommand, requiresAdmin: false },
+    "страйктар": { handler: warnsCommand, requiresAdmin: false },
+    "warns": { handler: warnsCommand, requiresAdmin: false },
+
+    // Команды, требующие прав администратора
+    "жабуу": { handler: muteallCommand, requiresAdmin: true },
+    "muteall": { handler: muteallCommand, requiresAdmin: true },
+    
+    "ачуу": { handler: unmuteallCommand, requiresAdmin: true },
+    "unmuteall": { handler: unmuteallCommand, requiresAdmin: true },
+    
+    "шилтеме": { handler: linkCommand, requiresAdmin: true },
+    "link": { handler: linkCommand, requiresAdmin: true },
+    
+    "зомби": { handler: zombiesCommand, requiresAdmin: true },
+    "zombies": { handler: zombiesCommand, requiresAdmin: true },
+    
+    "башкаруу": { handler: adminPanelCommand, requiresAdmin: true },
+    "настройки": { handler: adminPanelCommand, requiresAdmin: true },
+    "settings": { handler: adminPanelCommand, requiresAdmin: true },
+  };
+
+  const firstWord = lowerText.split(/\s+/)[0];
+  const matchedBuiltin = builtinCommandAliases[firstWord];
+
+  if (matchedBuiltin) {
+    if (!matchedBuiltin.requiresAdmin || isAdmin) {
+      let cmdName = "";
+      if (matchedBuiltin.handler === rulesCommand) cmdName = "rules";
+      else if (matchedBuiltin.handler === adminsCommand) cmdName = "admins";
+      else if (matchedBuiltin.handler === reportCommand) cmdName = "report";
+      else if (matchedBuiltin.handler === topUrmatCommand) cmdName = "top";
+      else if (matchedBuiltin.handler === bataCommand) cmdName = "bata";
+      else if (matchedBuiltin.handler === meCommand) cmdName = "me";
+      else if (matchedBuiltin.handler === idCommand) cmdName = "id";
+      else if (matchedBuiltin.handler === warnsCommand) cmdName = "warns";
+      else if (matchedBuiltin.handler === muteallCommand) cmdName = "muteall";
+      else if (matchedBuiltin.handler === unmuteallCommand) cmdName = "unmuteall";
+      else if (matchedBuiltin.handler === linkCommand) cmdName = "link";
+      else if (matchedBuiltin.handler === zombiesCommand) cmdName = "zombies";
+      else if (matchedBuiltin.handler === adminPanelCommand) cmdName = "settings";
+
+      if (cmdName && config.disabledCommands && config.disabledCommands[cmdName] === true) {
+        // Команда отключена, игнорируем
+      } else {
+        await matchedBuiltin.handler(ctx);
+        return;
+      }
+    }
   }
 
   // 0. Текстовые команды администратора (сокращенные команды / алиасы из веб-панели и стандартные команды)
