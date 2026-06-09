@@ -4,7 +4,7 @@ import { logger } from "./utils/logger.js";
 import { globalErrorHandler } from "./middlewares/errorHandler.js";
 import { rateLimiter } from "./middlewares/rateLimiter.js";
 import { db } from "./utils/db.js";
-import { joinHandler, captchaCallbackHandler } from "./handlers/joinHandler.js";
+import { joinHandler, captchaCallbackHandler, rulesAgreementCallbackHandler, goodbyeHandler } from "./handlers/joinHandler.js";
 import { messageHandler } from "./handlers/messageHandler.js";
 import { adminPanelCommand, adminPanelCallback, sendAdminPanel } from "./handlers/adminPanel.js";
 import { bataCommand, topUrmatCommand } from "./handlers/funHandler.js";
@@ -293,9 +293,12 @@ bot.on("callback_query:data", async (ctx, next) => {
 });
 
 // Обработчики
+bot.on("message:new_chat_members", joinHandler);
+bot.on("message:left_chat_member", goodbyeHandler);
 bot.on("chat_member", joinHandler);
 bot.on("callback_query:data", adminPanelCallback);
 bot.on("callback_query:data", captchaCallbackHandler);
+bot.on("callback_query:data", rulesAgreementCallbackHandler);
 bot.on("callback_query:data", helpCallback);
 bot.on("message", messageHandler);
 bot.on("edited_message", messageHandler);

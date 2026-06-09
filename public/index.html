@@ -1491,6 +1491,89 @@
                 </div>
               </div>
             </div>
+
+            <!-- Advanced Onboarding Settings Card -->
+            <div class="card" style="margin-top: 20px;">
+              <div class="card-header">
+                <div class="card-title">🚀 Өркүндөтүлгөн саламдашуу жана Кирүү башкаруусу</div>
+                <div class="card-description">Тайпанын жаңы катышуучуларын тосуп алууну максималдуу түрдө көзөмөлдөө.</div>
+              </div>
+              <div class="card-body">
+                <!-- 1. Auto delete settings -->
+                <div class="grid-2">
+                  <div class="form-group">
+                    <label class="form-label">Саламдашууну автоматтык өчүрүү (секунд)</label>
+                    <input type="number" class="form-input" id="welcomeAutoDelete" placeholder="Мисалы: 30 (0 - өчүрбөө)">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Коштошууну автоматтык өчүрүү (секунд)</label>
+                    <input type="number" class="form-input" id="goodbyeAutoDelete" placeholder="Мисалы: 15 (0 - өчүрбөө)">
+                  </div>
+                </div>
+
+                <!-- 2. Auto Pin Welcome -->
+                <div class="setting-row" style="margin-top: 14px;">
+                  <div class="setting-info">
+                    <div class="setting-name">Саламдашууну автоматтык түрдө пин кылуу</div>
+                    <div class="setting-desc">Жаңы кошулган колдонуучунун саламдашуу билдирүүсүн өйдө жака кадап коёт.</div>
+                  </div>
+                  <label class="switch">
+                    <input type="checkbox" id="welcomePin">
+                    <span class="slider"></span>
+                  </label>
+                </div>
+
+                <!-- 3. Rules Agreement -->
+                <div class="setting-row" style="margin-top: 14px;">
+                  <div class="setting-info">
+                    <div class="setting-name">Эрежелерди кабыл алууну талап кылуу</div>
+                    <div class="setting-desc">Катышуучу баскычты басып эрежелерди кабыл алмайынча билдирүү жөнөтө албайт.</div>
+                  </div>
+                  <label class="switch">
+                    <input type="checkbox" id="rulesAgreement">
+                    <span class="slider"></span>
+                  </label>
+                </div>
+
+                <!-- 4. Newcomer Restrictions -->
+                <div class="setting-row" style="margin-top: 14px;">
+                  <div class="setting-info">
+                    <div class="setting-name">Жаңы катышуучулар үчүн убактылуу чектөө (Карантин)</div>
+                    <div class="setting-desc">Тайпага жаңы киргендер медиа жана шилтемелерди жөнөтө албай калат.</div>
+                  </div>
+                  <label class="switch">
+                    <input type="checkbox" id="newcomerRestrict">
+                    <span class="slider"></span>
+                  </label>
+                </div>
+                <div class="form-group" style="margin-top: 10px;">
+                  <label class="form-label">Чектөө убактысы (мүнөт)</label>
+                  <input type="number" class="form-input" id="newcomerRestrictDuration" placeholder="Стандарттуу: 60">
+                </div>
+
+                <!-- 5. Join Filters -->
+                <div class="setting-row" style="margin-top: 14px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 14px;">
+                  <div class="setting-info">
+                    <div class="setting-name">Никнейми (username) жокторду киргизбөө</div>
+                    <div class="setting-desc">Атында @username жазылбаган аккаунттарды дароо тайпадан чыгарат.</div>
+                  </div>
+                  <label class="switch">
+                    <input type="checkbox" id="joinFilterNoUsername">
+                    <span class="slider"></span>
+                  </label>
+                </div>
+                <div class="setting-row" style="margin-top: 14px; border-bottom: none;">
+                  <div class="setting-info">
+                    <div class="setting-name">Профиль сүрөтү (photo) жокторду киргизбөө</div>
+                    <div class="setting-desc">Профиль сүрөтү коюлбаган жаңы аккаунттарды дароо тайпадан чыгарат.</div>
+                  </div>
+                  <label class="switch">
+                    <input type="checkbox" id="joinFilterNoPhoto">
+                    <span class="slider"></span>
+                  </label>
+                </div>
+              </div>
+            </div>
           </div>
 
           <!-- 3. ТАБ: ЧЕКТӨӨЛӨР & ЭРЕЖЕЛЕР -->
@@ -2030,6 +2113,15 @@
       const goodbye = cfg.goodbye || {};
       document.getElementById('goodbye_enabled').checked = goodbye.enabled || false;
       document.getElementById('goodbye_text').value = goodbye.text || '';
+
+      document.getElementById('welcomeAutoDelete').value = cfg.welcomeAutoDelete || 0;
+      document.getElementById('goodbyeAutoDelete').value = cfg.goodbyeAutoDelete || 0;
+      document.getElementById('welcomePin').checked = cfg.welcomePin || false;
+      document.getElementById('rulesAgreement').checked = cfg.rulesAgreement || false;
+      document.getElementById('newcomerRestrict').checked = cfg.newcomerRestrict || false;
+      document.getElementById('newcomerRestrictDuration').value = cfg.newcomerRestrictDuration || 60;
+      document.getElementById('joinFilterNoUsername').checked = cfg.joinFilterNoUsername || false;
+      document.getElementById('joinFilterNoPhoto').checked = cfg.joinFilterNoPhoto || false;
 
       document.getElementById('rulesText').value = cfg.rulesText || '';
     }
@@ -2575,6 +2667,15 @@
       if (!appData.config.goodbye) appData.config.goodbye = {};
       appData.config.goodbye.enabled = document.getElementById('goodbye_enabled').checked;
       appData.config.goodbye.text = document.getElementById('goodbye_text').value;
+
+      appData.config.welcomeAutoDelete = parseInt(document.getElementById('welcomeAutoDelete').value) || 0;
+      appData.config.goodbyeAutoDelete = parseInt(document.getElementById('goodbyeAutoDelete').value) || 0;
+      appData.config.welcomePin = document.getElementById('welcomePin').checked;
+      appData.config.rulesAgreement = document.getElementById('rulesAgreement').checked;
+      appData.config.newcomerRestrict = document.getElementById('newcomerRestrict').checked;
+      appData.config.newcomerRestrictDuration = parseInt(document.getElementById('newcomerRestrictDuration').value) || 60;
+      appData.config.joinFilterNoUsername = document.getElementById('joinFilterNoUsername').checked;
+      appData.config.joinFilterNoPhoto = document.getElementById('joinFilterNoPhoto').checked;
 
       appData.config.rulesText = document.getElementById('rulesText').value;
 

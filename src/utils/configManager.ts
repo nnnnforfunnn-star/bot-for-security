@@ -72,6 +72,16 @@ export interface GroupConfig {
     enabled: boolean;
     text: string;
   };
+
+  // Advanced Onboarding settings
+  welcomeAutoDelete?: number;
+  goodbyeAutoDelete?: number;
+  newcomerRestrict?: boolean;
+  newcomerRestrictDuration?: number;
+  rulesAgreement?: boolean;
+  welcomePin?: boolean;
+  joinFilterNoUsername?: boolean;
+  joinFilterNoPhoto?: boolean;
   
   // Rules
   rulesText: string;
@@ -155,6 +165,14 @@ export const DEFAULT_CONFIG: GroupConfig = {
     enabled: false,
     text: "Кош болуңуз, {name}!"
   },
+  welcomeAutoDelete: 0,
+  goodbyeAutoDelete: 0,
+  newcomerRestrict: false,
+  newcomerRestrictDuration: 60,
+  rulesAgreement: false,
+  welcomePin: false,
+  joinFilterNoUsername: false,
+  joinFilterNoPhoto: false,
   
   rulesText: "Тайпанын эрежелери азырынча жазыла элек. Админдер /setrules буйругу менен кошо алышат."
 };
