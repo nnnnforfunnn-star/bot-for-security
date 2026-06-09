@@ -219,6 +219,24 @@ export const db = {
     } catch (e) {}
   },
 
+  async hget<T = string>(key: string, field: string): Promise<T | null> {
+    try {
+      const tcp = await getRedisTCPClient();
+      if (tcp) {
+        const res = await tcp.hGet(key, field);
+        if (res === null || res === undefined) return null;
+        try {
+          return JSON.parse(res) as T;
+        } catch {
+          return res as unknown as T;
+        }
+      }
+      if (upstashClient) return await upstashClient.hget<T>(key, field);
+      const hash = memCache.get(key) || {};
+      return hash[field] !== undefined ? hash[field] : null;
+    } catch (e) { return null; }
+  },
+
   async hgetall(key: string): Promise<Record<string, string> | null> {
     try {
       const tcp = await getRedisTCPClient();
