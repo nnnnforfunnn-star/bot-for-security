@@ -2,7 +2,7 @@ import { db } from "./db.js";
 
 export interface GroupConfig {
   captchaEnabled: boolean;
-  captchaMode: "button" | "math" | "text";
+  captchaMode: "button" | "math" | "text" | "emoji" | "button_timer";
   captchaTime: number;
   captchaKick: boolean;
   cleanWelcome: boolean;

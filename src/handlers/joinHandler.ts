@@ -139,6 +139,36 @@ export async function joinHandler(ctx: Context, next: NextFunction): Promise<voi
           keyboard = new InlineKeyboard().text("✅ Мен адаммын / Я человек", `cpt:${member.id}:1`);
           captchaText = `👋 Кош келдиңиз, [${member.first_name}](tg://user?id=${member.id})!\n` +
             `Сураныч, төмөнкү баскычты басып, адам экениңизди далилдеңиз:`;
+        } else if (mode === "button_timer") {
+          keyboard = new InlineKeyboard().text("⏳ Текшерүү / Проверить", `cpt:${member.id}:timer:${Date.now()}`);
+          captchaText = `👋 Кош келдиңиз, [${member.first_name}](tg://user?id=${member.id})!\n` +
+            `Бул тайпада *ыкчам басуудан коргоо* (Timer) иштеп жатат.\n` +
+            `Сураныч, **5 секунд күтө туруңуз**, андан кийин төмөнкү баскычты басыңыз:`;
+        } else if (mode === "emoji") {
+          const emojiOptions = [
+            { emoji: "🍎", name: "алма / яблоко" },
+            { emoji: "🍌", name: "банан / банан" },
+            { emoji: "🍒", name: "чие / вишня" },
+            { emoji: "🍇", name: "жүзүм / виноград" },
+            { emoji: "🍓", name: "кулпунай / клубника" },
+            { emoji: "🍍", name: "ананас / ананас" }
+          ].sort(() => Math.random() - 0.5);
+
+          const target = emojiOptions[0];
+          const wrong = emojiOptions.slice(1, 4);
+          const options = [
+            { text: target.emoji, isCorrect: true },
+            ...wrong.map(w => ({ text: w.emoji, isCorrect: false }))
+          ].sort(() => Math.random() - 0.5);
+
+          keyboard = new InlineKeyboard()
+            .text(options[0].text, `cpt:${member.id}:${options[0].isCorrect ? 1 : 0}`)
+            .text(options[1].text, `cpt:${member.id}:${options[1].isCorrect ? 1 : 0}`)
+            .text(options[2].text, `cpt:${member.id}:${options[2].isCorrect ? 1 : 0}`)
+            .text(options[3].text, `cpt:${member.id}:${options[3].isCorrect ? 1 : 0}`);
+
+          captchaText = `👋 Кош келдиңиз, [${member.first_name}](tg://user?id=${member.id})!\n` +
+            `Сураныч, төмөнкү баскычтардан **${target.name}** тандаңыз:`;
         } else if (mode === "math") {
           const a = Math.floor(Math.random() * 5) + 1;
           const b = Math.floor(Math.random() * 5) + 1;
@@ -344,8 +374,7 @@ export async function captchaCallbackHandler(ctx: Context, next: NextFunction): 
 
   const parts = query.data.split(":");
   const targetUserId = parseInt(parts[1], 10);
-  const isCorrect = parts[2] === "1";
-
+  
   if (query.from.id !== targetUserId) {
     await ctx.answerCallbackQuery("❌ Бул суроо сизге тиешелүү эмес!");
     return;
@@ -353,6 +382,20 @@ export async function captchaCallbackHandler(ctx: Context, next: NextFunction): 
 
   const chatId = query.message!.chat.id;
   const pendingKey = `chat:${chatId}:user:${targetUserId}:captchaPending`;
+
+  let isCorrect = parts[2] === "1";
+  let isTimerFail = false;
+
+  if (parts[2] === "timer") {
+    const timestamp = parseInt(parts[3], 10);
+    const elapsed = Date.now() - timestamp;
+    if (elapsed < 5000) {
+      isCorrect = false;
+      isTimerFail = true;
+    } else {
+      isCorrect = true;
+    }
+  }
 
   if (isCorrect) {
     try {
@@ -388,7 +431,14 @@ export async function captchaCallbackHandler(ctx: Context, next: NextFunction): 
       await ctx.answerCallbackQuery("Кечиресиз, ката кетти.");
     }
   } else {
-    await ctx.answerCallbackQuery("❌ Жооп туура эмес!");
+    if (isTimerFail) {
+      await ctx.answerCallbackQuery({
+        text: "❌ Сиз өтө тез бастыңыз! Сураныч, 5 секунд күтө туруңуз.",
+        show_alert: true
+      });
+    } else {
+      await ctx.answerCallbackQuery("❌ Жооп туура эмес!");
+    }
     try {
       await db.del(pendingKey);
       if (query.message) {
@@ -399,7 +449,7 @@ export async function captchaCallbackHandler(ctx: Context, next: NextFunction): 
       if (config.captchaKick) {
         await ctx.api.banChatMember(chatId, targetUserId).catch(() => {});
         await ctx.api.unbanChatMember(chatId, targetUserId).catch(() => {});
-        await logAction(ctx.api, chatId, targetUserId, query.from.first_name, "Kick", "Капчадан өтпөдү");
+        await logAction(ctx.api, chatId, targetUserId, query.from.first_name, "Kick", isTimerFail ? "Капча: Ыкчам басуу (Бот)" : "Капчадан өтпөдү");
       }
     } catch (e) {
       logger.error("Error kicking user on incorrect captcha", e);
