@@ -185,6 +185,23 @@ export const db = {
     } catch (e) { return 0; }
   },
 
+  async zadd(key: string, score: number, member: string | number): Promise<void> {
+    try {
+      const tcp = await getRedisTCPClient();
+      if (tcp) {
+        await tcp.zAdd(key, { score, value: member.toString() });
+        return;
+      }
+      if (upstashClient) {
+        await upstashClient.zadd(key, { score, member: member.toString() });
+        return;
+      }
+      const zkey = `${key}:${member}`;
+      memCache.set(zkey, score);
+      saveLocalDB();
+    } catch (e) {}
+  },
+
   async zrange(key: string, start: number, stop: number, opts?: { withScores?: boolean, rev?: boolean }): Promise<any[]> {
     try {
       const tcp = await getRedisTCPClient();

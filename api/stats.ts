@@ -72,18 +72,25 @@ export default async function handler(req: any, res: any) {
       // 3. Members List
       const userIds = await db.smembers(`chat:${chatId}:users`);
       const usersInfo = [];
+      const admins = await bot.api.getChatAdministrators(chatId).catch(() => []);
+      const adminIds = new Set(admins.map(a => a.user.id));
       
       for (const uid of userIds) {
         const info = await db.hgetall(`chat:${chatId}:user:${uid}:info`);
         const warns = await db.get<number>(`chat:${chatId}:user:${uid}:warns`) || 0;
         const urmat = await db.get<number>(`chat:${chatId}:user:${uid}:urmat`) || 0;
+        const title = await db.get<string>(`chat:${chatId}:user:${uid}:title`) || "";
+        const numericId = parseInt(uid, 10);
+        const isUserAdmin = adminIds.has(numericId);
         
         usersInfo.push({
-          id: uid,
+          id: numericId,
           name: info?.name || "Белгисиз",
           username: info?.username || "",
           warns,
-          urmat
+          urmat,
+          title,
+          isAdmin: isUserAdmin
         });
       }
 

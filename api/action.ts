@@ -54,7 +54,7 @@ export default async function handler(req: any, res: any) {
 
     const { action, targetUserId, reason } = req.body;
 
-    const requiresTarget = ["ban", "mute", "unmute", "kick", "unban", "promote", "demote", "resetwarns", "warn"];
+    const requiresTarget = ["ban", "mute", "unmute", "kick", "unban", "promote", "demote", "resetwarns", "warn", "setkarma", "setusertitle"];
     if (!action || (requiresTarget.includes(action) && !targetUserId)) {
       return res.status(400).json({ error: "Bad Request: missing action or targetUserId" });
     }
@@ -185,6 +185,19 @@ export default async function handler(req: any, res: any) {
         const desc = req.body.text || "";
         await (bot.api as any).raw.setChatDescription({ chat_id: chatId, description: desc });
         await logAction(bot.api, chatId, 0, "Тайпа", "SetDesc", "Web Panel аркылуу өзгөртүлдү", user.first_name || "Админ");
+        break;
+      case "setkarma":
+        const karmaVal = parseInt(req.body.value, 10);
+        if (!isNaN(karmaVal)) {
+          await db.set(`chat:${chatId}:user:${targetUserId}:urmat`, karmaVal);
+          await db.zadd(`chat:${chatId}:urmat_leaderboard`, karmaVal, String(targetUserId));
+          await logAction(bot.api, chatId, targetUserId, targetName, "Карма", `Сый-Урмат деңгээли өзгөртүлдү: ${karmaVal}`, user.first_name || "Админ");
+        }
+        break;
+      case "setusertitle":
+        const titleText = req.body.text || "";
+        await db.set(`chat:${chatId}:user:${targetUserId}:title`, titleText);
+        await logAction(bot.api, chatId, targetUserId, targetName, "Наам", `Жаңы наам берилди: ${titleText || "өчүрүлдү"}`, user.first_name || "Админ");
         break;
       default:
         return res.status(400).json({ error: "Unknown action" });

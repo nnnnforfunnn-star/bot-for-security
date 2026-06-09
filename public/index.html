@@ -780,8 +780,9 @@
     }
 
     .member-item.expanded .member-actions-wrapper {
-      max-height: 500px;
+      max-height: 2000px;
       border-top: 1px solid var(--border-color);
+      overflow: visible;
     }
 
     .member-actions-inner {
@@ -1825,8 +1826,25 @@
                 <div class="card-description">Тайпадагы колдонуучулардын эскертүүлөрүн, рейтингдерин көрүү жана укуктарын башкаруу.</div>
               </div>
               <div class="card-body">
-                <div class="form-group">
-                  <input type="text" class="form-input" id="user_search_input" placeholder="Колдонуучунун атын же нигин издеңиз..." onkeyup="filterUsersList()">
+                <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px;">
+                  <input type="text" class="form-input" id="user_search_input" placeholder="Аты, ниги же ID боюнча издеңиз..." onkeyup="filterUsersList()" style="flex: 2; min-width: 200px;">
+                  
+                  <select class="form-select" id="user_filter_select" onchange="filterUsersList()" style="flex: 1; min-width: 150px;">
+                    <option value="all">Бардык катышуучулар</option>
+                    <option value="admins">🛡️ Администраторлор</option>
+                    <option value="regular">👤 Кадимки колдонуучулар</option>
+                    <option value="warned">⚠️ Варны барлар</option>
+                    <option value="high_karma">🌟 Жогорку Карма (>0)</option>
+                    <option value="low_karma">💔 Төмөнкү Карма (&lt;0)</option>
+                    <option value="has_title">🏅 Атайын наамы барлар</option>
+                  </select>
+
+                  <select class="form-select" id="user_sort_select" onchange="filterUsersList()" style="flex: 1; min-width: 150px;">
+                    <option value="karma_desc">🌟 Карма боюнча (Азаюу)</option>
+                    <option value="karma_asc">🌟 Карма боюнча (Өсүү)</option>
+                    <option value="warns_desc">⚠️ Варндар боюнча (Көп)</option>
+                    <option value="name_asc">🔤 Аты боюнча (А-Я)</option>
+                  </select>
                 </div>
                 
                 <div id="users_list_container" style="margin-top: 16px;">
@@ -2675,58 +2693,164 @@
       elem.closest('.member-item').classList.toggle('expanded');
     }
 
+    async function submitUserKarma(uid) {
+      const val = parseInt(document.getElementById('user_karma_' + uid).value, 10);
+      await doAction('setkarma', uid, "Карма өзгөртүлдү via Web Panel", val);
+    }
+
+    async function submitUserTitle(uid) {
+      const textVal = document.getElementById('user_title_' + uid).value;
+      await doAction('setusertitle', uid, "Наам өзгөртүлдү via Web Panel", null, textVal);
+    }
+
     function renderUsersList() {
       const container = document.getElementById('users_list_container');
-      const sortedUsers = statsData.users.sort((a,b) => b.urmat - a.urmat);
-      
-      const html = sortedUsers.map(u => `
-        <div class="member-item" data-name="${u.name.toLowerCase()}" data-username="${u.username.toLowerCase()}">
+      if (!container) return;
+
+      const q = (document.getElementById('user_search_input')?.value || "").toLowerCase().trim();
+      const filterVal = document.getElementById('user_filter_select')?.value || "all";
+      const sortVal = document.getElementById('user_sort_select')?.value || "karma_desc";
+
+      let filtered = [...statsData.users];
+
+      // 1. Text Search Filter
+      if (q) {
+        filtered = filtered.filter(u => 
+          (u.name && u.name.toLowerCase().includes(q)) || 
+          (u.username && u.username.toLowerCase().includes(q)) ||
+          u.id.toString().includes(q)
+        );
+      }
+
+      // 2. Category Filter
+      if (filterVal === "admins") {
+        filtered = filtered.filter(u => u.isAdmin === true);
+      } else if (filterVal === "regular") {
+        filtered = filtered.filter(u => u.isAdmin !== true);
+      } else if (filterVal === "warned") {
+        filtered = filtered.filter(u => u.warns > 0);
+      } else if (filterVal === "high_karma") {
+        filtered = filtered.filter(u => u.urmat > 0);
+      } else if (filterVal === "low_karma") {
+        filtered = filtered.filter(u => u.urmat < 0);
+      } else if (filterVal === "has_title") {
+        filtered = filtered.filter(u => u.title && u.title.length > 0);
+      }
+
+      // 3. Sorting
+      if (sortVal === "karma_desc") {
+        filtered.sort((a, b) => b.urmat - a.urmat);
+      } else if (sortVal === "karma_asc") {
+        filtered.sort((a, b) => a.urmat - b.urmat);
+      } else if (sortVal === "warns_desc") {
+        filtered.sort((a, b) => b.warns - a.warns);
+      } else if (sortVal === "name_asc") {
+        filtered.sort((a, b) => (a.name || "").localeCompare(b.name || ""));
+      }
+
+      const html = filtered.map(u => {
+        // Filter logs related to this user
+        const userLogs = statsData.logs.filter(l => String(l.userId) === String(u.id));
+        let logsListHtml = "";
+        if (userLogs.length > 0) {
+          logsListHtml = userLogs.map(l => {
+            const d = new Date(l.timestamp).toLocaleString("ru-RU", { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+            let actionLabel = l.action;
+            let badgeStyle = "background: rgba(255,255,255,0.06);";
+            if (l.action.includes("Бан") || l.action.includes("Кик")) badgeStyle = "background: rgba(239, 68, 68, 0.15); color: var(--danger);";
+            if (l.action.includes("Мут") || l.action.includes("Warn") || l.action.includes("Эскертүү")) badgeStyle = "background: rgba(245, 158, 11, 0.15); color: var(--warn);";
+            
+            return `
+            <div style="font-size:11px; margin-bottom:6px; padding:6px 10px; background:rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.04); border-radius:6px; display:flex; flex-direction: column; gap: 2px;">
+              <div style="display:flex; justify-content:space-between; align-items:center;">
+                <span class="badge" style="font-size:10px; padding: 2px 6px; border-radius: 4px; ${badgeStyle}">${actionLabel}</span>
+                <span style="color:var(--text-muted); font-size:10px;">📅 ${d}</span>
+              </div>
+              <div style="margin-top:2px;">Себеби: <i>${l.reason || 'көрсөтүлгөн эмес'}</i></div>
+              <div style="color:var(--text-muted); font-size:9px; align-self: flex-end;">Админ: ${l.adminName}</div>
+            </div>`;
+          }).join('');
+        } else {
+          logsListHtml = `<div style="text-align:center; padding:10px; font-size:11px; color:var(--text-muted);">Аракеттер журналы таза.</div>`;
+        }
+
+        const isUserAdminBadge = u.isAdmin ? `<span class="badge" style="background: var(--success-glow); color: var(--success); font-size:10px; padding: 2px 6px; border-radius: 4px; font-weight: 600;">🛡️ Админ</span>` : "";
+        const customTitleBadge = u.title ? `<span class="badge" style="background: var(--accent-glow); color: var(--accent); font-size:10px; padding: 2px 6px; border-radius: 4px; font-weight: 600;">🏅 ${u.title}</span>` : "";
+
+        return `
+        <div class="member-item" id="member_card_${u.id}">
           <div class="member-header" onclick="toggleMemberCard(this)">
             <div class="member-info">
-              <div class="profile-avatar" style="background:#4b5563;">${u.name.substring(0,1).toUpperCase()}</div>
+              <div class="profile-avatar" style="background: linear-gradient(135deg, #4b5563, #1f2937); font-family: 'Outfit', sans-serif;">${u.name.substring(0,1).toUpperCase()}</div>
               <div>
-                <div class="member-title">${u.name} ${u.username ? '(@' + u.username + ')' : ''}</div>
-                <div class="member-meta">
-                  <span>⚠️ Варндар: <b>${u.warns}</b></span>
-                  <span>🌟 Сый-Урмат: <b>${u.urmat}</b></span>
+                <div class="member-title" style="display:flex; align-items:center; gap:8px;">
+                  <span>${u.name}</span>
+                  ${u.username ? '<span style="color:var(--text-muted); font-weight:normal;">(@' + u.username + ')</span>' : ''}
+                  ${isUserAdminBadge}
+                  ${customTitleBadge}
+                </div>
+                <div class="member-meta" style="margin-top: 4px;">
+                  <span>⚠️ Варндар: <b style="${u.warns > 0 ? 'color: var(--warn);' : ''}">${u.warns}</b></span>
+                  <span>🌟 Сый-Урмат: <b style="${u.urmat > 0 ? 'color: var(--success);' : (u.urmat < 0 ? 'color: var(--danger);' : '')}">${u.urmat}</b></span>
                 </div>
               </div>
             </div>
-            <div style="font-size: 11px; color: var(--text-muted);">Башкаруу ▼</div>
+            <div style="font-size: 11px; color: var(--text-muted); font-weight: 500;">Башкаруу ▼</div>
           </div>
+          
           <div class="member-actions-wrapper">
             <div class="member-actions-inner">
               <div class="action-deck">
-                <div style="font-size: 12px; font-weight: 600; color: var(--text-muted); text-transform: uppercase;">Ыкчам Аракеттер</div>
+                <div style="font-size: 12px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">Ыкчам Аракеттер</div>
                 
                 <div class="action-row">
-                  <input type="number" class="form-input form-input-sm" id="user_mute_dur_${u.id}" placeholder="Мут убактысы (мүнөт)" value="120">
-                  <input type="text" class="form-input form-input-sm" id="user_mute_reason_${u.id}" placeholder="Себеби...">
+                  <input type="number" class="form-input form-input-sm" id="user_mute_dur_${u.id}" placeholder="Мут убактысы (мүнөт)" value="120" style="flex:1;">
+                  <input type="text" class="form-input form-input-sm" id="user_mute_reason_${u.id}" placeholder="Себеби..." style="flex:2;">
                   <button class="btn btn-sm btn-warn" onclick="submitUserAction('mute', ${u.id})">Муттоо</button>
                 </div>
                 
                 <div class="action-row">
-                  <input type="text" class="form-input form-input-sm" id="user_warn_reason_${u.id}" placeholder="Себеби...">
+                  <input type="text" class="form-input form-input-sm" id="user_warn_reason_${u.id}" placeholder="Себеби..." style="flex:2;">
                   <button class="btn btn-sm btn-warn" onclick="submitUserAction('warn', ${u.id})">Варн берүү</button>
                 </div>
 
                 <div class="action-row">
-                  <input type="text" class="form-input form-input-sm" id="user_ban_reason_${u.id}" placeholder="Себеби...">
+                  <input type="text" class="form-input form-input-sm" id="user_ban_reason_${u.id}" placeholder="Себеби..." style="flex:2;">
                   <button class="btn btn-sm btn-danger" onclick="submitUserAction('ban', ${u.id})">Бандоо</button>
                 </div>
 
-                <div style="display:flex; gap: 8px; flex-wrap: wrap; margin-top: 8px;">
-                  <button class="btn btn-sm btn-danger" onclick="doAction('kick', ${u.id})">Кик (Чыгаруу)</button>
-                  <button class="btn btn-sm" onclick="doAction('unmute', ${u.id})">Анмут</button>
-                  <button class="btn btn-sm" onclick="doAction('unban', ${u.id})">Разбан</button>
-                  <button class="btn btn-sm" onclick="doAction('resetwarns', ${u.id})">Варндарды тазалоо</button>
+                <div style="display:flex; gap: 8px; flex-wrap: wrap; margin-top: 4px;">
+                  <button class="btn btn-sm btn-danger" onclick="doAction('kick', ${u.id})">👢 Кик (Чыгаруу)</button>
+                  <button class="btn btn-sm" onclick="doAction('unmute', ${u.id})">🔊 Анмут</button>
+                  <button class="btn btn-sm" onclick="doAction('unban', ${u.id})">🔓 Разбан</button>
+                  <button class="btn btn-sm" onclick="doAction('resetwarns', ${u.id})">🔄 Варндарды тазалоо</button>
                 </div>
 
                 <hr style="border:none; border-top: 1px solid var(--border-color); margin: 8px 0;">
 
-                <div style="font-size: 12px; font-weight: 600; color: var(--text-muted); text-transform: uppercase;">Администратор даражасын берүү</div>
+                <div style="font-size: 12px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">Сый-Урмат (Рейтинг) & Наам башкаруу</div>
+                <div class="action-row" style="display: flex; gap: 12px; flex-wrap: wrap;">
+                  <div style="display:flex; flex-direction:column; gap:4px; flex:1; min-width: 140px;">
+                    <label style="font-size:11px; color:var(--text-muted);">Сый-Урмат деңгээли (Карма)</label>
+                    <div style="display:flex; gap:6px;">
+                      <input type="number" class="form-input form-input-sm" id="user_karma_${u.id}" value="${u.urmat}" style="width:70px;">
+                      <button class="btn btn-sm btn-primary" onclick="submitUserKarma(${u.id})">Сактоо</button>
+                    </div>
+                  </div>
+                  <div style="display:flex; flex-direction:column; gap:4px; flex:2; min-width: 200px;">
+                    <label style="font-size:11px; color:var(--text-muted);">Колдонуучунун наамы (Badge / Статус)</label>
+                    <div style="display:flex; gap:6px;">
+                      <input type="text" class="form-input form-input-sm" id="user_title_${u.id}" value="${u.title || ''}" placeholder="Манасчы, Активист..." style="flex:1;">
+                      <button class="btn btn-sm btn-primary" onclick="submitUserTitle(${u.id})">Сактоо</button>
+                    </div>
+                  </div>
+                </div>
+
+                <hr style="border:none; border-top: 1px solid var(--border-color); margin: 8px 0;">
+
+                <div style="font-size: 12px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">Администратор даражасын берүү</div>
                 <div class="action-row">
-                  <select class="form-select" id="user_role_${u.id}">
+                  <select class="form-select form-select-sm" id="user_role_${u.id}" style="flex:1;">
                     <option value="junior">Младший админ (Өчүрүү гана)</option>
                     <option value="middle" selected>Орто админ (Өчүрүү + Муттоо)</option>
                     <option value="senior">Старший админ (Өчүрүү + Муттоо + Орнотуулар)</option>
@@ -2735,25 +2859,26 @@
                   <button class="btn btn-sm btn-primary" onclick="submitUserPromote(${u.id})">Админ кылуу</button>
                   <button class="btn btn-sm btn-danger" onclick="doAction('demote', ${u.id})">Админден алуу</button>
                 </div>
+
+                <hr style="border:none; border-top: 1px solid var(--border-color); margin: 8px 0;">
+
+                <div style="font-size: 12px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">Аракеттер тарыхы (Audit Log)</div>
+                <div class="user-logs-timeline" style="max-height: 160px; overflow-y: auto; padding: 4px; background: rgba(0,0,0,0.2); border-radius: 8px; border: 1px solid var(--border-color);">
+                  ${logsListHtml}
+                </div>
+
               </div>
             </div>
           </div>
         </div>
-      `).join('');
-      container.innerHTML = html || "<p style='color:var(--text-muted); padding:20px; text-align:center;'>Катышуучулар тизмеси бош.</p>";
+        `;
+      }).join('');
+
+      container.innerHTML = html || "<p style='color:var(--text-muted); padding:20px; text-align:center;'>Эч кандай катышуучу табылган жок.</p>";
     }
 
     function filterUsersList() {
-      const q = document.getElementById('user_search_input').value.toLowerCase().trim();
-      document.querySelectorAll('#users_list_container .member-item').forEach(el => {
-        const name = el.getAttribute('data-name');
-        const username = el.getAttribute('data-username');
-        if (name.includes(q) || username.includes(q)) {
-          el.style.display = 'block';
-        } else {
-          el.style.display = 'none';
-        }
-      });
+      renderUsersList();
     }
 
     function renderCommandsList() {
@@ -2890,12 +3015,12 @@
       await doAction('promote', uid, "Promoted via Web Panel", role);
     }
 
-    async function doAction(actionName, targetUserId, reason = "", value = null) {
+    async function doAction(actionName, targetUserId, reason = "", value = null, text = null) {
       try {
         const res = await fetch(actionUrl, {
           method: 'POST',
           headers: { 'Authorization': 'tma ' + initData, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: actionName, targetUserId, reason, value })
+          body: JSON.stringify({ action: actionName, targetUserId, reason, value, text })
         });
         if (res.ok) {
           showToast("Ийгиликтүү аткарылды!", 'success');
