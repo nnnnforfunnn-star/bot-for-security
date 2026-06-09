@@ -66,6 +66,51 @@ export async function joinHandler(ctx: Context, next: NextFunction): Promise<voi
       }
     }
 
+    if (config.joinFilterSpamScanner) {
+      try {
+        // Fetch bio
+        let bio = "";
+        try {
+          const chatInfo = await ctx.api.getChat(member.id);
+          if (chatInfo && "bio" in chatInfo && chatInfo.bio) {
+            bio = chatInfo.bio;
+          }
+        } catch (e) {
+          // Ignores if bio retrieval fails or is restricted by privacy
+        }
+
+        const scanText = `${member.first_name} ${member.last_name || ""} ${member.username || ""} ${bio}`.toLowerCase();
+        let matchedKeyword = "";
+        
+        if (config.joinFilterSpamKeywords && config.joinFilterSpamKeywords.length > 0) {
+          for (const kw of config.joinFilterSpamKeywords) {
+            const cleanKw = kw.trim().toLowerCase();
+            if (cleanKw && scanText.includes(cleanKw)) {
+              matchedKeyword = kw;
+              break;
+            }
+          }
+        }
+
+        if (matchedKeyword) {
+          const spamAction = config.joinFilterSpamAction || "ban";
+          if (spamAction === "ban") {
+            await ctx.api.banChatMember(chatId, member.id);
+            await ctx.reply(`🚫 [${member.first_name}](tg://user?id=${member.id}) спам сөздөрү/био камтылгандыктан тайпадан биротоло блоктолду (Сөз: "${matchedKeyword}").`, { parse_mode: "Markdown" });
+            await logAction(ctx.api, chatId, member.id, member.first_name, "Ban", `Скам/Спам Сканер: Ник/Био сөзү: "${matchedKeyword}"`);
+          } else {
+            await ctx.api.banChatMember(chatId, member.id);
+            await ctx.api.unbanChatMember(chatId, member.id);
+            await ctx.reply(`👢 [${member.first_name}](tg://user?id=${member.id}) шектүү био/ник камтылгандыктан тайпадан чыгарылды (Сөз: "${matchedKeyword}").`, { parse_mode: "Markdown" });
+            await logAction(ctx.api, chatId, member.id, member.first_name, "Kick", `Скам/Спам Сканер: Ник/Био сөзү: "${matchedKeyword}"`);
+          }
+          continue;
+        }
+      } catch (e) {
+        logger.error(`Error in joinFilterSpamScanner for ${member.id}`, e);
+      }
+    }
+
     // Сохраняем дату входа
     await db.set(`chat:${chatId}:user:${member.id}:joinDate`, Date.now());
 

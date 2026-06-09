@@ -82,6 +82,9 @@ export interface GroupConfig {
   welcomePin?: boolean;
   joinFilterNoUsername?: boolean;
   joinFilterNoPhoto?: boolean;
+  joinFilterSpamScanner?: boolean;
+  joinFilterSpamKeywords?: string[];
+  joinFilterSpamAction?: "kick" | "ban";
   
   // Rules
   rulesText: string;
@@ -173,6 +176,9 @@ export const DEFAULT_CONFIG: GroupConfig = {
   welcomePin: false,
   joinFilterNoUsername: false,
   joinFilterNoPhoto: false,
+  joinFilterSpamScanner: false,
+  joinFilterSpamKeywords: ["HR-менеджер", "Набираем активных", "Заработок в интернете", "investing", "крипта", "пишите в лс"],
+  joinFilterSpamAction: "ban",
   
   rulesText: "Тайпанын эрежелери азырынча жазыла элек. Админдер /setrules буйругу менен кошо алышат."
 };

@@ -1572,6 +1572,31 @@
                     <span class="slider"></span>
                   </label>
                 </div>
+
+                <!-- 6. Spam Scanner -->
+                <div class="setting-row" style="margin-top: 14px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 14px;">
+                  <div class="setting-info">
+                    <div class="setting-name">Жаңы колдонуучуларды анти-спам сканерлөө</div>
+                    <div class="setting-desc">Жаңы кирген катышуучунун Нигин жана Биосун сканерлеп, спам сөздөр табылса чыгарат.</div>
+                  </div>
+                  <label class="switch">
+                    <input type="checkbox" id="joinFilterSpamScanner" onchange="toggleSpamScannerFields()">
+                    <span class="slider"></span>
+                  </label>
+                </div>
+                <div id="spam_scanner_container" style="display: none; margin-top: 10px;">
+                  <div class="form-group">
+                    <label class="form-label">Бөгөттөлүүчү Био жана Ник сөздөрү (Ар бир сапта бирден сөз)</label>
+                    <textarea class="form-textarea" id="joinFilterSpamKeywords" rows="4" placeholder="Мисалы:&#10;HR-менеджер&#10;Набираем активных&#10;investing&#10;крипта"></textarea>
+                  </div>
+                  <div class="form-group" style="margin-top: 10px;">
+                    <label class="form-label">Анти-спам жазалоо аракети</label>
+                    <select class="form-select" id="joinFilterSpamAction">
+                      <option value="ban">Тайпадан биротоло блоктоо (Бан)</option>
+                      <option value="kick">Тайпадан гана чыгаруу (Кик)</option>
+                    </select>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -2122,6 +2147,10 @@
       document.getElementById('newcomerRestrictDuration').value = cfg.newcomerRestrictDuration || 60;
       document.getElementById('joinFilterNoUsername').checked = cfg.joinFilterNoUsername || false;
       document.getElementById('joinFilterNoPhoto').checked = cfg.joinFilterNoPhoto || false;
+      document.getElementById('joinFilterSpamScanner').checked = cfg.joinFilterSpamScanner || false;
+      document.getElementById('joinFilterSpamKeywords').value = (cfg.joinFilterSpamKeywords || []).join('\n');
+      document.getElementById('joinFilterSpamAction').value = cfg.joinFilterSpamAction || 'ban';
+      toggleSpamScannerFields();
 
       document.getElementById('rulesText').value = cfg.rulesText || '';
     }
@@ -2518,6 +2547,11 @@
       container.innerHTML = html;
     }
 
+    function toggleSpamScannerFields() {
+      const isChecked = document.getElementById('joinFilterSpamScanner').checked;
+      document.getElementById('spam_scanner_container').style.display = isChecked ? 'block' : 'none';
+    }
+
     function toggleCmdSubfields(key) {
       const act = document.getElementById('cmd_action_' + key).value;
       const container = document.getElementById('cmd_sub_container_' + key);
@@ -2676,6 +2710,11 @@
       appData.config.newcomerRestrictDuration = parseInt(document.getElementById('newcomerRestrictDuration').value) || 60;
       appData.config.joinFilterNoUsername = document.getElementById('joinFilterNoUsername').checked;
       appData.config.joinFilterNoPhoto = document.getElementById('joinFilterNoPhoto').checked;
+      appData.config.joinFilterSpamScanner = document.getElementById('joinFilterSpamScanner').checked;
+      appData.config.joinFilterSpamKeywords = document.getElementById('joinFilterSpamKeywords').value.split('\n')
+        .map(x => x.trim())
+        .filter(x => x.length > 0);
+      appData.config.joinFilterSpamAction = document.getElementById('joinFilterSpamAction').value;
 
       appData.config.rulesText = document.getElementById('rulesText').value;
 
