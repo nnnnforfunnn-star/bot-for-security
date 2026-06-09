@@ -1,6 +1,6 @@
 import { Context, NextFunction, InlineKeyboard } from "grammy";
 import { logger } from "../utils/logger.js";
-import { isUserAdmin, muteUser, banUser, unbanUser, formatMessageToHtml } from "../utils/telegram.js";
+import { isUserAdmin, muteUser, banUser, unbanUser, formatMessageToHtml, parseDurationAndReason } from "../utils/telegram.js";
 import { getGroupConfig } from "../utils/configManager.js";
 import { db } from "../utils/db.js";
 import { logAction } from "../utils/actionLogger.js";
@@ -218,9 +218,9 @@ export async function messageHandler(ctx: Context, next: NextFunction): Promise<
         if (cmd && cmd.alias) {
           const aliases = cmd.alias.toLowerCase().split(",").map(a => a.trim());
           for (const alias of aliases) {
-            if (alias && (lowerText === alias || lowerText.startsWith(alias + " "))) {
+            if (alias && (lowerText === alias || lowerText.startsWith(alias + " ") || lowerText.startsWith(alias + "\n"))) {
               matchedCmdKey = key;
-              matchedCmd = cmd;
+              matchedCmd = { ...cmd, aliasUsed: alias };
               break;
             }
           }
@@ -236,23 +236,21 @@ export async function messageHandler(ctx: Context, next: NextFunction): Promise<
         const customReply = matchedCmd.replyText || "";
         const autoDelete = matchedCmd.autoDelete || false;
         
-        let reason = "Башкаруучунун буйругу (Custom Command)";
-        const aliasUsed = lowerText.split(" ")[0];
-        if (text.length > aliasUsed.length) {
-          reason = text.substring(aliasUsed.length).trim();
-        }
+        const { durationSeconds, reason: parsedReason } = parseDurationAndReason(text, matchedCmd.aliasUsed);
+        const reason = parsedReason || "Башкаруучунун буйругу (Custom Command)";
 
         let replyMsgText = "";
 
         if (action === "ban") {
-          await banUser(ctx.api, chatId, targetUserId, 0);
+          await banUser(ctx.api, chatId, targetUserId, durationSeconds);
           await logAction(ctx.api, chatId, targetUserId, targetMsg.from?.first_name || "Колдонуучу", "Бан", reason, ctx.from.first_name);
-          replyMsgText = customReply || `🚷 [${targetMsg.from?.first_name}](tg://user?id=${targetUserId}) бөгөттөлдү (Бан). Себеби: ${reason}`;
+          const durationText = durationSeconds > 0 ? ` (${Math.round(durationSeconds/60)} мүнөткө)` : "";
+          replyMsgText = customReply || `🚷 [${targetMsg.from?.first_name}](tg://user?id=${targetUserId}) бөгөттөлдү (Бан)${durationText}.\nСебеби: ${reason}`;
         } else if (action === "mute") {
-          const durationMinutes = matchedCmd.muteDuration || config.muteDurationMinutes || 120;
-          await muteUser(ctx.api, chatId, targetUserId, durationMinutes * 60);
-          await logAction(ctx.api, chatId, targetUserId, targetMsg.from?.first_name || "Колдонуучу", "Мут", `${reason} (${durationMinutes} мүнөт)`, ctx.from.first_name);
-          replyMsgText = customReply || `🔇 [${targetMsg.from?.first_name}](tg://user?id=${targetUserId}) жазуу укугунан ажыратылды (Мут, ${durationMinutes} мүнөт). Себеби: ${reason}`;
+          const finalDuration = durationSeconds > 0 ? durationSeconds : (matchedCmd.muteDuration || config.muteDurationMinutes || 120) * 60;
+          await muteUser(ctx.api, chatId, targetUserId, finalDuration);
+          await logAction(ctx.api, chatId, targetUserId, targetMsg.from?.first_name || "Колдонуучу", "Мут", `${reason} (${Math.round(finalDuration/60)} мүнөт)`, ctx.from.first_name);
+          replyMsgText = customReply || `🔇 [${targetMsg.from?.first_name}](tg://user?id=${targetUserId}) жазуу укугунан ажыратылды (Мут: ${Math.round(finalDuration/60)} мүнөт).\nСебеби: ${reason}`;
         } else if (action === "kick") {
           await ctx.api.banChatMember(chatId, targetUserId).catch(() => {});
           await ctx.api.unbanChatMember(chatId, targetUserId).catch(() => {});
@@ -304,62 +302,61 @@ export async function messageHandler(ctx: Context, next: NextFunction): Promise<
       }
 
       // 0.2 Стандартные жестко заданные текстовые команды (обратная совместимость)
+      const triggerUsed = lowerText.split(/\s+/)[0];
       if ((lowerText.startsWith("бан") || lowerText.startsWith("ban")) && !(config.disabledCommands?.ban)) {
-        let duration = 0;
-        const match = lowerText.match(/(?:бан|ban)\s+(\d+)([мчсдкmhds])/);
-        if (match) {
-          const val = parseInt(match[1]);
-          const unit = match[2];
-          if (unit === 'м' || unit === 'm') duration = val * 60;
-          if (unit === 'ч' || unit === 'с' || unit === 'h') duration = val * 3600;
-          if (unit === 'д' || unit === 'к' || unit === 'd') duration = val * 86400;
-        }
-        await banUser(ctx.api, chatId, targetUserId, duration);
-        await logAction(ctx.api, chatId, targetUserId, targetMsg.from?.first_name || "Колдонуучу", "Бан", "Админдин буйругу (Manual)", ctx.from.first_name);
-        await ctx.reply(`🚷 [${targetMsg.from?.first_name}](tg://user?id=${targetUserId}) бөгөттөлдү (Бан).`, { parse_mode: "Markdown" });
+        const { durationSeconds, reason } = parseDurationAndReason(text, triggerUsed);
+        const customReason = reason || "Админдин буйругу (Manual)";
+        await banUser(ctx.api, chatId, targetUserId, durationSeconds);
+        await logAction(ctx.api, chatId, targetUserId, targetMsg.from?.first_name || "Колдонуучу", "Бан", customReason, ctx.from.first_name);
+        const durationText = durationSeconds > 0 ? ` (${Math.round(durationSeconds/60)} мүнөткө)` : "";
+        await ctx.reply(`🚫 [${targetMsg.from?.first_name}](tg://user?id=${targetUserId}) бөгөттөлдү (Бан)${durationText}.\nСебеби: ${customReason}`, { parse_mode: "Markdown" });
         return;
       } else if ((lowerText.startsWith("мут") || lowerText.startsWith("mute")) && !(config.disabledCommands?.mute)) {
-        let duration = 120 * 60; // 2 hours default
-        const match = lowerText.match(/(?:мут|mute)\s+(\d+)([мчсдкmhds])/);
-        if (match) {
-          const val = parseInt(match[1]);
-          const unit = match[2];
-          if (unit === 'м' || unit === 'm') duration = val * 60;
-          if (unit === 'ч' || unit === 'с' || unit === 'h') duration = val * 3600;
-          if (unit === 'д' || unit === 'к' || unit === 'd') duration = val * 86400;
-        }
+        const { durationSeconds, reason } = parseDurationAndReason(text, triggerUsed);
+        const duration = durationSeconds > 0 ? durationSeconds : (config.muteDurationMinutes || 120) * 60;
+        const customReason = reason || "Админдин буйругу (Manual)";
         await muteUser(ctx.api, chatId, targetUserId, duration);
-        await logAction(ctx.api, chatId, targetUserId, targetMsg.from?.first_name || "Колдонуучу", "Мут", "Админдин буйругу (Manual)", ctx.from.first_name);
-        await ctx.reply(`🔇 [${targetMsg.from?.first_name}](tg://user?id=${targetUserId}) жазуу укугунан ажыратылды (Мут).`, { parse_mode: "Markdown" });
+        await logAction(ctx.api, chatId, targetUserId, targetMsg.from?.first_name || "Колдонуучу", "Мут", `${customReason} (${Math.round(duration/60)} мүнөт)`, ctx.from.first_name);
+        await ctx.reply(`🔇 [${targetMsg.from?.first_name}](tg://user?id=${targetUserId}) жазуу укугунан ажыратылды (Мут: ${Math.round(duration/60)} мүнөт).\nСебеби: ${customReason}`, { parse_mode: "Markdown" });
         return;
-      } else if ((lowerText === "кик" || lowerText === "kick") && !(config.disabledCommands?.kick)) {
+      } else if ((lowerText.startsWith("кик") || lowerText.startsWith("kick")) && !(config.disabledCommands?.kick)) {
+        const { reason } = parseDurationAndReason(text, triggerUsed);
+        const customReason = reason || "Админдин буйругу (Manual)";
         await ctx.api.banChatMember(chatId, targetUserId).catch(() => {});
         await ctx.api.unbanChatMember(chatId, targetUserId).catch(() => {});
-        await logAction(ctx.api, chatId, targetUserId, targetMsg.from?.first_name || "Колдонуучу", "Кик", "Админдин буйругу (Manual)", ctx.from.first_name);
-        await ctx.reply(`👢 ${targetMsg.from?.first_name} чаттан чыгарылды (Кик).`);
+        await logAction(ctx.api, chatId, targetUserId, targetMsg.from?.first_name || "Колдонуучу", "Кик", customReason, ctx.from.first_name);
+        await ctx.reply(`👢 [${targetMsg.from?.first_name}](tg://user?id=${targetUserId}) чаттан чыгарылды (Кик).\nСебеби: ${customReason}`, { parse_mode: "Markdown" });
         return;
-      } else if ((lowerText === "разбан" || lowerText === "unban") && !(config.disabledCommands?.unban)) {
+      } else if ((lowerText.startsWith("разбан") || lowerText.startsWith("unban")) && !(config.disabledCommands?.unban)) {
+        const { reason } = parseDurationAndReason(text, triggerUsed);
+        const customReason = reason || "Админдин буйругу (Manual)";
         await unbanUser(ctx.api, chatId, targetUserId);
-        await logAction(ctx.api, chatId, targetUserId, targetMsg.from?.first_name || "Колдонуучу", "Разбан", "Админдин буйругу (Manual)", ctx.from.first_name);
-        await ctx.reply(`✅ [${targetMsg.from?.first_name}](tg://user?id=${targetUserId}) бөгөттөн чыгарылды (Разбан).`, { parse_mode: "Markdown" });
+        await logAction(ctx.api, chatId, targetUserId, targetMsg.from?.first_name || "Колдонуучу", "Разбан", customReason, ctx.from.first_name);
+        await ctx.reply(`✅ [${targetMsg.from?.first_name}](tg://user?id=${targetUserId}) бөгөттөн чыгарылды (Разбан).\nСебеби: ${customReason}`, { parse_mode: "Markdown" });
         return;
-      } else if ((lowerText === "анмут" || lowerText === "unmute") && !(config.disabledCommands?.unmute)) {
+      } else if ((lowerText.startsWith("анмут") || lowerText.startsWith("unmute")) && !(config.disabledCommands?.unmute)) {
+        const { reason } = parseDurationAndReason(text, triggerUsed);
+        const customReason = reason || "Админдин буйругу (Manual)";
         await ctx.api.restrictChatMember(chatId, targetUserId, {
           can_send_messages: true, can_send_audios: true, can_send_documents: true,
           can_send_photos: true, can_send_videos: true, can_send_video_notes: true,
           can_send_voice_notes: true, can_send_polls: true, can_send_other_messages: true,
           can_add_web_page_previews: true,
         });
-        await logAction(ctx.api, chatId, targetUserId, targetMsg.from?.first_name || "Колдонуучу", "Анмут", "Админдин буйругу (Manual)", ctx.from.first_name);
-        await ctx.reply(`🔊 [${targetMsg.from?.first_name}](tg://user?id=${targetUserId}) жазуу укугу кайтарылды (Анмут).`, { parse_mode: "Markdown" });
+        await logAction(ctx.api, chatId, targetUserId, targetMsg.from?.first_name || "Колдонуучу", "Анмут", customReason, ctx.from.first_name);
+        await ctx.reply(`🔊 [${targetMsg.from?.first_name}](tg://user?id=${targetUserId}) жазуу укугу кайтарылды (Анмут).\nСебеби: ${customReason}`, { parse_mode: "Markdown" });
         return;
-      } else if ((lowerText === "эскертүү" || lowerText === "warn") && !(config.disabledCommands?.warn)) {
-        await handleWarn(ctx, targetUserId, chatId, targetMsg.from?.first_name || "", "Админдин эскертүүсү", config.muteDurationMinutes, config.warnLimit, config.warnAction, ctx.from.first_name);
+      } else if ((lowerText.startsWith("эскертүү") || lowerText.startsWith("warn")) && !(config.disabledCommands?.warn)) {
+        const { reason } = parseDurationAndReason(text, triggerUsed);
+        const customReason = reason || "Админдин эскертүүсү";
+        await handleWarn(ctx, targetUserId, chatId, targetMsg.from?.first_name || "", customReason, config.muteDurationMinutes, config.warnLimit, config.warnAction, ctx.from.first_name);
         return;
-      } else if ((lowerText === "өчүр" || lowerText === "del") && !(config.disabledCommands?.del)) {
+      } else if ((lowerText.startsWith("өчүр") || lowerText.startsWith("del")) && !(config.disabledCommands?.del)) {
+        const { reason } = parseDurationAndReason(text, triggerUsed);
+        const customReason = reason || "Админдин буйругу (Manual)";
         await ctx.api.deleteMessage(chatId, targetMsg.message_id).catch(() => {});
         await ctx.deleteMessage().catch(() => {});
-        await logAction(ctx.api, chatId, targetUserId, targetMsg.from?.first_name || "Колдонуучу", "Удаление", "Админдин буйругу (Manual Del)", ctx.from.first_name);
+        await logAction(ctx.api, chatId, targetUserId, targetMsg.from?.first_name || "Колдонуучу", "Удаление", customReason, ctx.from.first_name);
         return;
       }
     }

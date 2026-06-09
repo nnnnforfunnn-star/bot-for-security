@@ -238,6 +238,15 @@ export function formatMessageToHtml(inputText: string): string {
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;");
 
+  // Парсим кастомный формат ссылок в строках: Текст ссылки | Ссылка
+  html = html.replace(/^([^\n|]+(?:\|[^\n|]+)*)\|\s*(https?:\/\/[^\s]+|t\.me\/[^\s]+|tg:\/\/[^\s]+)$/gm, (match, linkText, url) => {
+    let cleanUrl = url.trim();
+    if (cleanUrl.startsWith("t.me/")) {
+      cleanUrl = "https://" + cleanUrl;
+    }
+    return `<a href="${cleanUrl}">${linkText.trim()}</a>`;
+  });
+
   // Парсим Markdown ссылки [text](url) -> <a href="url">text</a>
   html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (match, linkText, url) => {
     const cleanUrl = url.replace(/&amp;/g, "&");
@@ -255,4 +264,48 @@ export function formatMessageToHtml(inputText: string): string {
   html = html.replace(/`([^`]+)`/g, "<code>$1</code>");
 
   return html;
+}
+
+/**
+ * Парсит длительность наказания и причину из текста команды.
+ * Поддерживает форматы: 5мин, 5 мүнөт, 2 часа, 1 день и т.д.
+ */
+export function parseDurationAndReason(text: string, trigger: string): { durationSeconds: number; reason: string } {
+  const lowerText = text.toLowerCase();
+  const triggerIndex = lowerText.indexOf(trigger.toLowerCase());
+  
+  let remaining = text;
+  if (triggerIndex !== -1) {
+    remaining = text.substring(triggerIndex + trigger.length).trim();
+  }
+  
+  let durationSeconds = 0;
+  let durationMatched = false;
+
+  const timeRegex = /(\d+)\s*(мүнөт|мүн|мин|минут|м|m|min|саат|с|ч|час|часа|часов|h|hr|күн|кун|к|дн|дней|д|d|day|days)\b/i;
+  const match = remaining.match(timeRegex);
+  
+  if (match) {
+    const value = parseInt(match[1], 10);
+    const unit = match[2].toLowerCase();
+    
+    if (["мүнөт", "мүн", "мин", "минут", "м", "m", "min"].some(u => unit.startsWith(u) || unit === "m" || unit === "м")) {
+      durationSeconds = value * 60;
+    } else if (["саат", "с", "ч", "час", "часа", "часов", "h", "hr"].some(u => unit.startsWith(u) || unit === "h" || unit === "с" || unit === "ч")) {
+      durationSeconds = value * 3600;
+    } else if (["күн", "кун", "к", "дн", "дней", "д", "d", "day"].some(u => unit.startsWith(u) || unit === "d" || unit === "к" || unit === "д")) {
+      durationSeconds = value * 86400;
+    }
+    
+    durationMatched = true;
+    remaining = remaining.replace(match[0], "").trim();
+  }
+
+  // Убираем лишние пробелы и новые строки
+  const reason = remaining.replace(/\s+/g, " ").trim();
+
+  return {
+    durationSeconds: durationMatched ? durationSeconds : 0,
+    reason: reason
+  };
 }
