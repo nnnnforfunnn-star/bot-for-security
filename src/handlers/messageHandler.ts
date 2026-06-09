@@ -1,4 +1,4 @@
-import { Context, NextFunction } from "grammy";
+import { Context, NextFunction, InlineKeyboard } from "grammy";
 import { logger } from "../utils/logger.js";
 import { isUserAdmin, muteUser, banUser, unbanUser } from "../utils/telegram.js";
 import { getGroupConfig } from "../utils/configManager.js";
@@ -155,7 +155,30 @@ export async function messageHandler(ctx: Context, next: NextFunction): Promise<
       if (filters) {
         for (const trigger of Object.keys(filters)) {
           if (lowerText.includes(trigger.toLowerCase())) {
-            await ctx.reply(filters[trigger]);
+            let replyContent = filters[trigger];
+            let replyText = replyContent;
+            let keyboard: InlineKeyboard | undefined = undefined;
+
+            try {
+              if (replyContent.startsWith("{") && replyContent.endsWith("}")) {
+                const parsed = JSON.parse(replyContent);
+                replyText = parsed.text || "";
+                if (parsed.buttonText && parsed.buttonUrl) {
+                  keyboard = new InlineKeyboard().url(parsed.buttonText, parsed.buttonUrl);
+                }
+              }
+            } catch (e) {
+              // Not JSON
+            }
+
+            await ctx.reply(replyText, {
+              reply_markup: keyboard,
+              parse_mode: "Markdown"
+            }).catch(async () => {
+              await ctx.reply(replyText, {
+                reply_markup: keyboard
+              }).catch(() => {});
+            });
             break;
           }
         }
@@ -412,6 +435,54 @@ export async function messageHandler(ctx: Context, next: NextFunction): Promise<
       const act = config.locksAction || "delete";
       await executeViolation(act, lockReason);
       return;
+    }
+  }
+
+  // 2.5 Media & Link Rate Limiter
+  if (config.mediaRateLimitEnabled) {
+    const hasMedia = ctx.message?.photo || ctx.message?.video || ctx.message?.document || 
+                      ctx.message?.audio || ctx.message?.voice || ctx.message?.video_note || 
+                      ctx.message?.sticker || ctx.message?.animation;
+    const hasLink = ctx.message?.entities?.some(e => e.type === "url" || e.type === "text_link");
+
+    if (hasMedia || hasLink) {
+      try {
+        const rateLimitCount = config.mediaRateLimitCount || 5;
+        const rateLimitPeriod = config.mediaRateLimitPeriod || 60;
+        const rateLimitAction = config.mediaRateLimitAction || "delete";
+        
+        const rateLimitKey = `chat:${chatId}:user:${userId}:mediaCount`;
+        const currentCount = await db.get<number>(rateLimitKey) || 0;
+        
+        if (currentCount >= rateLimitCount) {
+          await ctx.deleteMessage().catch(() => {});
+          const limitReason = `Медиа жана шилтеме лимити ашты (${rateLimitCount} билдирүү / ${rateLimitPeriod}с)`;
+          
+          if (rateLimitAction === "delete") {
+            await logAction(ctx.api, chatId, userId, name, "Удаление", limitReason, "Система (Бот)");
+          } else if (rateLimitAction === "mute") {
+            await muteUser(ctx.api, chatId, userId, 2 * 60 * 60);
+            await logAction(ctx.api, chatId, userId, name, "Мут", `${limitReason} (120 мүнөт)`, "Система (Бот)");
+            await ctx.reply(`🔇 [${name}](tg://user?id=${userId}) ${limitReason} үчүн 2 саатка мутталды.`, { parse_mode: "Markdown" });
+          } else if (rateLimitAction === "warn") {
+            await handleWarn(ctx, userId, chatId, name, limitReason, config.muteDurationMinutes, config.warnLimit, config.warnAction, "Система (Бот)", 1);
+          } else if (rateLimitAction === "kick") {
+            await ctx.api.banChatMember(chatId, userId).catch(() => {});
+            await ctx.api.unbanChatMember(chatId, userId).catch(() => {});
+            await logAction(ctx.api, chatId, userId, name, "Кик", limitReason, "Система (Бот)");
+            await ctx.reply(`👢 [${name}](tg://user?id=${userId}) тайпадан чыгарылды (Кик). Себеби: ${limitReason}`, { parse_mode: "Markdown" });
+          } else if (rateLimitAction === "ban") {
+            await banUser(ctx.api, chatId, userId);
+            await logAction(ctx.api, chatId, userId, name, "Бан", limitReason, "Система (Бот)");
+            await ctx.reply(`🚷 [${name}](tg://user?id=${userId}) бөгөттөлдү (Бан). Себеби: ${limitReason}`, { parse_mode: "Markdown" });
+          }
+          return;
+        } else {
+          await db.set(rateLimitKey, currentCount + 1, rateLimitPeriod);
+        }
+      } catch (e) {
+        logger.error("Error checking media rate limit:", e);
+      }
     }
   }
 

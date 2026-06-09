@@ -88,6 +88,13 @@ export interface GroupConfig {
   
   // Rules
   rulesText: string;
+  autoPinRules?: boolean;
+
+  // Media Rate Limiter
+  mediaRateLimitEnabled?: boolean;
+  mediaRateLimitCount?: number;
+  mediaRateLimitPeriod?: number;
+  mediaRateLimitAction?: "delete" | "warn" | "mute" | "kick" | "ban";
   
   // Custom command configs
   customCommands?: Record<string, {
@@ -180,7 +187,12 @@ export const DEFAULT_CONFIG: GroupConfig = {
   joinFilterSpamKeywords: ["HR-менеджер", "Набираем активных", "Заработок в интернете", "investing", "крипта", "пишите в лс"],
   joinFilterSpamAction: "ban",
   
-  rulesText: "Тайпанын эрежелери азырынча жазыла элек. Админдер /setrules буйругу менен кошо алышат."
+  rulesText: "Тайпанын эрежелери азырынча жазыла элек. Админдер /setrules буйругу менен кошо алышат.",
+  autoPinRules: false,
+  mediaRateLimitEnabled: false,
+  mediaRateLimitCount: 5,
+  mediaRateLimitPeriod: 60,
+  mediaRateLimitAction: "delete"
 };
 
 export async function getGroupConfig(chatId: number): Promise<GroupConfig> {

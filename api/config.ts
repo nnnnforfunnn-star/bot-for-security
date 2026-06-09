@@ -67,7 +67,17 @@ export default async function handler(req: any, res: any) {
       
       let updatedConfig = {};
       if (config) {
+        const oldConfig = await getGroupConfig(chatId);
         updatedConfig = await updateGroupConfig(chatId, config);
+
+        if (config.rulesText && config.rulesText !== oldConfig.rulesText && (updatedConfig as any).autoPinRules) {
+          try {
+            const rulesMsg = await bot.api.sendMessage(chatId, `📖 **Тайпанын жаңы эрежелери:**\n\n${config.rulesText}`, { parse_mode: "Markdown" });
+            await bot.api.pinChatMessage(chatId, rulesMsg.message_id, { disable_notification: true }).catch(() => {});
+          } catch (e) {
+            console.error("Error auto-pinning rules:", e);
+          }
+        }
       }
 
       // Helper function to sync hashes

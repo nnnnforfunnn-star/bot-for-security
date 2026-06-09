@@ -1,6 +1,34 @@
-import { Context } from "grammy";
+import { Context, InlineKeyboard } from "grammy";
 import { db } from "../utils/db.js";
 import { isUserAdminInChat } from "../utils/telegram.js";
+
+// Helper to reply with notes/filters that might contain JSON configuration
+async function replyWithStructuredContent(ctx: Context, content: string) {
+  let text = content;
+  let keyboard: InlineKeyboard | undefined = undefined;
+
+  try {
+    if (content.startsWith("{") && content.endsWith("}")) {
+      const parsed = JSON.parse(content);
+      text = parsed.text || "";
+      if (parsed.buttonText && parsed.buttonUrl) {
+        keyboard = new InlineKeyboard().url(parsed.buttonText, parsed.buttonUrl);
+      }
+    }
+  } catch (e) {
+    // Treat as plain text
+  }
+
+  await ctx.reply(text, {
+    reply_markup: keyboard,
+    parse_mode: "Markdown"
+  }).catch(async (err) => {
+    // Fallback if markdown format fails
+    await ctx.reply(text, {
+      reply_markup: keyboard
+    }).catch(() => {});
+  });
+}
 
 // /save [name] [text]
 export async function saveNoteCommand(ctx: Context) {
@@ -46,7 +74,7 @@ export async function getNoteCommand(ctx: Context, isHashtag: boolean = false) {
       if (w.startsWith("#")) {
         const name = w.substring(1).toLowerCase().replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g,"");
         if (notes[name]) {
-          await ctx.reply(notes[name]);
+          await replyWithStructuredContent(ctx, notes[name]);
           return;
         }
       }
@@ -56,7 +84,7 @@ export async function getNoteCommand(ctx: Context, isHashtag: boolean = false) {
     if (match) {
       const name = match[1].toLowerCase();
       if (notes[name]) {
-        await ctx.reply(notes[name]);
+        await replyWithStructuredContent(ctx, notes[name]);
       } else {
         await ctx.reply(`❌ **${name}** белгиси табылган жок.`, { parse_mode: "Markdown" });
       }

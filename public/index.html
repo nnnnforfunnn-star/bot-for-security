@@ -1615,6 +1615,56 @@
                 <div class="form-group">
                   <textarea class="form-textarea" id="rulesText" rows="6"></textarea>
                 </div>
+                <div class="setting-row" style="margin-top: 14px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 14px;">
+                  <div class="setting-info">
+                    <div class="setting-name">Эреже өзгөргөндө автоматтык түрдө пин кылуу</div>
+                    <div class="setting-desc">Сактоо баскычы басылганда жаңы эрежелер билдирүү катары жөнөтүлүп, пин кылынат.</div>
+                  </div>
+                  <label class="switch">
+                    <input type="checkbox" id="autoPinRules">
+                    <span class="slider"></span>
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <!-- Media & Link Rate Limiter Card -->
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title">🛡️ Шилтеме жана Медиа жөнөтүү лимити (Rate Limiter)</div>
+                <div class="card-description">Колдонуучу кыска убакыттын ичинде канча шилтеме же медиа (сүрөт, видео, документ) жөнөтө аларын чектөө.</div>
+              </div>
+              <div class="card-body">
+                <div class="setting-row">
+                  <div class="setting-info">
+                    <div class="setting-name">Лимит системасын күйгүзүү</div>
+                    <div class="setting-desc">Спам боттордун сүрөттөр же жарнамаларды бат-баттан жөнөтүүсүн токтотот.</div>
+                  </div>
+                  <label class="switch">
+                    <input type="checkbox" id="mediaRateLimitEnabled">
+                    <span class="slider"></span>
+                  </label>
+                </div>
+                <div class="grid-2" style="margin-top: 14px;">
+                  <div class="form-group">
+                    <label class="form-label">Билдирүүлөрдүн чеги (Максимум)</label>
+                    <input type="number" class="form-input" id="mediaRateLimitCount" min="1" placeholder="Стандарттуу: 5">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Убакыт интервалы (секунд)</label>
+                    <input type="number" class="form-input" id="mediaRateLimitPeriod" min="5" placeholder="Стандарттуу: 60">
+                  </div>
+                </div>
+                <div class="form-group" style="margin-top: 14px;">
+                  <label class="form-label">Чегинен ашканда берилүүчү жаза</label>
+                  <select class="form-select" id="mediaRateLimitAction">
+                    <option value="delete">Билдирүүлөрүн өчүрүү гана</option>
+                    <option value="mute">Мут (2 саат)</option>
+                    <option value="warn">Варн берүү (Эскертүү)</option>
+                    <option value="kick">Кик кылуу (Чаттан чыгаруу)</option>
+                    <option value="ban">Бандоо (Бөгөттөө)</option>
+                  </select>
+                </div>
               </div>
             </div>
 
@@ -1649,7 +1699,7 @@
                   <label class="form-label">Жазалоонун себеби (милдеттүү)</label>
                   <input type="text" class="form-input" id="bl_reason" placeholder="Мисалы: Спам жарнама үчүн">
                 </div>
-                <button class="btn btn-primary" style="width: 100%; margin-top: 10px;" onclick="addBlacklist()">Кара тизмеге кошуу</button>
+                <button class="btn btn-primary" style="width: 100%; margin-top: 10px;" onclick="addBlacklist()">Кара тизмеге кошуу/сактоо</button>
                 
                 <div style="margin-top: 24px;">
                   <h4 class="form-label">Тыюу салынгандар тизмеси</h4>
@@ -1671,9 +1721,19 @@
                 </div>
                 <div class="form-group">
                   <label class="form-label">Боттун жообу</label>
-                  <input type="text" class="form-input" id="fl_reply" placeholder="Мисалы: Саламатсызбы! Кандай жардам керек?">
+                  <textarea class="form-textarea" id="fl_reply" rows="3" placeholder="Мисалы: Саламатсызбы! Кандай жардам керек?"></textarea>
                 </div>
-                <button class="btn btn-primary" style="width: 100%;" onclick="addFilter()">Кошуу</button>
+                <div class="grid-2" style="margin-top: 10px;">
+                  <div class="form-group">
+                    <label class="form-label">Шилтеме баскычынын тексти (Кошумча)</label>
+                    <input type="text" class="form-input" id="fl_btn_text" placeholder="Мисалы: Каналга өтүү">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Шилтеме URL (Кошумча)</label>
+                    <input type="text" class="form-input" id="fl_btn_url" placeholder="Мисалы: https://t.me/... / http://...">
+                  </div>
+                </div>
+                <button class="btn btn-primary" style="width: 100%; margin-top: 10px;" onclick="addFilter()">Автожоопту кошуу/сактоо</button>
                 
                 <div style="margin-top: 24px;">
                   <h4 class="form-label">Активдүү автожооптор</h4>
@@ -1717,11 +1777,39 @@
                   <label class="form-label">Белгинин тексти</label>
                   <textarea class="form-textarea" id="nt_text" rows="3" placeholder="Биздин негизги эрежелер..."></textarea>
                 </div>
-                <button class="btn btn-primary" style="width: 100%;" onclick="addNote()">Сактоо</button>
+                <div class="grid-2" style="margin-top: 10px;">
+                  <div class="form-group">
+                    <label class="form-label">Шилтеме баскычынын тексти (Кошумча)</label>
+                    <input type="text" class="form-input" id="nt_btn_text" placeholder="Мисалы: Сайтты ачуу">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Шилтеме URL (Кошумча)</label>
+                    <input type="text" class="form-input" id="nt_btn_url" placeholder="Мисалы: https://...">
+                  </div>
+                </div>
+                <button class="btn btn-primary" style="width: 100%; margin-top: 10px;" onclick="addNote()">Белгини кошуу/сактоо</button>
                 
                 <div style="margin-top: 24px;">
                   <h4 class="form-label">Сакталган белгилер</h4>
                   <div id="nt_list" style="margin-top: 10px;"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Backup Import/Export Card -->
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title">📋 Көчүрмөлөө (Backup & Restore)</div>
+                <div class="card-description">Тайпанын автожоопторун, кара тизмесин, сөгүнүү сөздөрүн жана белгилерин экспорттоп, башка топторго оңой чаптасаңыз болот.</div>
+              </div>
+              <div class="card-body">
+                <div class="form-group">
+                  <label class="form-label">JSON тексти</label>
+                  <textarea class="form-textarea" id="backupJsonArea" rows="4" placeholder="Бул жерге экспорттолгон JSON текстти чаптаңыз же экспорттоону басыңыз..."></textarea>
+                </div>
+                <div style="display: flex; gap: 10px; margin-top: 10px;">
+                  <button class="btn" style="flex: 1;" onclick="exportBackup()">📤 Экспорттоо (Код алуу)</button>
+                  <button class="btn btn-primary" style="flex: 1;" onclick="importBackup()">📥 Импорттоо (Жүктөө)</button>
                 </div>
               </div>
             </div>
@@ -2155,6 +2243,11 @@
       toggleSpamScannerFields();
 
       document.getElementById('rulesText').value = cfg.rulesText || '';
+      document.getElementById('autoPinRules').checked = cfg.autoPinRules || false;
+      document.getElementById('mediaRateLimitEnabled').checked = cfg.mediaRateLimitEnabled || false;
+      document.getElementById('mediaRateLimitCount').value = cfg.mediaRateLimitCount || 5;
+      document.getElementById('mediaRateLimitPeriod').value = cfg.mediaRateLimitPeriod || 60;
+      document.getElementById('mediaRateLimitAction').value = cfg.mediaRateLimitAction || 'delete';
     }
 
     function renderLists() {
@@ -2171,20 +2264,38 @@
             <div class="list-item-title">${k}</div>
             <div class="list-item-subtitle">Чара: ${actionLbl}</div>
           </div>
-          <button class="btn btn-sm btn-danger" onclick="deleteListItem('blacklist', '${k}')">Өчүрүү</button>
+          <div style="display:flex; gap:6px;">
+            <button class="btn btn-sm" onclick="editBlacklist('${k}')">Оңдоо</button>
+            <button class="btn btn-sm btn-danger" onclick="deleteListItem('blacklist', '${k}')">Өчүрүү</button>
+          </div>
         </div>`;
       }).join('');
       document.getElementById('bl_list').innerHTML = blHtml || "<p style='font-size:12px;color:var(--text-muted)'>Кара тизме бош.</p>";
 
       // Filters rendering
-      const flHtml = Object.entries(appData.filters).map(([k, v]) => `
+      const flHtml = Object.entries(appData.filters).map(([k, v]) => {
+        let displayVal = v;
+        let btnInfo = "";
+        try {
+          if (v.startsWith('{') && v.endsWith('}')) {
+            const parsed = JSON.parse(v);
+            displayVal = parsed.text || "";
+            btnInfo = ` <span class="badge" style="background:var(--primary); font-size:10px; margin-left:6px;">Баскыч: ${parsed.buttonText} (${parsed.buttonUrl})</span>`;
+          }
+        } catch (e) {}
+
+        return `
         <div class="list-item">
           <div class="list-item-content">
-            <div class="list-item-title">${k}</div>
-            <div class="list-item-subtitle">${v}</div>
+            <div class="list-item-title">${k}${btnInfo}</div>
+            <div class="list-item-subtitle">${displayVal}</div>
           </div>
-          <button class="btn btn-sm btn-danger" onclick="deleteListItem('filters', '${k}')">Өчүрүү</button>
-        </div>`).join('');
+          <div style="display:flex; gap:6px;">
+            <button class="btn btn-sm" onclick="editFilter('${k}')">Оңдоо</button>
+            <button class="btn btn-sm btn-danger" onclick="deleteListItem('filters', '${k}')">Өчүрүү</button>
+          </div>
+        </div>`;
+      }).join('');
       document.getElementById('fl_list').innerHTML = flHtml || "<p style='font-size:12px;color:var(--text-muted)'>Тизме бош.</p>";
 
       // Swearwords rendering
@@ -2196,15 +2307,93 @@
       document.getElementById('sw_list').innerHTML = swHtml || "<p style='font-size:12px;color:var(--text-muted);width:100%'>База бош.</p>";
 
       // Notes rendering
-      const ntHtml = Object.entries(appData.notes).map(([k, v]) => `
+      const ntHtml = Object.entries(appData.notes).map(([k, v]) => {
+        let displayVal = v;
+        let btnInfo = "";
+        try {
+          if (v.startsWith('{') && v.endsWith('}')) {
+            const parsed = JSON.parse(v);
+            displayVal = parsed.text || "";
+            btnInfo = ` <span class="badge" style="background:var(--primary); font-size:10px; margin-left:6px;">Баскыч: ${parsed.buttonText} (${parsed.buttonUrl})</span>`;
+          }
+        } catch (e) {}
+
+        return `
         <div class="list-item">
           <div class="list-item-content">
-            <div class="list-item-title">#${k}</div>
-            <div class="list-item-subtitle">${v}</div>
+            <div class="list-item-title">#${k}${btnInfo}</div>
+            <div class="list-item-subtitle">${displayVal}</div>
           </div>
-          <button class="btn btn-sm btn-danger" onclick="deleteListItem('notes', '${k}')">Өчүрүү</button>
-        </div>`).join('');
+          <div style="display:flex; gap:6px;">
+            <button class="btn btn-sm" onclick="editNote('${k}')">Оңдоо</button>
+            <button class="btn btn-sm btn-danger" onclick="deleteListItem('notes', '${k}')">Өчүрүү</button>
+          </div>
+        </div>`;
+      }).join('');
       document.getElementById('nt_list').innerHTML = ntHtml || "<p style='font-size:12px;color:var(--text-muted)'>Тизме бош.</p>";
+    }
+
+    function editBlacklist(word) {
+      const rawAction = appData.blacklist[word] || '';
+      document.getElementById('bl_word').value = word;
+      if (rawAction.includes(':')) {
+        const parts = rawAction.split(':');
+        document.getElementById('bl_action').value = parts[0];
+        document.getElementById('bl_val').value = parts[1];
+        document.getElementById('bl_reason').value = parts.slice(2).join(':');
+      } else {
+        document.getElementById('bl_action').value = rawAction || 'delete';
+        document.getElementById('bl_reason').value = '';
+      }
+      toggleBlacklistFields();
+      document.getElementById('bl_word').focus();
+      showToast("Оңдоо үчүн маалыматтар толтурулду.");
+    }
+
+    function editFilter(word) {
+      const val = appData.filters[word] || '';
+      document.getElementById('fl_word').value = word;
+      try {
+        if (val.startsWith('{') && val.endsWith('}')) {
+          const parsed = JSON.parse(val);
+          document.getElementById('fl_reply').value = parsed.text || '';
+          document.getElementById('fl_btn_text').value = parsed.buttonText || '';
+          document.getElementById('fl_btn_url').value = parsed.buttonUrl || '';
+        } else {
+          document.getElementById('fl_reply').value = val;
+          document.getElementById('fl_btn_text').value = '';
+          document.getElementById('fl_btn_url').value = '';
+        }
+      } catch (e) {
+        document.getElementById('fl_reply').value = val;
+        document.getElementById('fl_btn_text').value = '';
+        document.getElementById('fl_btn_url').value = '';
+      }
+      document.getElementById('fl_word').focus();
+      showToast("Оңдоо үчүн маалыматтар толтурулду.");
+    }
+
+    function editNote(name) {
+      const val = appData.notes[name] || '';
+      document.getElementById('nt_name').value = name;
+      try {
+        if (val.startsWith('{') && val.endsWith('}')) {
+          const parsed = JSON.parse(val);
+          document.getElementById('nt_text').value = parsed.text || '';
+          document.getElementById('nt_btn_text').value = parsed.buttonText || '';
+          document.getElementById('nt_btn_url').value = parsed.buttonUrl || '';
+        } else {
+          document.getElementById('nt_text').value = val;
+          document.getElementById('nt_btn_text').value = '';
+          document.getElementById('nt_btn_url').value = '';
+        }
+      } catch (e) {
+        document.getElementById('nt_text').value = val;
+        document.getElementById('nt_btn_text').value = '';
+        document.getElementById('nt_btn_url').value = '';
+      }
+      document.getElementById('nt_name').focus();
+      showToast("Оңдоо үчүн маалыматтар толтурулду.");
     }
 
     function addBlacklist() {
@@ -2228,29 +2417,51 @@
       document.getElementById('bl_word').value = '';
       document.getElementById('bl_reason').value = '';
       renderLists();
-      showToast("Тизмеге убактылуу кошулду, Сактоо баскычын басыңыз.");
+      showToast("Кара тизмеге сакталды, Сактоо баскычын басыңыз.");
     }
 
     function addFilter() {
       const w = document.getElementById('fl_word').value.trim().toLowerCase();
       const r = document.getElementById('fl_reply').value.trim();
-      if (w && r) {
-        appData.filters[w] = r;
-        document.getElementById('fl_word').value = '';
-        document.getElementById('fl_reply').value = '';
-        renderLists();
+      const btnText = document.getElementById('fl_btn_text').value.trim();
+      const btnUrl = document.getElementById('fl_btn_url').value.trim();
+
+      if (!w || !r) { showToast("Ачкыч сөз жана боттун жообу толтурулушу керек!", 'error'); return; }
+
+      let valueStr = r;
+      if (btnText && btnUrl) {
+        valueStr = JSON.stringify({ text: r, buttonText: btnText, buttonUrl: btnUrl });
       }
+
+      appData.filters[w] = valueStr;
+      document.getElementById('fl_word').value = '';
+      document.getElementById('fl_reply').value = '';
+      document.getElementById('fl_btn_text').value = '';
+      document.getElementById('fl_btn_url').value = '';
+      renderLists();
+      showToast("Автожооп сакталды, Сактоо баскычын басыңыз.");
     }
 
     function addNote() {
       const n = document.getElementById('nt_name').value.trim().toLowerCase();
       const t = document.getElementById('nt_text').value.trim();
-      if (n && t) {
-        appData.notes[n] = t;
-        document.getElementById('nt_name').value = '';
-        document.getElementById('nt_text').value = '';
-        renderLists();
+      const btnText = document.getElementById('nt_btn_text').value.trim();
+      const btnUrl = document.getElementById('nt_btn_url').value.trim();
+
+      if (!n || !t) { showToast("Белгинин аталышы жана тексти толтурулушу керек!", 'error'); return; }
+
+      let valueStr = t;
+      if (btnText && btnUrl) {
+        valueStr = JSON.stringify({ text: t, buttonText: btnText, buttonUrl: btnUrl });
       }
+
+      appData.notes[n] = valueStr;
+      document.getElementById('nt_name').value = '';
+      document.getElementById('nt_text').value = '';
+      document.getElementById('nt_btn_text').value = '';
+      document.getElementById('nt_btn_url').value = '';
+      renderLists();
+      showToast("Белги сакталды, Сактоо баскычын басыңыз.");
     }
 
     function addSwear() {
@@ -2261,6 +2472,7 @@
           appData.swearwords.push(w);
           document.getElementById('sw_word').value = '';
           renderLists();
+          showToast("Сөз кошулду, Сактоо баскычын басыңыз.");
         }
       }
     }
@@ -2268,11 +2480,58 @@
     function deleteListItem(type, key) {
       delete appData[type][key];
       renderLists();
+      showToast("Тизмеден өчүрүлдү. Сактоо баскычын унутпаңыз.");
     }
 
     function deleteSwearWord(idx) {
       appData.swearwords.splice(idx, 1);
       renderLists();
+      showToast("Сөз өчүрүлдү. Сактоо баскычын унутпаңыз.");
+    }
+
+    function exportBackup() {
+      const backup = {
+        blacklist: appData.blacklist || {},
+        filters: appData.filters || {},
+        notes: appData.notes || {},
+        swearwords: appData.swearwords || []
+      };
+      const jsonStr = JSON.stringify(backup, null, 2);
+      const area = document.getElementById('backupJsonArea');
+      area.value = jsonStr;
+      area.select();
+      
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(jsonStr).then(() => {
+          showToast("Көчүрмө коду көчүрүлдү!", 'success');
+        }).catch(() => {
+          showToast("Код даяр, аны өзүңүз көчүрүп алыңыз.");
+        });
+      } else {
+        showToast("Код даяр, аны өзүңүз көчүрүп алыңыз.");
+      }
+    }
+
+    function importBackup() {
+      const val = document.getElementById('backupJsonArea').value.trim();
+      if (!val) { showToast("JSON тексти бош!", 'error'); return; }
+      try {
+        const parsed = JSON.parse(val);
+        if (parsed.blacklist) appData.blacklist = { ...appData.blacklist, ...parsed.blacklist };
+        if (parsed.filters) appData.filters = { ...appData.filters, ...parsed.filters };
+        if (parsed.notes) appData.notes = { ...appData.notes, ...parsed.notes };
+        if (parsed.swearwords && Array.isArray(parsed.swearwords)) {
+          if (!appData.swearwords) appData.swearwords = [];
+          parsed.swearwords.forEach(w => {
+            if (!appData.swearwords.includes(w)) appData.swearwords.push(w);
+          });
+        }
+        renderLists();
+        document.getElementById('backupJsonArea').value = "";
+        showToast("Маалыматтар ийгиликтүү кошулду! Өзгөртүүлөрдү Сактоо баскычын басыңыз.", 'success');
+      } catch (e) {
+        showToast("JSON коду туура эмес түзүлгөн!", 'error');
+      }
     }
 
     function renderStatsAndLogs() {
@@ -2719,6 +2978,11 @@
       appData.config.joinFilterSpamAction = document.getElementById('joinFilterSpamAction').value;
 
       appData.config.rulesText = document.getElementById('rulesText').value;
+      appData.config.autoPinRules = document.getElementById('autoPinRules').checked;
+      appData.config.mediaRateLimitEnabled = document.getElementById('mediaRateLimitEnabled').checked;
+      appData.config.mediaRateLimitCount = parseInt(document.getElementById('mediaRateLimitCount').value) || 5;
+      appData.config.mediaRateLimitPeriod = parseInt(document.getElementById('mediaRateLimitPeriod').value) || 60;
+      appData.config.mediaRateLimitAction = document.getElementById('mediaRateLimitAction').value;
 
       // Extract customCommands configs
       if (!appData.config.customCommands) appData.config.customCommands = {};
