@@ -223,3 +223,36 @@ export async function unbanUser(
     return false;
   }
 }
+
+/**
+ * Преобразует разметку Markdown (ссылки, жирный, курсив, код) в HTML формат,
+ * экранируя остальные HTML-сущности для надежной отправки в Telegram API.
+ */
+export function formatMessageToHtml(inputText: string): string {
+  if (!inputText) return "";
+  let html = inputText;
+
+  // Экранируем HTML сущности
+  html = html
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+
+  // Парсим Markdown ссылки [text](url) -> <a href="url">text</a>
+  html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (match, linkText, url) => {
+    const cleanUrl = url.replace(/&amp;/g, "&");
+    return `<a href="${cleanUrl}">${linkText}</a>`;
+  });
+
+  // Парсим жирный текст **text** или *text* -> <b>text</b>
+  html = html.replace(/\*\*([^*]+)\*\*/g, "<b>$1</b>");
+  html = html.replace(/\*([^*]+)\*/g, "<b>$1</b>");
+
+  // Парсим курсив _text_ -> <i>text</i>
+  html = html.replace(/_([^_]+)_/g, "<i>$1</i>");
+
+  // Парсим код `text` -> <code>text</code>
+  html = html.replace(/`([^`]+)`/g, "<code>$1</code>");
+
+  return html;
+}

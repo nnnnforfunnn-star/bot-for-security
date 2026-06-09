@@ -1,6 +1,6 @@
 import { Context, InlineKeyboard } from "grammy";
 import { db } from "../utils/db.js";
-import { isUserAdminInChat } from "../utils/telegram.js";
+import { isUserAdminInChat, formatMessageToHtml } from "../utils/telegram.js";
 
 // Helper to reply with notes/filters that might contain JSON configuration
 async function replyWithStructuredContent(ctx: Context, content: string) {
@@ -11,19 +11,37 @@ async function replyWithStructuredContent(ctx: Context, content: string) {
     if (content.startsWith("{") && content.endsWith("}")) {
       const parsed = JSON.parse(content);
       text = parsed.text || "";
-      if (parsed.buttonText && parsed.buttonUrl) {
-        keyboard = new InlineKeyboard().url(parsed.buttonText, parsed.buttonUrl);
+      
+      const kb = new InlineKeyboard();
+      let hasButtons = false;
+
+      if (Array.isArray(parsed.buttons)) {
+        for (const btn of parsed.buttons) {
+          if (btn.text && btn.url) {
+            kb.url(btn.text, btn.url).row();
+            hasButtons = true;
+          }
+        }
+      } else if (parsed.buttonText && parsed.buttonUrl) {
+        kb.url(parsed.buttonText, parsed.buttonUrl);
+        hasButtons = true;
+      }
+
+      if (hasButtons) {
+        keyboard = kb;
       }
     }
   } catch (e) {
     // Treat as plain text
   }
 
-  await ctx.reply(text, {
+  const formattedText = formatMessageToHtml(text);
+
+  await ctx.reply(formattedText, {
     reply_markup: keyboard,
-    parse_mode: "Markdown"
+    parse_mode: "HTML"
   }).catch(async (err) => {
-    // Fallback if markdown format fails
+    // Fallback if HTML parse fails (e.g. unclosed tags)
     await ctx.reply(text, {
       reply_markup: keyboard
     }).catch(() => {});

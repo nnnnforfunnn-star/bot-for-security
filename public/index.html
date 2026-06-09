@@ -1723,15 +1723,9 @@
                   <label class="form-label">Боттун жообу</label>
                   <textarea class="form-textarea" id="fl_reply" rows="3" placeholder="Мисалы: Саламатсызбы! Кандай жардам керек?"></textarea>
                 </div>
-                <div class="grid-2" style="margin-top: 10px;">
-                  <div class="form-group">
-                    <label class="form-label">Шилтеме баскычынын тексти (Кошумча)</label>
-                    <input type="text" class="form-input" id="fl_btn_text" placeholder="Мисалы: Каналга өтүү">
-                  </div>
-                  <div class="form-group">
-                    <label class="form-label">Шилтеме URL (Кошумча)</label>
-                    <input type="text" class="form-input" id="fl_btn_url" placeholder="Мисалы: https://t.me/... / http://...">
-                  </div>
+                <div class="form-group" style="margin-top: 10px;">
+                  <label class="form-label">Шилтеме баскычтары (Ар бир сапта: Баскычтын Аты | Ссылка)</label>
+                  <textarea class="form-textarea" id="fl_buttons" rows="2" placeholder="Мисалы:&#10;Каналга өтүү | https://t.me/kanal&#10;Чатка өтүү | https://t.me/chat"></textarea>
                 </div>
                 <button class="btn btn-primary" style="width: 100%; margin-top: 10px;" onclick="addFilter()">Автожоопту кошуу/сактоо</button>
                 
@@ -1777,15 +1771,9 @@
                   <label class="form-label">Белгинин тексти</label>
                   <textarea class="form-textarea" id="nt_text" rows="3" placeholder="Биздин негизги эрежелер..."></textarea>
                 </div>
-                <div class="grid-2" style="margin-top: 10px;">
-                  <div class="form-group">
-                    <label class="form-label">Шилтеме баскычынын тексти (Кошумча)</label>
-                    <input type="text" class="form-input" id="nt_btn_text" placeholder="Мисалы: Сайтты ачуу">
-                  </div>
-                  <div class="form-group">
-                    <label class="form-label">Шилтеме URL (Кошумча)</label>
-                    <input type="text" class="form-input" id="nt_btn_url" placeholder="Мисалы: https://...">
-                  </div>
+                <div class="form-group" style="margin-top: 10px;">
+                  <label class="form-label">Шилтеме баскычтары (Ар бир сапта: Баскычтын Аты | Ссылка)</label>
+                  <textarea class="form-textarea" id="nt_buttons" rows="2" placeholder="Мисалы:&#10;Сайтты ачуу | https://site.com"></textarea>
                 </div>
                 <button class="btn btn-primary" style="width: 100%; margin-top: 10px;" onclick="addNote()">Белгини кошуу/сактоо</button>
                 
@@ -2280,7 +2268,11 @@
           if (v.startsWith('{') && v.endsWith('}')) {
             const parsed = JSON.parse(v);
             displayVal = parsed.text || "";
-            btnInfo = ` <span class="badge" style="background:var(--primary); font-size:10px; margin-left:6px;">Баскыч: ${parsed.buttonText} (${parsed.buttonUrl})</span>`;
+            if (Array.isArray(parsed.buttons)) {
+              btnInfo = ` <span class="badge" style="background:var(--primary); font-size:10px; margin-left:6px;">Баскычтар: ${parsed.buttons.length}</span>`;
+            } else if (parsed.buttonText && parsed.buttonUrl) {
+              btnInfo = ` <span class="badge" style="background:var(--primary); font-size:10px; margin-left:6px;">Баскыч: ${parsed.buttonText} (${parsed.buttonUrl})</span>`;
+            }
           }
         } catch (e) {}
 
@@ -2314,7 +2306,11 @@
           if (v.startsWith('{') && v.endsWith('}')) {
             const parsed = JSON.parse(v);
             displayVal = parsed.text || "";
-            btnInfo = ` <span class="badge" style="background:var(--primary); font-size:10px; margin-left:6px;">Баскыч: ${parsed.buttonText} (${parsed.buttonUrl})</span>`;
+            if (Array.isArray(parsed.buttons)) {
+              btnInfo = ` <span class="badge" style="background:var(--primary); font-size:10px; margin-left:6px;">Баскычтар: ${parsed.buttons.length}</span>`;
+            } else if (parsed.buttonText && parsed.buttonUrl) {
+              btnInfo = ` <span class="badge" style="background:var(--primary); font-size:10px; margin-left:6px;">Баскыч: ${parsed.buttonText} (${parsed.buttonUrl})</span>`;
+            }
           }
         } catch (e) {}
 
@@ -2357,17 +2353,21 @@
         if (val.startsWith('{') && val.endsWith('}')) {
           const parsed = JSON.parse(val);
           document.getElementById('fl_reply').value = parsed.text || '';
-          document.getElementById('fl_btn_text').value = parsed.buttonText || '';
-          document.getElementById('fl_btn_url').value = parsed.buttonUrl || '';
+          if (Array.isArray(parsed.buttons)) {
+            const btnText = parsed.buttons.map(b => `${b.text} | ${b.url}`).join('\n');
+            document.getElementById('fl_buttons').value = btnText;
+          } else if (parsed.buttonText && parsed.buttonUrl) {
+            document.getElementById('fl_buttons').value = `${parsed.buttonText} | ${parsed.buttonUrl}`;
+          } else {
+            document.getElementById('fl_buttons').value = '';
+          }
         } else {
           document.getElementById('fl_reply').value = val;
-          document.getElementById('fl_btn_text').value = '';
-          document.getElementById('fl_btn_url').value = '';
+          document.getElementById('fl_buttons').value = '';
         }
       } catch (e) {
         document.getElementById('fl_reply').value = val;
-        document.getElementById('fl_btn_text').value = '';
-        document.getElementById('fl_btn_url').value = '';
+        document.getElementById('fl_buttons').value = '';
       }
       document.getElementById('fl_word').focus();
       showToast("Оңдоо үчүн маалыматтар толтурулду.");
@@ -2380,17 +2380,21 @@
         if (val.startsWith('{') && val.endsWith('}')) {
           const parsed = JSON.parse(val);
           document.getElementById('nt_text').value = parsed.text || '';
-          document.getElementById('nt_btn_text').value = parsed.buttonText || '';
-          document.getElementById('nt_btn_url').value = parsed.buttonUrl || '';
+          if (Array.isArray(parsed.buttons)) {
+            const btnText = parsed.buttons.map(b => `${b.text} | ${b.url}`).join('\n');
+            document.getElementById('nt_buttons').value = btnText;
+          } else if (parsed.buttonText && parsed.buttonUrl) {
+            document.getElementById('nt_buttons').value = `${parsed.buttonText} | ${parsed.buttonUrl}`;
+          } else {
+            document.getElementById('nt_buttons').value = '';
+          }
         } else {
           document.getElementById('nt_text').value = val;
-          document.getElementById('nt_btn_text').value = '';
-          document.getElementById('nt_btn_url').value = '';
+          document.getElementById('nt_buttons').value = '';
         }
       } catch (e) {
         document.getElementById('nt_text').value = val;
-        document.getElementById('nt_btn_text').value = '';
-        document.getElementById('nt_btn_url').value = '';
+        document.getElementById('nt_buttons').value = '';
       }
       document.getElementById('nt_name').focus();
       showToast("Оңдоо үчүн маалыматтар толтурулду.");
@@ -2423,21 +2427,34 @@
     function addFilter() {
       const w = document.getElementById('fl_word').value.trim().toLowerCase();
       const r = document.getElementById('fl_reply').value.trim();
-      const btnText = document.getElementById('fl_btn_text').value.trim();
-      const btnUrl = document.getElementById('fl_btn_url').value.trim();
+      const btnTextVal = document.getElementById('fl_buttons').value.trim();
 
       if (!w || !r) { showToast("Ачкыч сөз жана боттун жообу толтурулушу керек!", 'error'); return; }
 
+      const buttons = [];
+      if (btnTextVal) {
+        const btnLines = btnTextVal.split('\n');
+        for (const line of btnLines) {
+          if (line.includes('|')) {
+            const parts = line.split('|');
+            const bText = parts[0].trim();
+            const bUrl = parts.slice(1).join('|').trim();
+            if (bText && bUrl) {
+              buttons.push({ text: bText, url: bUrl });
+            }
+          }
+        }
+      }
+
       let valueStr = r;
-      if (btnText && btnUrl) {
-        valueStr = JSON.stringify({ text: r, buttonText: btnText, buttonUrl: btnUrl });
+      if (buttons.length > 0) {
+        valueStr = JSON.stringify({ text: r, buttons: buttons });
       }
 
       appData.filters[w] = valueStr;
       document.getElementById('fl_word').value = '';
       document.getElementById('fl_reply').value = '';
-      document.getElementById('fl_btn_text').value = '';
-      document.getElementById('fl_btn_url').value = '';
+      document.getElementById('fl_buttons').value = '';
       renderLists();
       showToast("Автожооп сакталды, Сактоо баскычын басыңыз.");
     }
@@ -2445,21 +2462,34 @@
     function addNote() {
       const n = document.getElementById('nt_name').value.trim().toLowerCase();
       const t = document.getElementById('nt_text').value.trim();
-      const btnText = document.getElementById('nt_btn_text').value.trim();
-      const btnUrl = document.getElementById('nt_btn_url').value.trim();
+      const btnTextVal = document.getElementById('nt_buttons').value.trim();
 
       if (!n || !t) { showToast("Белгинин аталышы жана тексти толтурулушу керек!", 'error'); return; }
 
+      const buttons = [];
+      if (btnTextVal) {
+        const btnLines = btnTextVal.split('\n');
+        for (const line of btnLines) {
+          if (line.includes('|')) {
+            const parts = line.split('|');
+            const bText = parts[0].trim();
+            const bUrl = parts.slice(1).join('|').trim();
+            if (bText && bUrl) {
+              buttons.push({ text: bText, url: bUrl });
+            }
+          }
+        }
+      }
+
       let valueStr = t;
-      if (btnText && btnUrl) {
-        valueStr = JSON.stringify({ text: t, buttonText: btnText, buttonUrl: btnUrl });
+      if (buttons.length > 0) {
+        valueStr = JSON.stringify({ text: t, buttons: buttons });
       }
 
       appData.notes[n] = valueStr;
       document.getElementById('nt_name').value = '';
       document.getElementById('nt_text').value = '';
-      document.getElementById('nt_btn_text').value = '';
-      document.getElementById('nt_btn_url').value = '';
+      document.getElementById('nt_buttons').value = '';
       renderLists();
       showToast("Белги сакталды, Сактоо баскычын басыңыз.");
     }

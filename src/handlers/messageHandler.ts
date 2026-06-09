@@ -1,6 +1,6 @@
 import { Context, NextFunction, InlineKeyboard } from "grammy";
 import { logger } from "../utils/logger.js";
-import { isUserAdmin, muteUser, banUser, unbanUser } from "../utils/telegram.js";
+import { isUserAdmin, muteUser, banUser, unbanUser, formatMessageToHtml } from "../utils/telegram.js";
 import { getGroupConfig } from "../utils/configManager.js";
 import { db } from "../utils/db.js";
 import { logAction } from "../utils/actionLogger.js";
@@ -163,17 +163,35 @@ export async function messageHandler(ctx: Context, next: NextFunction): Promise<
               if (replyContent.startsWith("{") && replyContent.endsWith("}")) {
                 const parsed = JSON.parse(replyContent);
                 replyText = parsed.text || "";
-                if (parsed.buttonText && parsed.buttonUrl) {
-                  keyboard = new InlineKeyboard().url(parsed.buttonText, parsed.buttonUrl);
+                
+                const kb = new InlineKeyboard();
+                let hasButtons = false;
+
+                if (Array.isArray(parsed.buttons)) {
+                  for (const btn of parsed.buttons) {
+                    if (btn.text && btn.url) {
+                      kb.url(btn.text, btn.url).row();
+                      hasButtons = true;
+                    }
+                  }
+                } else if (parsed.buttonText && parsed.buttonUrl) {
+                  kb.url(parsed.buttonText, parsed.buttonUrl);
+                  hasButtons = true;
+                }
+
+                if (hasButtons) {
+                  keyboard = kb;
                 }
               }
             } catch (e) {
               // Not JSON
             }
 
-            await ctx.reply(replyText, {
+            const formattedText = formatMessageToHtml(replyText);
+
+            await ctx.reply(formattedText, {
               reply_markup: keyboard,
-              parse_mode: "Markdown"
+              parse_mode: "HTML"
             }).catch(async () => {
               await ctx.reply(replyText, {
                 reply_markup: keyboard
