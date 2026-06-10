@@ -87,6 +87,8 @@ export default async function handler(req: any, res: any) {
       const admins = await bot.api.getChatAdministrators(chatId).catch(() => []);
       const adminIds = new Set(admins.map(a => a.user.id));
       
+      const adminsMap = new Map(admins.map(a => [a.user.id, a]));
+      
       for (const uid of userIds) {
         const info = await db.hgetall(`chat:${chatId}:user:${uid}:info`);
         const warns = await db.get<number>(`chat:${chatId}:user:${uid}:warns`) || 0;
@@ -95,6 +97,27 @@ export default async function handler(req: any, res: any) {
         const numericId = parseInt(uid, 10);
         const isUserAdmin = adminIds.has(numericId);
         
+        let adminRole: string | null = null;
+        let adminCustomTitle = "";
+        
+        if (isUserAdmin) {
+          const adm = adminsMap.get(numericId);
+          if (adm) {
+            if (adm.status === "creator") {
+              adminRole = "owner";
+            } else {
+              if (adm.can_restrict_members && adm.can_change_info) {
+                adminRole = "coowner";
+              } else if (adm.can_restrict_members) {
+                adminRole = "middle";
+              } else {
+                adminRole = "junior";
+              }
+            }
+            adminCustomTitle = adm.custom_title || "";
+          }
+        }
+        
         usersInfo.push({
           id: numericId,
           name: info?.name || "Белгисиз",
@@ -102,8 +125,45 @@ export default async function handler(req: any, res: any) {
           warns,
           urmat,
           title,
-          isAdmin: isUserAdmin
+          isAdmin: isUserAdmin,
+          adminRole,
+          adminCustomTitle
         });
+      }
+
+      // Ensure all current admins are included in usersInfo
+      const processedUserIds = new Set(usersInfo.map(u => u.id));
+      for (const adm of admins) {
+        if (!processedUserIds.has(adm.user.id)) {
+          const uid = adm.user.id.toString();
+          const info = await db.hgetall(`chat:${chatId}:user:${uid}:info`);
+          const warns = await db.get<number>(`chat:${chatId}:user:${uid}:warns`) || 0;
+          const urmat = await db.get<number>(`chat:${chatId}:user:${uid}:urmat`) || 0;
+          const title = await db.get<string>(`chat:${chatId}:user:${uid}:title`) || "";
+          
+          let adminRole = "junior";
+          if (adm.status === "creator") {
+            adminRole = "owner";
+          } else {
+            if (adm.can_restrict_members && adm.can_change_info) {
+              adminRole = "coowner";
+            } else if (adm.can_restrict_members) {
+              adminRole = "middle";
+            }
+          }
+
+          usersInfo.push({
+            id: adm.user.id,
+            name: info?.name || [adm.user.first_name, adm.user.last_name].filter(Boolean).join(" ") || "Администратор",
+            username: info?.username || adm.user.username || "",
+            warns,
+            urmat,
+            title,
+            isAdmin: true,
+            adminRole,
+            adminCustomTitle: adm.custom_title || ""
+          });
+        }
       }
 
       // 4. Group details

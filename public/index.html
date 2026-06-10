@@ -1082,14 +1082,12 @@
               ⚠️ Варндар
             </div>
             <div class="nav-subitem" id="subitem-stats-logs" onclick="openStatsSubTab('logs', this)">
-              📋 Audit Log
+              🕵️ Аракеттер журналы
+            </div>
+            <div class="nav-subitem" id="subitem-stats-admins" onclick="openStatsSubTab('admins', this)">
+              🛡️ Администраторлордун активдүүлүгү
             </div>
           </div>
-        </div>
-
-        <div class="nav-label" style="margin-top: 10px;">Тайпа жөндөөсү</div>
-        <div class="nav-item" onclick="openTab('tab-group', this)">
-          <div class="nav-item-inner">🏠 Тайпа маалыматы</div>
         </div>
       </div>
     </div>
@@ -2059,7 +2057,7 @@
             <div class="stats-subview" id="view-stats-logs">
               <div class="card">
                 <div class="card-header">
-                  <div class="card-title">🕵️ Аракеттер журналы (Audit Log)</div>
+                  <div class="card-title">🕵️ Аракеттер журналы</div>
                   <div class="card-description">Бот жана админдер тарабынан тайпада жасалган акыркы аракеттер.</div>
                 </div>
                 <div class="card-body" id="stats_logs_body" style="padding: 0;">
@@ -2067,43 +2065,39 @@
                 </div>
               </div>
             </div>
-          </div>
 
-          <!-- 7. ТАБ: ТАЙПА МААЛЫМАТЫ -->
-          <div id="tab-group" class="tab-content">
-            <div class="card">
-              <div class="card-header">
-                <div class="card-title">🏠 Тайпа маалыматын башкаруу</div>
-                <div class="card-description">Тайпанын аталышын, сыпаттамасын же жай режимин (slowmode) ушул жерден өзгөртүңүз.</div>
-              </div>
-              <div class="card-body">
-                <div class="form-group">
-                  <label class="form-label">Тайпанын аталышы (Title)</label>
-                  <div style="display: flex; gap: 8px;">
-                    <input type="text" class="form-input" id="group_title" placeholder="Жаңы аталыш">
-                    <button class="btn btn-primary" onclick="doGroupAction('settitle', document.getElementById('group_title').value)">Сактоо</button>
-                  </div>
+            <!-- Subview: Admin Activity -->
+            <div class="stats-subview" id="view-stats-admins">
+              <div class="card">
+                <div class="card-header">
+                  <div class="card-title">👑 Администраторлордун активдүүлүгү</div>
+                  <div class="card-description">Модераторлордун жалпы саны, алардын даражасы жана жасаган модерациялык аракеттери.</div>
                 </div>
-                
-                <div class="form-group" style="margin-top: 20px;">
-                  <label class="form-label">Тайпанын баяндамасы (Description)</label>
-                  <div style="display: flex; gap: 8px;">
-                    <textarea class="form-textarea" id="group_desc" rows="3" placeholder="Тайпа жөнүндө кыскача маалымат..."></textarea>
-                    <button class="btn btn-primary" onclick="doGroupAction('setdesc', document.getElementById('group_desc').value)">Сактоо</button>
+                <div class="card-body">
+                  <!-- Stats summary row -->
+                  <div class="stats-header-grid" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 20px; padding: 0;">
+                    <div class="stat-mini-card">
+                      <div class="stat-mini-val" id="stat_admins_total_count">0</div>
+                      <div class="stat-mini-lbl">Жалпы админдер</div>
+                    </div>
+                    <div class="stat-mini-card">
+                      <div class="stat-mini-val" style="color:var(--success);" id="stat_admins_active_count">0</div>
+                      <div class="stat-mini-lbl">Активдүү админдер (Бүгүн)</div>
+                    </div>
+                    <div class="stat-mini-card">
+                      <div class="stat-mini-val" style="color:var(--accent);" id="stat_admins_total_actions">0</div>
+                      <div class="stat-mini-lbl">Жалпы модерация аракеттери</div>
+                    </div>
                   </div>
-                </div>
-                
-                <div class="form-group" style="margin-top: 20px;">
-                  <label class="form-label">Жай режим (Slowmode)</label>
-                  <div style="display: flex; gap: 8px;">
-                    <select class="form-select" id="group_slowmode">
-                      <option value="0">Өчүрүү (0s)</option>
-                      <option value="10">10 секунд</option>
-                      <option value="30">30 секунд</option>
-                      <option value="60">1 мүнөт</option>
-                      <option value="300">5 мүнөт</option>
-                    </select>
-                    <button class="btn btn-primary" onclick="doGroupAction('slowmode', null, document.getElementById('group_slowmode').value)">Орнотуу</button>
+
+                  <!-- Search bar for admins -->
+                  <div style="display: flex; gap: 8px; margin-bottom: 16px;">
+                    <input type="text" class="form-input" id="search_admins_input" placeholder="Админдерди издөө..." oninput="renderAdminsActivity()" style="max-width: 300px;">
+                  </div>
+
+                  <!-- Admins Table -->
+                  <div id="stats_admins_body">
+                    <!-- Dynamically populated -->
                   </div>
                 </div>
               </div>
@@ -2966,6 +2960,189 @@
       } else {
         warnsBody.innerHTML = "<p style='color:var(--text-muted); font-size:13px;'>Страйк алган катышуучулар жок.</p>";
       }
+      
+      // Render admin stats
+      renderAdminsActivity();
+    }
+
+    function renderAdminsActivity() {
+      const body = document.getElementById('stats_admins_body');
+      if (!body) return;
+
+      const searchVal = (document.getElementById('search_admins_input')?.value || "").toLowerCase().trim();
+
+      // Filter admins
+      let admins = statsData.users.filter(u => u.isAdmin);
+
+      if (searchVal) {
+        admins = admins.filter(u => 
+          u.name.toLowerCase().includes(searchVal) || 
+          (u.username && u.username.toLowerCase().includes(searchVal)) ||
+          u.id.toString().includes(searchVal)
+        );
+      }
+
+      // Calculate stats for each admin based on logs
+      const logs = statsData.logs || [];
+      let totalActionsCount = 0;
+      const activeAdminsSet = new Set();
+
+      const adminStatsList = admins.map(admin => {
+        // Find matching logs
+        const adminLogs = logs.filter(log => {
+          const adminNameLower = (log.adminName || "").toLowerCase();
+          const isMatch = adminNameLower === admin.name.toLowerCase() ||
+                          (admin.username && adminNameLower === admin.username.toLowerCase()) ||
+                          admin.name.toLowerCase().includes(adminNameLower) ||
+                          adminNameLower.includes(admin.name.toLowerCase());
+          return isMatch;
+        });
+
+        const bans = adminLogs.filter(l => l.action.includes("Бан") || l.action.includes("Ban")).length;
+        const mutes = adminLogs.filter(l => l.action.includes("Мут") || l.action.includes("Mute")).length;
+        const warns = adminLogs.filter(l => l.action.includes("Варн") || l.action.includes("Эскертүү") || l.action.includes("Warn")).length;
+        const kicks = adminLogs.filter(l => l.action.includes("Кик") || l.action.includes("Kick")).length;
+        const total = adminLogs.length;
+
+        if (total > 0) {
+          // Check if at least one action is from today
+          const todayStr = new Date().toDateString();
+          const hasTodayAction = adminLogs.some(l => new Date(l.timestamp).toDateString() === todayStr);
+          if (hasTodayAction) {
+            activeAdminsSet.add(admin.id);
+          }
+          totalActionsCount += total;
+        }
+
+        return {
+          admin,
+          bans,
+          mutes,
+          warns,
+          kicks,
+          total,
+          recentLogs: adminLogs.slice(0, 5) // Show up to 5 recent actions
+        };
+      });
+
+      // Update KPI counters
+      const totalCountElem = document.getElementById('stat_admins_total_count');
+      const activeCountElem = document.getElementById('stat_admins_active_count');
+      const totalActionsElem = document.getElementById('stat_admins_total_actions');
+
+      if (totalCountElem) totalCountElem.innerText = admins.length;
+      if (activeCountElem) activeCountElem.innerText = activeAdminsSet.size;
+      if (totalActionsElem) totalActionsElem.innerText = totalActionsCount;
+
+      // Sort by total actions desc
+      adminStatsList.sort((a, b) => b.total - a.total);
+
+      if (adminStatsList.length === 0) {
+        body.innerHTML = "<p style='color:var(--text-muted); text-align:center; padding: 20px;'>Администраторлор табылган жок.</p>";
+        return;
+      }
+
+      // Map roles to Kyrgyzstan text & badges
+      const getRoleBadge = (role, customTitle) => {
+        let label = "Админ";
+        let color = "var(--text-muted)";
+        let bg = "rgba(255,255,255,0.05)";
+
+        if (role === "owner") {
+          label = "👑 Чат Ээси";
+          color = "#ff4500";
+          bg = "rgba(255, 69, 0, 0.15)";
+        } else if (role === "coowner") {
+          label = "⭐ Жардамчы (Co-owner)";
+          color = "var(--accent)";
+          bg = "var(--accent-glow)";
+        } else if (role === "senior") {
+          label = "🛡️ Улуу админ";
+          color = "var(--success)";
+          bg = "var(--success-glow)";
+        } else if (role === "middle") {
+          label = "🛡️ Орто админ";
+          color = "var(--warn)";
+          bg = "var(--warn-glow)";
+        } else if (role === "junior") {
+          label = "🛡️ Кичүү админ";
+          color = "var(--text-muted)";
+          bg = "rgba(255,255,255,0.05)";
+        }
+
+        const titleText = customTitle ? ` [${customTitle}]` : "";
+        return `<span class="badge" style="background: ${bg}; color: ${color}; font-size:11px; padding: 3px 8px; border-radius: 4px; font-weight: 600;">${label}${titleText}</span>`;
+      };
+
+      const tableHtml = `
+      <div class="table-container">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Администратор</th>
+              <th>Ролу / Статусу</th>
+              <th>🚫 Бан</th>
+              <th>🔇 Мут</th>
+              <th>⚠️ Варн</th>
+              <th>👢 Кик</th>
+              <th>📊 Жалпы</th>
+              <th>Аракеттер</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${adminStatsList.map(item => {
+              const u = item.admin;
+              const avatarChar = (u.name || "A").substring(0, 1).toUpperCase();
+              
+              let recentActionsHtml = "";
+              if (item.recentLogs.length > 0) {
+                recentActionsHtml = item.recentLogs.map(log => {
+                  const date = new Date(log.timestamp).toLocaleTimeString("ru-RU", {hour:'2-digit', minute:'2-digit'});
+                  return `<div style="font-size:11px; margin-top:4px; color:var(--text-muted); border-left:2px solid var(--accent); padding-left:6px; text-align:left;">
+                    <b>${date}</b>: ${log.action} -> <b>${log.name}</b> (${log.reason})
+                  </div>`;
+                }).join('');
+              } else {
+                recentActionsHtml = `<div style="font-size:11px; color:var(--text-muted); font-style:italic;">Аракеттер журналында маалымат жок.</div>`;
+              }
+
+              return `
+              <tr id="admin_row_${u.id}">
+                <td>
+                  <div style="display:flex; align-items:center; gap:8px;">
+                    <div style="width:28px; height:28px; border-radius:50%; background:var(--accent-glow); color:var(--accent); display:flex; align-items:center; justify-content:center; font-weight:bold; font-size:12px;">
+                      ${avatarChar}
+                    </div>
+                    <div style="text-align:left;">
+                      <b>${u.name}</b>
+                      ${u.username ? `<br><span style="font-size:11px; color:var(--text-muted);">@${u.username}</span>` : ""}
+                    </div>
+                  </div>
+                </td>
+                <td>${getRoleBadge(u.adminRole, u.adminCustomTitle)}</td>
+                <td><span style="${item.bans > 0 ? 'color:var(--danger); font-weight:bold;' : 'color:var(--text-muted);'}">${item.bans}</span></td>
+                <td><span style="${item.mutes > 0 ? 'color:var(--warn); font-weight:bold;' : 'color:var(--text-muted);'}">${item.mutes}</span></td>
+                <td><span style="${item.warns > 0 ? 'color:var(--warn); font-weight:bold;' : 'color:var(--text-muted);'}">${item.warns}</span></td>
+                <td><span style="${item.kicks > 0 ? 'color:var(--danger); font-weight:bold;' : 'color:var(--text-muted);'}">${item.kicks}</span></td>
+                <td><span style="color:var(--accent); font-weight:bold; font-size:14px;">${item.total}</span></td>
+                <td>
+                  <div style="position:relative; display:inline-block;">
+                    <button class="btn btn-sm" onclick="const popup = this.nextElementSibling; popup.style.display = popup.style.display === 'none' ? 'block' : 'none'; event.stopPropagation(); document.addEventListener('click', () => popup.style.display = 'none', {once: true});" style="padding: 2px 8px; font-size:11px;">Көрүү</button>
+                    <div style="display:none; position:absolute; right:0; background:var(--card-bg); border:1px solid var(--border-color); border-radius:8px; padding:10px; margin-top:5px; z-index:100; min-width:240px; box-shadow: 0 4px 12px rgba(0,0,0,0.5);" onclick="event.stopPropagation();">
+                      <div style="font-weight:600; font-size:11px; margin-bottom:6px; color:var(--text-main); border-bottom:1px solid var(--border-color); padding-bottom:4px; text-align:left;">Акыркы 5 аракет:</div>
+                      ${recentActionsHtml}
+                    </div>
+                  </div>
+                </td>
+              </tr>
+              `;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>
+      `;
+
+      body.innerHTML = tableHtml;
     }
 
     function toggleMemberCard(elem) {
