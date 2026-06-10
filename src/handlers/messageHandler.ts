@@ -850,7 +850,7 @@ export async function messageHandler(ctx: Context, next: NextFunction): Promise<
   if (config.karmaEnabled && ctx.message.reply_to_message && text) {
     const targetUser = ctx.message.reply_to_message.from;
     if (targetUser && !targetUser.is_bot && targetUser.id !== userId) {
-      const isThanking = KARMA_WORDS.some(word => new RegExp(`\\b${word}\\b`, 'i').test(lowerText)) || lowerText === "+";
+      const isThanking = KARMA_WORDS.some(word => new RegExp(`(?<![a-zA-Zа-яА-ЯөүңӨҮҢёЁ0-9])${word}(?![a-zA-Zа-яА-ЯөүңӨҮҢёЁ0-9])`, 'i').test(lowerText)) || lowerText === "+";
       const isMinus = lowerText === "-";
       
       if (isThanking) {

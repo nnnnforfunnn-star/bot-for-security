@@ -282,7 +282,7 @@ export function parseDurationAndReason(text: string, trigger: string): { duratio
   let durationSeconds = 0;
   let durationMatched = false;
 
-  const timeRegex = /(\d+)\s*(мүнөт|мүн|мин|минут|м|m|min|саат|с|ч|час|часа|часов|h|hr|күн|кун|к|дн|дней|д|d|day|days)\b/i;
+  const timeRegex = /(\d+)\s*(мүнөт|минут|мүн|мин|min|m|часов|часа|час|саат|hr|h|с|ч|дней|days|day|кун|күн|дн|д|d|к)(?![a-zA-Zа-яА-ЯөүңӨҮҢёЁ0-9])/i;
   const match = remaining.match(timeRegex);
   
   if (match) {
