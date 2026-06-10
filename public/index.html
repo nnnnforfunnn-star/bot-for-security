@@ -36,6 +36,14 @@
       --sidebar-width: 260px;
       --header-height: 60px;
     }
+    
+    .chart-dot {
+      transition: r 0.2s ease, fill 0.2s ease;
+    }
+    .chart-point-group:hover .chart-dot {
+      r: 6;
+      fill: #ffffff;
+    }
 
     * {
       margin: 0;
@@ -1055,6 +1063,9 @@
             <span class="nav-accordion-arrow">▶</span>
           </div>
           <div class="nav-accordion-content">
+            <div class="nav-subitem" id="subitem-stats-overview" onclick="openStatsSubTab('overview', this)">
+              📊 Жалпы көрүнүш
+            </div>
             <div class="nav-subitem" id="subitem-stats-total" onclick="openStatsSubTab('total', this)">
               💬 Жалпы СМС
             </div>
@@ -1836,7 +1847,6 @@
                     <option value="warned">⚠️ Варны барлар</option>
                     <option value="high_karma">🌟 Жогорку Карма (>0)</option>
                     <option value="low_karma">💔 Төмөнкү Карма (&lt;0)</option>
-                    <option value="has_title">🏅 Атайын наамы барлар</option>
                   </select>
 
                   <select class="form-select" id="user_sort_select" onchange="filterUsersList()" style="flex: 1; min-width: 150px;">
@@ -1858,6 +1868,10 @@
           <div id="tab-stats" class="tab-content">
             <!-- Stats overview cards row -->
             <div class="stats-header-grid">
+              <div class="stat-mini-card" id="card-stats-overview" onclick="openStatsSubTab('overview')">
+                <div class="stat-mini-val" style="color:var(--accent); font-size:22px;">📊</div>
+                <div class="stat-mini-lbl">Жалпы көрүнүш</div>
+              </div>
               <div class="stat-mini-card" id="card-stats-total" onclick="openStatsSubTab('total')">
                 <div class="stat-mini-val" id="stat_total">0</div>
                 <div class="stat-mini-lbl">Жалпы СМС</div>
@@ -1873,6 +1887,106 @@
               <div class="stat-mini-card" id="card-stats-mutes" onclick="openStatsSubTab('mutes')">
                 <div class="stat-mini-val" style="color:var(--warn);" id="stat_mutes">0</div>
                 <div class="stat-mini-lbl">Муттар</div>
+              </div>
+            </div>
+
+            <!-- Subview: OVERVIEW (Default Dashboard) -->
+            <div class="stats-subview" id="view-stats-overview">
+              <div class="card" style="margin-bottom: 20px;">
+                <div class="card-header">
+                  <div class="card-title">📈 Активдүүлүк аналитикасы (Акыркы 7 күн)</div>
+                  <div class="card-description">Тайпанын акыркы жумадагы билдирүүлөрүнүн динамикасы.</div>
+                </div>
+                <div class="card-body">
+                  <div id="overview_chart_container" style="width: 100%; height: 200px; background: rgba(0,0,0,0.15); border-radius: 12px; padding: 12px; border: 1px solid var(--border-color); display: flex; align-items: center; justify-content: center; position: relative;">
+                    <!-- SVG Chart populated dynamically -->
+                  </div>
+                </div>
+              </div>
+
+              <!-- Google Analytics Dashboard metrics grid -->
+              <div class="stats-kpi-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 20px;">
+                
+                <div class="card" style="margin: 0; background: var(--bg-card); display: flex; flex-direction: column; justify-content: space-between;">
+                  <div class="card-body" style="padding: 16px;">
+                    <div style="font-size: 12px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">СМС активдүүлүгү</div>
+                    <div style="display: flex; align-items: baseline; gap: 8px; margin: 10px 0;">
+                      <span style="font-size: 24px; font-weight: 700; color: var(--text-color);" id="kpi_today_count">0</span>
+                      <span style="font-size: 12px; color: var(--text-muted);">бүгүн жазылды</span>
+                    </div>
+                    <div style="font-size: 12px; color: var(--text-muted); display: flex; justify-content: space-between;">
+                      <span>Жалпы СМС:</span>
+                      <span id="kpi_total_count" style="font-weight: 600; color: var(--accent);">0</span>
+                    </div>
+                    <div class="progress-bar-bg" style="width:100%; height: 6px; background: rgba(255,255,255,0.06); border-radius:3px; margin-top:8px; overflow:hidden;">
+                      <div id="kpi_msg_progress" style="width: 0%; height: 100%; background: var(--accent); border-radius:3px; transition: width 0.8s ease;"></div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="card" style="margin: 0; background: var(--bg-card); display: flex; flex-direction: column; justify-content: space-between;">
+                  <div class="card-body" style="padding: 16px;">
+                    <div style="font-size: 12px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">Колдонуучулардын катышуусу</div>
+                    <div style="display: flex; align-items: baseline; gap: 8px; margin: 10px 0;">
+                      <span style="font-size: 24px; font-weight: 700; color: var(--success);" id="kpi_engagement_rate">0%</span>
+                      <span style="font-size: 12px; color: var(--text-muted);">активдүү катышуу</span>
+                    </div>
+                    <div style="font-size: 12px; color: var(--text-muted); display: flex; justify-content: space-between;">
+                      <span>Активдүү / Жалпы:</span>
+                      <span id="kpi_active_ratio_text" style="font-weight: 600;">0 / 0</span>
+                    </div>
+                    <div class="progress-bar-bg" style="width:100%; height: 6px; background: rgba(255,255,255,0.06); border-radius:3px; margin-top:8px; overflow:hidden;">
+                      <div id="kpi_engagement_progress" style="width: 0%; height: 100%; background: var(--success); border-radius:3px; transition: width 0.8s ease;"></div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="card" style="margin: 0; background: var(--bg-card); display: flex; flex-direction: column; justify-content: space-between;">
+                  <div class="card-body" style="padding: 16px;">
+                    <div style="font-size: 12px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">Модерация индекси</div>
+                    <div style="display: flex; align-items: baseline; gap: 8px; margin: 10px 0;">
+                      <span style="font-size: 24px; font-weight: 700; color: var(--warn);" id="kpi_mod_actions_count">0</span>
+                      <span style="font-size: 12px; color: var(--text-muted);">жалпы чаралар</span>
+                    </div>
+                    <div style="font-size: 11px; color: var(--text-muted); display: flex; justify-content: space-between; flex-wrap: wrap; gap: 4px;">
+                      <span>🚫 Бан: <b id="kpi_bans_count">0</b></span>
+                      <span>🔇 Мут: <b id="kpi_mutes_count">0</b></span>
+                      <span>⚠️ Варн: <b id="kpi_warns_count">0</b></span>
+                    </div>
+                    <div class="progress-bar-bg" style="width:100%; height: 6px; background: rgba(255,255,255,0.06); border-radius:3px; margin-top:8px; overflow:hidden;">
+                      <div id="kpi_mod_progress" style="width: 0%; height: 100%; background: var(--warn); border-radius:3px; transition: width 0.8s ease;"></div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="card" style="margin: 0; background: var(--bg-card); display: flex; flex-direction: column; justify-content: space-between;">
+                  <div class="card-body" style="padding: 16px;">
+                    <div style="font-size: 12px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">Тайпанын Орточо Кармасы</div>
+                    <div style="display: flex; align-items: baseline; gap: 8px; margin: 10px 0;">
+                      <span style="font-size: 24px; font-weight: 700;" id="kpi_avg_karma">0</span>
+                      <span style="font-size: 12px; color: var(--text-muted);">орточо упай</span>
+                    </div>
+                    <div style="font-size: 12px; color: var(--text-muted); display: flex; justify-content: space-between;">
+                      <span>Тайпа аброю:</span>
+                      <span id="kpi_karma_status" style="font-weight: 600;">Жакшы</span>
+                    </div>
+                    <div class="progress-bar-bg" style="width:100%; height: 6px; background: rgba(255,255,255,0.06); border-radius:3px; margin-top:8px; overflow:hidden;">
+                      <div id="kpi_karma_progress" style="width: 50%; height: 100%; background: var(--accent); border-radius:3px; transition: width 0.8s ease;"></div>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+
+              <!-- Insight card -->
+              <div class="card" style="margin-bottom: 20px; border-left: 4px solid var(--accent); background: linear-gradient(90deg, rgba(168, 85, 247, 0.05), transparent);">
+                <div class="card-body" style="padding: 16px; display: flex; align-items: center; gap: 12px;">
+                  <div style="font-size: 24px;">💡</div>
+                  <div>
+                    <div style="font-weight: 600; font-size: 13px; color: var(--text-color);">Аналитикалык байкоо (AI Insight)</div>
+                    <div style="font-size: 12px; color: var(--text-muted); margin-top: 2px;" id="kpi_ai_insight">Күтө туруңуз, маалыматтар анализдөөдө...</div>
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -2064,6 +2178,9 @@
     function toggleAccordion(id) {
       const acc = document.getElementById(id);
       acc.classList.toggle('open');
+      if (acc.classList.contains('open')) {
+        openStatsSubTab('overview');
+      }
     }
 
     function toggleBlacklistFields() {
@@ -2580,11 +2697,173 @@
       }
     }
 
+    function renderOverviewChart() {
+      const chartContainer = document.getElementById('overview_chart_container');
+      if (!chartContainer) return;
+
+      const history = statsData.stats.history || [];
+      if (history.length === 0) {
+        chartContainer.innerHTML = `<p style="color:var(--text-muted); text-align:center; padding: 30px 0;">Активдүүлүк графиги үчүн жетиштүү маалымат жок.</p>`;
+        return;
+      }
+
+      const counts = history.map(h => h.count);
+      const maxCount = Math.max(...counts, 10);
+
+      const width = 600;
+      const height = 180;
+      const paddingLeft = 40;
+      const paddingRight = 20;
+      const paddingTop = 20;
+      const paddingBottom = 30;
+
+      const chartWidth = width - paddingLeft - paddingRight;
+      const chartHeight = height - paddingTop - paddingBottom;
+
+      const points = history.map((h, i) => {
+        const x = paddingLeft + (i / (history.length - 1)) * chartWidth;
+        const y = paddingTop + chartHeight - (h.count / maxCount) * chartHeight;
+        return { x, y, count: h.count, date: h.date };
+      });
+
+      let pathD = `M ${points[0].x} ${points[0].y}`;
+      for (let i = 1; i < points.length; i++) {
+        const p0 = points[i - 1];
+        const p1 = points[i];
+        const cpX1 = p0.x + (p1.x - p0.x) / 2;
+        const cpY1 = p0.y;
+        const cpX2 = p0.x + (p1.x - p0.x) / 2;
+        const cpY2 = p1.y;
+        pathD += ` C ${cpX1} ${cpY1}, ${cpX2} ${cpY2}, ${p1.x} ${p1.y}`;
+      }
+
+      const areaD = `${pathD} L ${points[points.length - 1].x} ${paddingTop + chartHeight} L ${points[0].x} ${paddingTop + chartHeight} Z`;
+
+      let gridLinesHtml = "";
+      for (let l = 0; l <= 3; l++) {
+        const val = Math.round((maxCount / 3) * l);
+        const y = paddingTop + chartHeight - (val / maxCount) * chartHeight;
+        gridLinesHtml += `
+          <line x1="${paddingLeft}" y1="${y}" x2="${width - paddingRight}" y2="${y}" stroke="rgba(255,255,255,0.05)" stroke-width="1" />
+          <text x="${paddingLeft - 10}" y="${y + 4}" fill="var(--text-muted)" font-size="10" text-anchor="end">${val}</text>
+        `;
+      }
+
+      let xLabelsHtml = "";
+      points.forEach((p, i) => {
+        xLabelsHtml += `
+          <text x="${p.x}" y="${height - 10}" fill="var(--text-muted)" font-size="10" text-anchor="middle">${p.date}</text>
+        `;
+      });
+
+      let interactiveDotsHtml = "";
+      points.forEach((p, i) => {
+        interactiveDotsHtml += `
+          <g class="chart-point-group" style="cursor:pointer;">
+            <circle cx="${p.x}" cy="${p.y}" r="4" fill="var(--accent)" stroke="#05070a" stroke-width="2" class="chart-dot" />
+            <circle cx="${p.x}" cy="${p.y}" r="14" fill="transparent" class="chart-hover-trigger">
+              <title>${p.date}: ${p.count} СМС</title>
+            </circle>
+          </g>
+        `;
+      });
+
+      const svgHtml = `
+      <svg viewBox="0 0 ${width} ${height}" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="chartGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="var(--accent)" stop-opacity="0.3"/>
+            <stop offset="100%" stop-color="var(--accent)" stop-opacity="0.0"/>
+          </linearGradient>
+        </defs>
+        ${gridLinesHtml}
+        <path d="${areaD}" fill="url(#chartGrad)" />
+        <path d="${pathD}" fill="none" stroke="var(--accent)" stroke-width="3" stroke-linecap="round" />
+        ${xLabelsHtml}
+        ${interactiveDotsHtml}
+      </svg>
+      `;
+
+      chartContainer.innerHTML = svgHtml;
+    }
+
     function renderStatsAndLogs() {
+      // 0. Populate main stats cards
       document.getElementById('stat_total').innerText = statsData.stats.msgCount || 0;
       document.getElementById('stat_today').innerText = statsData.stats.msgsToday || 0;
       document.getElementById('stat_bans').innerText = statsData.stats.bansCount || 0;
       document.getElementById('stat_mutes').innerText = statsData.stats.mutesCount || 0;
+
+      // Overview Tab KPI updates
+      const msgCount = statsData.stats.msgCount || 0;
+      const msgsToday = statsData.stats.msgsToday || 0;
+      const bansCount = statsData.stats.bansCount || 0;
+      const mutesCount = statsData.stats.mutesCount || 0;
+      const warnsCount = statsData.stats.warnsCount || 0;
+
+      document.getElementById('kpi_today_count').innerText = msgsToday;
+      document.getElementById('kpi_total_count').innerText = msgCount;
+      const msgPct = msgCount > 0 ? Math.min((msgsToday / msgCount) * 100, 100) : 0;
+      document.getElementById('kpi_msg_progress').style.width = msgPct + '%';
+
+      // User engagement
+      const totalUsers = statsData.users.length || 0;
+      const activeUsersTodayCount = statsData.topUsersToday ? (statsData.topUsersToday.length / 2) : 0;
+      document.getElementById('kpi_active_ratio_text').innerText = `${activeUsersTodayCount} / ${totalUsers}`;
+      const engagementRate = totalUsers > 0 ? Math.round((activeUsersTodayCount / totalUsers) * 100) : 0;
+      document.getElementById('kpi_engagement_rate').innerText = engagementRate + '%';
+      document.getElementById('kpi_engagement_progress').style.width = engagementRate + '%';
+
+      // Moderation index
+      const totalModActions = bansCount + mutesCount + warnsCount;
+      document.getElementById('kpi_mod_actions_count').innerText = totalModActions;
+      document.getElementById('kpi_bans_count').innerText = bansCount;
+      document.getElementById('kpi_mutes_count').innerText = mutesCount;
+      document.getElementById('kpi_warns_count').innerText = warnsCount;
+      const modPct = Math.min((totalModActions / 20) * 100, 100);
+      document.getElementById('kpi_mod_progress').style.width = modPct + '%';
+
+      // Average karma
+      let sumKarma = 0;
+      statsData.users.forEach(u => sumKarma += (u.urmat || 0));
+      const avgKarma = totalUsers > 0 ? Math.round((sumKarma / totalUsers) * 10) / 10 : 0;
+      document.getElementById('kpi_avg_karma').innerText = (avgKarma > 0 ? '+' : '') + avgKarma;
+
+      let karmaStatus = "Тынчтык";
+      let karmaProgress = 50;
+      if (avgKarma > 2) {
+        karmaStatus = "Эң ынтымактуу 🌟";
+        karmaProgress = Math.min(50 + (avgKarma / 10) * 50, 100);
+      } else if (avgKarma > 0) {
+        karmaStatus = "Позитивдүү 👍";
+        karmaProgress = 50 + (avgKarma / 10) * 50;
+      } else if (avgKarma < -2) {
+        karmaStatus = "Конфликттүү ⚠️";
+        karmaProgress = Math.max(50 + (avgKarma / 10) * 50, 0);
+      } else if (avgKarma < 0) {
+        karmaStatus = "Чыңалуу бар 💔";
+        karmaProgress = 50 + (avgKarma / 10) * 50;
+      }
+      document.getElementById('kpi_karma_status').innerText = karmaStatus;
+      document.getElementById('kpi_karma_progress').style.width = karmaProgress + '%';
+
+      // Insight
+      let insightText = "Тайпанын активдүүлүгү туруктуу калыпта.";
+      if (msgsToday > 0 && msgsToday > (msgCount / 7)) {
+        insightText = `Бүгүн тайпада билдирүүлөрдүн саны жогорулады (+${Math.round((msgsToday / (msgCount || 1)) * 100)}%). Катышуучулардын сүйлөшүү жигердүүлүгү абдан жакшы.`;
+      } else if (totalModActions > 5) {
+        insightText = `Акыркы убакта модерация чаралары көбөйдү (${totalModActions} чара). Тартипке жана эрежелердин сакталышына көңүл буруу сунушталат.`;
+      } else if (engagementRate > 30) {
+        insightText = `Тайпа абдан жандуу! Колдонуучулардын ${engagementRate}% бүгүн активдүү баарлашууга катышты. Бул эң сонун көрсөткүч.`;
+      } else if (avgKarma < -1) {
+        insightText = `Тайпадагы орточо Карма терс мааниде (${avgKarma}). Катышуучулар ортосунда талаш-тартыштар болушу мүмкүн, көзөмөлдү күчөтүңүз.`;
+      } else {
+        insightText = `Тайпадагы абал туруктуу. Бүгүн ${msgsToday} билдирүү жөнөтүлдү, эч кандай олуттуу мыйзам бузуулар катталган жок.`;
+      }
+      document.getElementById('kpi_ai_insight').innerText = insightText;
+
+      // Render chart
+      renderOverviewChart();
 
       // 1. Total top users
       const totalBody = document.getElementById('stats_total_body');
@@ -2698,10 +2977,7 @@
       await doAction('setkarma', uid, "Карма өзгөртүлдү via Web Panel", val);
     }
 
-    async function submitUserTitle(uid) {
-      const textVal = document.getElementById('user_title_' + uid).value;
-      await doAction('setusertitle', uid, "Наам өзгөртүлдү via Web Panel", null, textVal);
-    }
+
 
     function renderUsersList() {
       const container = document.getElementById('users_list_container');
@@ -2733,8 +3009,6 @@
         filtered = filtered.filter(u => u.urmat > 0);
       } else if (filterVal === "low_karma") {
         filtered = filtered.filter(u => u.urmat < 0);
-      } else if (filterVal === "has_title") {
-        filtered = filtered.filter(u => u.title && u.title.length > 0);
       }
 
       // 3. Sorting
@@ -2775,7 +3049,6 @@
         }
 
         const isUserAdminBadge = u.isAdmin ? `<span class="badge" style="background: var(--success-glow); color: var(--success); font-size:10px; padding: 2px 6px; border-radius: 4px; font-weight: 600;">🛡️ Админ</span>` : "";
-        const customTitleBadge = u.title ? `<span class="badge" style="background: var(--accent-glow); color: var(--accent); font-size:10px; padding: 2px 6px; border-radius: 4px; font-weight: 600;">🏅 ${u.title}</span>` : "";
 
         return `
         <div class="member-item" id="member_card_${u.id}">
@@ -2787,7 +3060,6 @@
                   <span>${u.name}</span>
                   ${u.username ? '<span style="color:var(--text-muted); font-weight:normal;">(@' + u.username + ')</span>' : ''}
                   ${isUserAdminBadge}
-                  ${customTitleBadge}
                 </div>
                 <div class="member-meta" style="margin-top: 4px;">
                   <span>⚠️ Варндар: <b style="${u.warns > 0 ? 'color: var(--warn);' : ''}">${u.warns}</b></span>
@@ -2828,20 +3100,13 @@
 
                 <hr style="border:none; border-top: 1px solid var(--border-color); margin: 8px 0;">
 
-                <div style="font-size: 12px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">Сый-Урмат (Рейтинг) & Наам башкаруу</div>
+                <div style="font-size: 12px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">Сый-Урмат (Рейтинг) башкаруу</div>
                 <div class="action-row" style="display: flex; gap: 12px; flex-wrap: wrap;">
                   <div style="display:flex; flex-direction:column; gap:4px; flex:1; min-width: 140px;">
                     <label style="font-size:11px; color:var(--text-muted);">Сый-Урмат деңгээли (Карма)</label>
                     <div style="display:flex; gap:6px;">
                       <input type="number" class="form-input form-input-sm" id="user_karma_${u.id}" value="${u.urmat}" style="width:70px;">
                       <button class="btn btn-sm btn-primary" onclick="submitUserKarma(${u.id})">Сактоо</button>
-                    </div>
-                  </div>
-                  <div style="display:flex; flex-direction:column; gap:4px; flex:2; min-width: 200px;">
-                    <label style="font-size:11px; color:var(--text-muted);">Колдонуучунун наамы (Badge / Статус)</label>
-                    <div style="display:flex; gap:6px;">
-                      <input type="text" class="form-input form-input-sm" id="user_title_${u.id}" value="${u.title || ''}" placeholder="Манасчы, Активист..." style="flex:1;">
-                      <button class="btn btn-sm btn-primary" onclick="submitUserTitle(${u.id})">Сактоо</button>
                     </div>
                   </div>
                 </div>

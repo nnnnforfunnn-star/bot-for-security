@@ -61,9 +61,21 @@ export default async function handler(req: any, res: any) {
       const msgCount = await db.get<number>(`chat:${chatId}:stats:messages_count`) || 0;
       const bansCount = await db.get<number>(`chat:${chatId}:stats:bans_count`) || 0;
       const mutesCount = await db.get<number>(`chat:${chatId}:stats:mutes_count`) || 0;
+      const warnsCount = (await db.get<number>(`chat:${chatId}:stats:эскертүү (warn)s_count`)) || (await db.get<number>(`chat:${chatId}:stats:warns_count`)) || 0;
       
       const today = new Date().toISOString().split("T")[0];
       const msgsToday = await db.get<number>(`chat:${chatId}:stats:messages_by_date:${today}`) || 0;
+
+      // Last 7 days messages count
+      const history: { date: string; count: number }[] = [];
+      for (let i = 6; i >= 0; i--) {
+        const d = new Date();
+        d.setDate(d.getDate() - i);
+        const dateStr = d.toISOString().split("T")[0];
+        const count = await db.get<number>(`chat:${chatId}:stats:messages_by_date:${dateStr}`) || 0;
+        const formattedDate = dateStr.split("-").slice(1).reverse().join(".");
+        history.push({ date: formattedDate, count });
+      }
 
       // Top Users Array
       const topUsersAllTimeRaw = await db.zrange(`chat:${chatId}:stats:top_users`, 0, 10, { rev: true, withScores: true });
@@ -105,7 +117,7 @@ export default async function handler(req: any, res: any) {
 
       return res.status(200).json({ 
         logs, 
-        stats: { msgCount, bansCount, mutesCount, msgsToday },
+        stats: { msgCount, bansCount, mutesCount, warnsCount, msgsToday, history },
         users: usersInfo,
         topUsersAll: topUsersAllTimeRaw,
         topUsersToday: topUsersTodayRaw,
