@@ -342,8 +342,16 @@ export async function messageHandler(ctx: Context, next: NextFunction): Promise<
     "settings": { handler: adminPanelCommand, requiresAdmin: true },
   };
 
-  const firstWord = lowerText.split(/\s+/)[0];
-  const matchedBuiltin = builtinCommandAliases[firstWord];
+  const cleanPrefix = (str: string) => {
+    if (str.startsWith("/") || str.startsWith(".") || str.startsWith("!")) {
+      return str.substring(1);
+    }
+    return str;
+  };
+
+  const firstWordRaw = lowerText.split(/\s+/)[0];
+  const cleanedWord = cleanPrefix(firstWordRaw);
+  const matchedBuiltin = builtinCommandAliases[cleanedWord];
 
   if (matchedBuiltin) {
     if (!matchedBuiltin.requiresAdmin || isAdmin) {
@@ -378,11 +386,13 @@ export async function messageHandler(ctx: Context, next: NextFunction): Promise<
     let matchedCmdKey: string | null = null;
     let matchedCmd: any = null;
 
+    const cleanLowerText = cleanPrefix(lowerText);
     for (const [key, cmd] of Object.entries(customCommands)) {
       if (cmd && cmd.alias) {
         const aliases = cmd.alias.toLowerCase().split(",").map(a => a.trim());
         for (const alias of aliases) {
-          if (alias && (lowerText === alias || lowerText.startsWith(alias + " ") || lowerText.startsWith(alias + "\n"))) {
+          const cleanAlias = cleanPrefix(alias);
+          if (cleanAlias && (cleanLowerText === cleanAlias || cleanLowerText.startsWith(cleanAlias + " ") || cleanLowerText.startsWith(cleanAlias + "\n"))) {
             matchedCmdKey = key;
             matchedCmd = { ...cmd, aliasUsed: alias };
             break;
@@ -498,11 +508,12 @@ export async function messageHandler(ctx: Context, next: NextFunction): Promise<
     }
 
     // 0.2 Стандартные жестко заданные текстовые команды (обратная совместимость)
-    const triggerUsed = lowerText.split(/\s+/)[0];
-    const isHardcodedCommand = ["бан", "ban", "мут", "mute", "кик", "kick", "разбан", "unban", "анмут", "unmute", "эскертүү", "warn", "өчүр", "del"].some(cmd => triggerUsed === cmd || triggerUsed.startsWith(cmd));
+    const firstWordRawStats = lowerText.split(/\s+/)[0];
+    const triggerUsed = cleanPrefix(firstWordRawStats);
+    const isHardcodedCommand = ["бан", "ban", "мут", "mute", "кик", "kick", "разбан", "unban", "анмут", "unmute", "эскертүү", "warn", "өчүр", "del"].includes(triggerUsed);
     
     if (isHardcodedCommand) {
-      const targetUser = await resolveTargetUser(ctx, text, triggerUsed);
+      const targetUser = await resolveTargetUser(ctx, text, firstWordRawStats);
       const targetUserId = targetUser?.id;
       const targetName = targetUser?.name || "Колдонуучу";
 
@@ -511,7 +522,7 @@ export async function messageHandler(ctx: Context, next: NextFunction): Promise<
         return;
       }
 
-      const { durationSeconds, reason: parsedReason } = parseDurationAndReason(text, triggerUsed);
+      const { durationSeconds, reason: parsedReason } = parseDurationAndReason(text, firstWordRawStats);
       
       let reason = parsedReason;
       const targetMsg = ctx.message.reply_to_message;
@@ -522,34 +533,34 @@ export async function messageHandler(ctx: Context, next: NextFunction): Promise<
         }
       }
 
-      if ((lowerText.startsWith("бан") || lowerText.startsWith("ban")) && !(config.disabledCommands?.ban)) {
+      if ((triggerUsed === "бан" || triggerUsed === "ban") && !(config.disabledCommands?.ban)) {
         const customReason = reason || "Админдин буйругу (Manual)";
         await banUser(ctx.api, chatId, targetUserId, durationSeconds);
         await logAction(ctx.api, chatId, targetUserId, targetName, "Бан", customReason, ctx.from.first_name);
         const durationText = durationSeconds > 0 ? ` (${Math.round(durationSeconds/60)} мүнөткө)` : "";
         await ctx.reply(`🚫 [${targetName}](tg://user?id=${targetUserId}) бөгөттөлдү (Бан)${durationText}.\nСебеби: ${customReason}`, { parse_mode: "Markdown" });
         return;
-      } else if ((lowerText.startsWith("мут") || lowerText.startsWith("mute")) && !(config.disabledCommands?.mute)) {
+      } else if ((triggerUsed === "мут" || triggerUsed === "mute") && !(config.disabledCommands?.mute)) {
         const duration = durationSeconds > 0 ? durationSeconds : (config.muteDurationMinutes || 120) * 60;
         const customReason = reason || "Админдин буйругу (Manual)";
         await muteUser(ctx.api, chatId, targetUserId, duration);
         await logAction(ctx.api, chatId, targetUserId, targetName, "Мут", `${customReason} (${Math.round(duration/60)} мүнөт)`, ctx.from.first_name);
         await ctx.reply(`🔇 [${targetName}](tg://user?id=${targetUserId}) жазуу укугунан ажыратылды (Мут: ${Math.round(duration/60)} мүнөт).\nСебеби: ${customReason}`, { parse_mode: "Markdown" });
         return;
-      } else if ((lowerText.startsWith("кик") || lowerText.startsWith("kick")) && !(config.disabledCommands?.kick)) {
+      } else if ((triggerUsed === "кик" || triggerUsed === "kick") && !(config.disabledCommands?.kick)) {
         const customReason = reason || "Админдин буйругу (Manual)";
         await ctx.api.banChatMember(chatId, targetUserId).catch(() => {});
         await ctx.api.unbanChatMember(chatId, targetUserId).catch(() => {});
         await logAction(ctx.api, chatId, targetUserId, targetName, "Кик", customReason, ctx.from.first_name);
         await ctx.reply(`👢 [${targetName}](tg://user?id=${targetUserId}) чаттан чыгарылды (Кик).\nСебеби: ${customReason}`, { parse_mode: "Markdown" });
         return;
-      } else if ((lowerText.startsWith("разбан") || lowerText.startsWith("unban")) && !(config.disabledCommands?.unban)) {
+      } else if ((triggerUsed === "разбан" || triggerUsed === "unban") && !(config.disabledCommands?.unban)) {
         const customReason = reason || "Админдин буйругу (Manual)";
         await unbanUser(ctx.api, chatId, targetUserId);
         await logAction(ctx.api, chatId, targetUserId, targetName, "Разбан", customReason, ctx.from.first_name);
         await ctx.reply(`✅ [${targetName}](tg://user?id=${targetUserId}) бөгөттөн чыгарылды (Разбан).\nСебеби: ${customReason}`, { parse_mode: "Markdown" });
         return;
-      } else if ((lowerText.startsWith("анмут") || lowerText.startsWith("unmute")) && !(config.disabledCommands?.unmute)) {
+      } else if ((triggerUsed === "анмут" || triggerUsed === "unmute") && !(config.disabledCommands?.unmute)) {
         const customReason = reason || "Админдин буйругу (Manual)";
         await ctx.api.restrictChatMember(chatId, targetUserId, {
           can_send_messages: true, can_send_audios: true, can_send_documents: true,
@@ -560,11 +571,11 @@ export async function messageHandler(ctx: Context, next: NextFunction): Promise<
         await logAction(ctx.api, chatId, targetUserId, targetName, "Анмут", customReason, ctx.from.first_name);
         await ctx.reply(`🔊 [${targetName}](tg://user?id=${targetUserId}) жазуу укугу кайтарылды (Анмут).\nСебеби: ${customReason}`, { parse_mode: "Markdown" });
         return;
-      } else if ((lowerText.startsWith("эскертүү") || lowerText.startsWith("warn")) && !(config.disabledCommands?.warn)) {
+      } else if ((triggerUsed === "эскертүү" || triggerUsed === "warn") && !(config.disabledCommands?.warn)) {
         const customReason = reason || "Админдин эскертүүсү";
         await handleWarn(ctx, targetUserId, chatId, targetName, customReason, config.muteDurationMinutes, config.warnLimit, config.warnAction, ctx.from.first_name);
         return;
-      } else if ((lowerText.startsWith("өчүр") || lowerText.startsWith("del")) && !(config.disabledCommands?.del)) {
+      } else if ((triggerUsed === "өчүр" || triggerUsed === "del") && !(config.disabledCommands?.del)) {
         const customReason = reason || "Админдин буйругу (Manual)";
         if (targetMsg) {
           await ctx.api.deleteMessage(chatId, targetMsg.message_id).catch(() => {});

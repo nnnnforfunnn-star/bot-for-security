@@ -9,6 +9,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- FontAwesome Free Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
     :root {
       --bg-dark: #05070a;
@@ -76,7 +78,7 @@
       display: flex;
       flex-direction: column;
       border-right: 1px solid var(--border-color);
-      z-index: 100;
+      z-index: 1100;
       transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
@@ -307,6 +309,7 @@
       flex-grow: 1;
       display: flex;
       flex-direction: column;
+      height: 100dvh;
       height: 100vh;
       overflow: hidden;
       background: var(--bg-dark);
@@ -373,7 +376,7 @@
 
     .content-area {
       flex-grow: 1;
-      padding: 24px;
+      padding: 24px 24px 100px 24px;
       overflow-y: auto;
       scroll-behavior: smooth;
     }
@@ -849,7 +852,7 @@
       position: fixed;
       bottom: 24px;
       right: 24px;
-      z-index: 200;
+      z-index: 900;
     }
 
     .save-bar-btn {
@@ -916,7 +919,7 @@
       position: fixed;
       top: 0; left: 0; right: 0; bottom: 0;
       background: rgba(0, 0, 0, 0.5);
-      z-index: 99;
+      z-index: 1090;
       transition: opacity 0.3s;
       opacity: 0;
       pointer-events: none;
@@ -963,7 +966,53 @@
       }
 
       .content-area {
-        padding: 12px;
+        padding: 12px 12px 100px 12px;
+      }
+
+      .breadcrumbs .breadcrumb-item:first-child,
+      .breadcrumbs .breadcrumb-separator {
+        display: none;
+      }
+
+      .breadcrumbs {
+        font-size: 14px;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        min-width: 0;
+        max-width: calc(100vw - 150px);
+        overflow: hidden;
+      }
+
+      .breadcrumbs .breadcrumb-item.active {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: calc(100vw - 170px);
+        display: inline-block;
+        vertical-align: middle;
+      }
+
+      .status-badge {
+        flex-shrink: 0;
+        white-space: nowrap;
+      }
+
+      @media (max-width: 480px) {
+        .status-badge span {
+          display: none;
+        }
+        .status-badge {
+          padding: 6px;
+          border-radius: 50%;
+          gap: 0;
+        }
+        .breadcrumbs {
+          max-width: calc(100vw - 110px);
+        }
+        .breadcrumbs .breadcrumb-item.active {
+          max-width: calc(100vw - 130px);
+        }
       }
 
       .card-header {
@@ -1024,7 +1073,7 @@
     <div class="sidebar" id="sidebar">
       <div class="sidebar-header">
         <div class="brand-container">
-          <div class="brand-logo">🛡️</div>
+          <div class="brand-logo" style="background: none; box-shadow: none; width: auto; height: auto; font-size: 20px; color: var(--accent);"><i class="fa-solid fa-shield-halved"></i></div>
           <div class="brand-title">KOOPSUZBEK</div>
         </div>
         <div class="profile-switcher" onclick="toggleSidebarGroupMenu()">
@@ -1033,59 +1082,59 @@
             <div class="profile-user" id="sidebar_username">@user</div>
             <div class="profile-group" id="sidebar_group_title">Жүктөлүүдө...</div>
           </div>
-          <div class="profile-arrow">▼</div>
+          <div class="profile-arrow"><i class="fa-solid fa-chevron-down" style="font-size: 10px;"></i></div>
         </div>
       </div>
 
       <div class="nav-items">
         <div class="nav-label">Негизги модулдар</div>
         <div class="nav-item active" onclick="openTab('tab-main', this)">
-          <div class="nav-item-inner">🛡️ Башкы жөндөөлөр</div>
+          <div class="nav-item-inner"><i class="fa-solid fa-gears" style="margin-right: 10px; width: 16px; text-align: center;"></i>Башкы жөндөөлөр</div>
         </div>
         <div class="nav-item" onclick="openTab('tab-welcome', this)">
-          <div class="nav-item-inner">💬 Саламдашуулар</div>
+          <div class="nav-item-inner"><i class="fa-solid fa-handshake" style="margin-right: 10px; width: 16px; text-align: center;"></i>Саламдашуулар</div>
         </div>
         <div class="nav-item" onclick="openTab('tab-rules', this)">
-          <div class="nav-item-inner">⚙️ Чектөөлөр & Эрежелер</div>
+          <div class="nav-item-inner"><i class="fa-solid fa-sliders" style="margin-right: 10px; width: 16px; text-align: center;"></i>Чектөөлөр & Эрежелер</div>
         </div>
         <div class="nav-item" onclick="openTab('tab-commands', this)">
-          <div class="nav-item-inner">🤖 Буйруктарды ырастоо</div>
+          <div class="nav-item-inner"><i class="fa-solid fa-terminal" style="margin-right: 10px; width: 16px; text-align: center;"></i>Буйруктарды ырастоо</div>
         </div>
         <div class="nav-item" onclick="openTab('tab-users', this)">
-          <div class="nav-item-inner">👥 Катышуучулар</div>
+          <div class="nav-item-inner"><i class="fa-solid fa-users" style="margin-right: 10px; width: 16px; text-align: center;"></i>Катышуучулар</div>
         </div>
 
         <div class="nav-label" style="margin-top: 10px;">Аналитика & Статистика</div>
         <!-- Accordion for Analytics -->
         <div class="nav-accordion" id="analytics-accordion">
           <div class="nav-accordion-header" onclick="toggleAccordion('analytics-accordion')">
-            <div class="nav-item-inner">📈 Толук аналитика</div>
-            <span class="nav-accordion-arrow">▶</span>
+            <div class="nav-item-inner"><i class="fa-solid fa-chart-line" style="margin-right: 10px; width: 16px; text-align: center;"></i>Толук аналитика</div>
+            <span class="nav-accordion-arrow"><i class="fa-solid fa-chevron-right" style="font-size: 10px;"></i></span>
           </div>
           <div class="nav-accordion-content">
             <div class="nav-subitem" id="subitem-stats-overview" onclick="openStatsSubTab('overview', this)">
-              📊 Жалпы көрүнүш
+              <i class="fa-solid fa-chart-pie" style="margin-right: 8px; width: 14px; text-align: center;"></i>Жалпы көрүнүш
             </div>
             <div class="nav-subitem" id="subitem-stats-total" onclick="openStatsSubTab('total', this)">
-              💬 Жалпы СМС
+              <i class="fa-solid fa-comments" style="margin-right: 8px; width: 14px; text-align: center;"></i>Жалпы СМС
             </div>
             <div class="nav-subitem" id="subitem-stats-today" onclick="openStatsSubTab('today', this)">
-              📅 Бүгүнкү СМС
+              <i class="fa-solid fa-calendar-day" style="margin-right: 8px; width: 14px; text-align: center;"></i>Бүгүнкү СМС
             </div>
             <div class="nav-subitem" id="subitem-stats-bans" onclick="openStatsSubTab('bans', this)">
-              🚫 Бандар
+              <i class="fa-solid fa-user-slash" style="margin-right: 8px; width: 14px; text-align: center;"></i>Бандар
             </div>
             <div class="nav-subitem" id="subitem-stats-mutes" onclick="openStatsSubTab('mutes', this)">
-              🔇 Муттар
+              <i class="fa-solid fa-microphone-slash" style="margin-right: 8px; width: 14px; text-align: center;"></i>Муттар
             </div>
             <div class="nav-subitem" id="subitem-stats-warns" onclick="openStatsSubTab('warns', this)">
-              ⚠️ Варндар
+              <i class="fa-solid fa-triangle-exclamation" style="margin-right: 8px; width: 14px; text-align: center;"></i>Варндар
             </div>
             <div class="nav-subitem" id="subitem-stats-logs" onclick="openStatsSubTab('logs', this)">
-              🕵️ Аракеттер журналы
+              <i class="fa-solid fa-list-check" style="margin-right: 8px; width: 14px; text-align: center;"></i>Аракеттер журналы
             </div>
             <div class="nav-subitem" id="subitem-stats-admins" onclick="openStatsSubTab('admins', this)">
-              🛡️ Администраторлордун активдүүлүгү
+              <i class="fa-solid fa-user-shield" style="margin-right: 8px; width: 14px; text-align: center;"></i>Администраторлордун активдүүлүгү
             </div>
           </div>
         </div>
@@ -1123,13 +1172,13 @@
             <!-- Emergency Panic / Lockdown Card -->
             <div class="card" style="border: 1px solid rgba(239, 68, 68, 0.3); background: rgba(239, 68, 68, 0.02);">
               <div class="card-header" style="border-bottom: 1px solid rgba(239, 68, 68, 0.15);">
-                <div class="card-title" style="color: #fca5a5;">🚨 Өзгөчө Кырдаал Режими (Lockdown System)</div>
-                <div class="card-description" style="color: #fca5a5; opacity: 0.8;">Чатты чабуулдан (raid/spam) тез арада коргоо жана бөгөттөө куралдары.</div>
+                <div class="card-title" style="color: #fca5a5;"><i class="fa-solid fa-triangle-exclamation" style="color: #fca5a5; margin-right: 8px;"></i>Өзгөчө Кырдаал Режими</div>
+                <div class="card-description" style="color: #fca5a5; opacity: 0.8;">Чатты чабуулдан тез арада коргоо жана бөгөттөө куралдары.</div>
               </div>
               <div class="card-body">
                 <div class="setting-row" style="border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 14px;">
                   <div class="setting-info">
-                    <div class="setting-name" style="color: #fecaca;">Группаны толук жабуу (Lockdown Mode)</div>
+                    <div class="setting-name" style="color: #fecaca;">Группаны толук жабуу</div>
                     <div class="setting-desc" style="color: #cbd5e1;">Иштетилгенде админ эместердин билдирүүлөрү автоматтык түрдө дароо өчүрүлөт.</div>
                   </div>
                   <label class="switch">
@@ -1141,7 +1190,7 @@
                 <div class="setting-row" style="padding-top: 14px; border-bottom: none;">
                   <div class="setting-info">
                     <div class="setting-name">Автожоопторду убактылуу өчүрүү</div>
-                    <div class="setting-desc">Боттун бардык автожоопторун (Filters) убактылуу тындырат.</div>
+                    <div class="setting-desc">Боттун бардык автожоопторун убактылуу тындырат.</div>
                   </div>
                   <label class="switch">
                     <input type="checkbox" id="disableFilters">
@@ -1153,7 +1202,7 @@
                   <select class="form-select" id="lockdownAction">
                     <option value="delete">Өчүрүү гана</option>
                     <option value="mute">Өчүрүү + Муттоо</option>
-                    <option value="warn">Өчүрүү + Эскертүү (Варн)</option>
+                    <option value="warn">Өчүрүү + Эскертүү</option>
                     <option value="kick">Өчүрүү + Кик кылуу</option>
                     <option value="ban">Өчүрүү + Бандоо</option>
                   </select>
@@ -1164,7 +1213,7 @@
             <!-- Security & Anti-Bot Card -->
             <div class="card">
               <div class="card-header">
-                <div class="card-title">🛡️ Коопсуздук жана Анти-Бот</div>
+                <div class="card-title"><i class="fa-solid fa-shield-halved" style="color: var(--accent); margin-right: 8px;"></i>Коопсуздук жана Анти-Бот</div>
                 <div class="card-description">Тайпага жаңы кошулган колдонуучуларды текшерүү орнотуулары.</div>
               </div>
               <div class="card-body">
@@ -1181,11 +1230,11 @@
                 <div class="form-group" style="margin-top: 14px;">
                   <label class="form-label">Капчанын түрү</label>
                   <select class="form-select" id="captchaMode">
-                    <option value="button">Жөнөкөй баскыч (Button)</option>
+                    <option value="button">Жөнөкөй баскыч</option>
                     <option value="math">Математикалык суроо</option>
                     <option value="text">Тексттик капча</option>
-                    <option value="emoji">Эмодзи капчасы (Нажмите на фрукт 🍎)</option>
-                    <option value="button_timer">Ыкчам басуудан коргоо (Задержка нажатия 5с)</option>
+                    <option value="emoji">Эмодзи капчасы (Мөмө-жемишти басыңыз 🍎)</option>
+                    <option value="button_timer">Ыкчам басуудан коргоо (5 секунддук кечигүү)</option>
                   </select>
                 </div>
                 <div class="setting-row">
@@ -1208,14 +1257,14 @@
             <!-- Moderation & Limits Card -->
             <div class="card">
               <div class="card-header">
-                <div class="card-title">👮‍♂️ Модерация жана Чектөөлөр</div>
+                <div class="card-title"><i class="fa-solid fa-gavel" style="color: var(--accent); margin-right: 8px;"></i>Модерация жана Чектөөлөр</div>
                 <div class="card-description">Эреже бузууларды автоматтык түрдө көзөмөлдөө системасы.</div>
               </div>
               <div class="card-body">
                 <div class="setting-row">
                   <div class="setting-info">
                     <div class="setting-name">Анти-Сөгүнүү коргоосу</div>
-                    <div class="setting-desc">Бот сөгүнүү сөздөрдү автоматтык түрдө өчүрүп, эскертүү (варн) берет.</div>
+                    <div class="setting-desc">Бот сөгүнүү сөздөрдү автоматтык түрдө өчүрүп, эскертүү берет.</div>
                   </div>
                   <label class="switch">
                     <input type="checkbox" id="antiSwearEnabled">
@@ -1244,7 +1293,7 @@
                 </div>
                 <div class="setting-row">
                   <div class="setting-info">
-                    <div class="setting-name">Тынч режим (Silent Mode)</div>
+                    <div class="setting-name">Тынч режим</div>
                     <div class="setting-desc">Бот өзүнүн административдик аракет билдирүүлөрүн тайпага чыгарбай жашырат.</div>
                   </div>
                   <label class="switch">
@@ -1261,7 +1310,7 @@
                     <label class="form-label">Сөгүнүү үчүн жаза</label>
                     <select class="form-select" id="swearAction">
                       <option value="delete">Билдирүүсүн өчүрүү гана</option>
-                      <option value="warn">Эскертүү (Варн)</option>
+                      <option value="warn">Эскертүү</option>
                       <option value="mute">Муттоо</option>
                       <option value="kick">Кик кылуу</option>
                       <option value="ban">Бандоо</option>
@@ -1271,7 +1320,7 @@
                     <label class="form-label">Араб арибиндеги аттар үчүн жаза</label>
                     <select class="form-select" id="arabicAction">
                       <option value="delete">Билдирүүсүн өчүрүү гана</option>
-                      <option value="warn">Эскертүү (Варн)</option>
+                      <option value="warn">Эскертүү</option>
                       <option value="mute">Муттоо</option>
                       <option value="kick">Кик кылуу</option>
                       <option value="ban">Бандоо</option>
@@ -1282,7 +1331,7 @@
                   <label class="form-label">Каналдын атынан жазгандар үчүн жаза</label>
                   <select class="form-select" id="channelAction">
                     <option value="delete">Билдирүүсүн өчүрүү гана</option>
-                    <option value="warn">Эскертүү (Варн)</option>
+                    <option value="warn">Эскертүү</option>
                     <option value="mute">Муттоо</option>
                     <option value="kick">Кик кылуу</option>
                     <option value="ban">Бандоо</option>
@@ -1294,7 +1343,7 @@
             <!-- Night Mode Card -->
             <div class="card">
               <div class="card-header">
-                <div class="card-title">🌙 Түнкү дозор (Night Mode)</div>
+                <div class="card-title"><i class="fa-solid fa-moon" style="color: var(--accent); margin-right: 8px;"></i>Түнкү дозор</div>
                 <div class="card-description">Белгиленген сааттарда тайпаны толугу менен жаап коюу же чектөө.</div>
               </div>
               <div class="card-body">
@@ -1323,7 +1372,7 @@
                   <select class="form-select" id="nightModeAction">
                     <option value="delete">Билдирүүсүн өчүрүү гана</option>
                     <option value="mute">Өчүрүү + Муттоо</option>
-                    <option value="warn">Өчүрүү + Эскертүү (Варн)</option>
+                    <option value="warn">Өчүрүү + Эскертүү</option>
                     <option value="kick">Өчүрүү + Кик кылуу</option>
                     <option value="ban">Өчүрүү + Бандоо</option>
                   </select>
@@ -1334,7 +1383,7 @@
             <!-- Global Limits Card -->
             <div class="card">
               <div class="card-header">
-                <div class="card-title">⚖️ Эскертүүлөр (Warns) жана Бөгөттөр</div>
+                <div class="card-title"><i class="fa-solid fa-scale-balanced" style="color: var(--accent); margin-right: 8px;"></i>Эскертүүлөр жана бөгөттөр</div>
                 <div class="card-description">Страйк системасын жөндөө.</div>
               </div>
               <div class="card-body">
@@ -1367,7 +1416,7 @@
             <!-- Anti-Flood Card -->
             <div class="card">
               <div class="card-header">
-                <div class="card-title">🌊 Спам & Антифлуд</div>
+                <div class="card-title"><i class="fa-solid fa-wind" style="color: var(--accent); margin-right: 8px;"></i>Спам жана антифлуд</div>
                 <div class="card-description">Кыска убакыттын ичинде көп СМС жөнөткөндөрдү автоматтык жазалоо.</div>
               </div>
               <div class="card-body">
@@ -1410,30 +1459,30 @@
             <!-- Global Locks Card -->
             <div class="card">
               <div class="card-header">
-                <div class="card-title">🔒 Медиа жана Билдирүүлөрдү Бөгөттөө (Locks)</div>
+                <div class="card-title"><i class="fa-solid fa-lock" style="color: var(--accent); margin-right: 8px;"></i>Медиа жана билдирүүлөрдү бөгөттөө</div>
                 <div class="card-description">Тайпада таптакыр тыюу салынган билдирүү же медиа түрлөрүн тандаңыз.</div>
               </div>
               <div class="card-body">
                 <div class="locks-grid">
                   <label class="lock-checkbox"><input type="checkbox" id="lock_text"><span>Текст</span></label>
-                  <label class="lock-checkbox"><input type="checkbox" id="lock_links"><span>Шилтеме (Links)</span></label>
-                  <label class="lock-checkbox"><input type="checkbox" id="lock_photo"><span>Сүрөт (Photo)</span></label>
-                  <label class="lock-checkbox"><input type="checkbox" id="lock_video"><span>Видео (Video)</span></label>
+                  <label class="lock-checkbox"><input type="checkbox" id="lock_links"><span>Шилтеме</span></label>
+                  <label class="lock-checkbox"><input type="checkbox" id="lock_photo"><span>Сүрөт</span></label>
+                  <label class="lock-checkbox"><input type="checkbox" id="lock_video"><span>Видео</span></label>
                   <label class="lock-checkbox"><input type="checkbox" id="lock_audio"><span>Аудио / Музыка</span></label>
-                  <label class="lock-checkbox"><input type="checkbox" id="lock_voices"><span>Үн билдирүү (Voice)</span></label>
+                  <label class="lock-checkbox"><input type="checkbox" id="lock_voices"><span>Үн билдирүү</span></label>
                   <label class="lock-checkbox"><input type="checkbox" id="lock_videonote"><span>Кружоктор</span></label>
-                  <label class="lock-checkbox"><input type="checkbox" id="lock_document"><span>Файлдар (Docs)</span></label>
+                  <label class="lock-checkbox"><input type="checkbox" id="lock_document"><span>Файлдар</span></label>
                   <label class="lock-checkbox"><input type="checkbox" id="lock_stickers"><span>Стикерлер</span></label>
                   <label class="lock-checkbox"><input type="checkbox" id="lock_gifs"><span>GIF Анимация</span></label>
                   <label class="lock-checkbox"><input type="checkbox" id="lock_bots"><span>Жаңы ботторду кошуу</span></label>
-                  <label class="lock-checkbox"><input type="checkbox" id="lock_commands"><span>/Буйруктар (Commands)</span></label>
+                  <label class="lock-checkbox"><input type="checkbox" id="lock_commands"><span>/Буйруктар</span></label>
                   <label class="lock-checkbox"><input type="checkbox" id="lock_games"><span>Оюндар</span></label>
-                  <label class="lock-checkbox"><input type="checkbox" id="lock_forwards"><span>Репосттор (Forward)</span></label>
+                  <label class="lock-checkbox"><input type="checkbox" id="lock_forwards"><span>Репосттор</span></label>
                   <label class="lock-checkbox"><input type="checkbox" id="lock_arabic"><span>Араб тамгалары</span></label>
                   <label class="lock-checkbox"><input type="checkbox" id="lock_porn"><span>Катуу сөздөр / NSFW</span></label>
                 </div>
                 <div class="form-group" style="margin-top: 18px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 14px;">
-                  <label class="form-label">🔗 Уруксат берилген шилтемелер (Link Whitelist)</label>
+                  <label class="form-label"><i class="fa-solid fa-link" style="color: var(--accent); margin-right: 8px;"></i>Уруксат берилген шилтемелер</label>
                   <input type="text" class="form-input" id="linkWhitelist" placeholder="Мисалы: google.com, t.me, youtube.com">
                   <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">Шилтемелер бөгөттөлгөн учурда да бул домендерге уруксат берилет. Үтүр менен бөлүңүз.</div>
                 </div>
@@ -1441,7 +1490,7 @@
                   <label class="form-label">Бөгөттөлгөн нерсени жөнөткөндө жаза</label>
                   <select class="form-select" id="locksAction">
                     <option value="delete">Билдирүүсүн өчүрүү гана</option>
-                    <option value="warn">Өчүрүү + Эскертүү (Варн)</option>
+                    <option value="warn">Өчүрүү + Эскертүү</option>
                     <option value="mute">Өчүрүү + Муттоо</option>
                     <option value="kick">Өчүрүү + Кик кылуу</option>
                     <option value="ban">Өчүрүү + Бандоо</option>
@@ -1455,7 +1504,7 @@
           <div id="tab-welcome" class="tab-content">
             <div class="card">
               <div class="card-header">
-                <div class="card-title">👋 Кош келүү жана Коштошуу билдирүүлөрү</div>
+                <div class="card-title"><i class="fa-solid fa-handshake" style="color: var(--accent); margin-right: 8px;"></i>Кош келүү жана Коштошуу билдирүүлөрү</div>
                 <div class="card-description">Жаңы колдонуучу киргенде же чыгып кеткенде боттун жообун жөндөө.</div>
               </div>
               <div class="card-body">
@@ -1476,7 +1525,7 @@
                 </div>
                 <div class="setting-row" style="margin-top: 20px;">
                   <div class="setting-info">
-                    <div class="setting-name">Таза Саламдашуу (Clean Welcome)</div>
+                    <div class="setting-name">Таза Саламдашуу</div>
                     <div class="setting-desc">Ар бир жаңы саламдашуу жөнөтүлгөндө эскилерин өчүрүп турат.</div>
                   </div>
                   <label class="switch">
@@ -1507,7 +1556,7 @@
             <!-- Advanced Onboarding Settings Card -->
             <div class="card" style="margin-top: 20px;">
               <div class="card-header">
-                <div class="card-title">🚀 Өркүндөтүлгөн саламдашуу жана Кирүү башкаруусу</div>
+                <div class="card-title"><i class="fa-solid fa-rocket" style="color: var(--accent); margin-right: 8px;"></i>Өркүндөтүлгөн саламдашуу</div>
                 <div class="card-description">Тайпанын жаңы катышуучуларын тосуп алууну максималдуу түрдө көзөмөлдөө.</div>
               </div>
               <div class="card-body">
@@ -1566,7 +1615,7 @@
                 <!-- 5. Join Filters -->
                 <div class="setting-row" style="margin-top: 14px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 14px;">
                   <div class="setting-info">
-                    <div class="setting-name">Никнейми (username) жокторду киргизбөө</div>
+                    <div class="setting-name">Никнейми жокторду киргизбөө</div>
                     <div class="setting-desc">Атында @username жазылбаган аккаунттарды дароо тайпадан чыгарат.</div>
                   </div>
                   <label class="switch">
@@ -1576,7 +1625,7 @@
                 </div>
                 <div class="setting-row" style="margin-top: 14px; border-bottom: none;">
                   <div class="setting-info">
-                    <div class="setting-name">Профиль сүрөтү (photo) жокторду киргизбөө</div>
+                    <div class="setting-name">Профиль сүрөтү жокторду киргизбөө</div>
                     <div class="setting-desc">Профиль сүрөтү коюлбаган жаңы аккаунттарды дароо тайпадан чыгарат.</div>
                   </div>
                   <label class="switch">
@@ -1618,7 +1667,7 @@
             <!-- Rules Text Card -->
             <div class="card">
               <div class="card-header">
-                <div class="card-title">📖 Тайпанын эрежелери</div>
+                <div class="card-title"><i class="fa-solid fa-book-open" style="color: var(--accent); margin-right: 8px;"></i>Тайпанын эрежелери</div>
                 <div class="card-description">Админдер жана катышуучулар үчүн /rules буйругу менен чакырылуучу негизги эрежелер.</div>
               </div>
               <div class="card-body">
@@ -1641,7 +1690,7 @@
             <!-- Media & Link Rate Limiter Card -->
             <div class="card">
               <div class="card-header">
-                <div class="card-title">🛡️ Шилтеме жана Медиа жөнөтүү лимити (Rate Limiter)</div>
+                <div class="card-title"><i class="fa-solid fa-gauge" style="color: var(--accent); margin-right: 8px;"></i>Шилтеме жана медиа жөнөтүү лимити</div>
                 <div class="card-description">Колдонуучу кыска убакыттын ичинде канча шилтеме же медиа (сүрөт, видео, документ) жөнөтө аларын чектөө.</div>
               </div>
               <div class="card-body">
@@ -1669,10 +1718,10 @@
                   <label class="form-label">Чегинен ашканда берилүүчү жаза</label>
                   <select class="form-select" id="mediaRateLimitAction">
                     <option value="delete">Билдирүүлөрүн өчүрүү гана</option>
-                    <option value="mute">Мут (2 саат)</option>
-                    <option value="warn">Варн берүү (Эскертүү)</option>
-                    <option value="kick">Кик кылуу (Чаттан чыгаруу)</option>
-                    <option value="ban">Бандоо (Бөгөттөө)</option>
+                    <option value="mute">Муттоо (2 саат)</option>
+                    <option value="warn">Эскертүү берүү</option>
+                    <option value="kick">Чаттан чыгаруу</option>
+                    <option value="ban">Бөгөттөө (Бан)</option>
                   </select>
                 </div>
               </div>
@@ -1681,7 +1730,7 @@
             <!-- Blacklist Words Card -->
             <div class="card">
               <div class="card-header">
-                <div class="card-title">🚫 Кара тизме (Тыюу салынган сөздөр жана тексттер)</div>
+                <div class="card-title"><i class="fa-solid fa-ban" style="color: var(--danger); margin-right: 8px;"></i>Кара тизме</div>
                 <div class="card-description">Бул жерге кошулган текст, сөз же толук шилтеме камтылган билдирүүлөр дароо өчүрүлүп, колдонуучуга тандалган жаза берилет.</div>
               </div>
               <div class="card-body">
@@ -1694,10 +1743,10 @@
                     <label class="form-label">Жазалоо түрү</label>
                     <select class="form-select" id="bl_action" onchange="toggleBlacklistFields()">
                       <option value="delete">Өчүрүү гана</option>
-                      <option value="warn">Эскертүү (Warn)</option>
-                      <option value="mute">Мут (Mute)</option>
-                      <option value="kick">Кик (Kick)</option>
-                      <option value="ban">Бан (Ban)</option>
+                      <option value="warn">Эскертүү</option>
+                      <option value="mute">Мут</option>
+                      <option value="kick">Кик</option>
+                      <option value="ban">Бан</option>
                     </select>
                   </div>
                   <div class="form-group" id="bl_duration_container" style="display:none;">
@@ -1721,7 +1770,7 @@
             <!-- Auto-replies (Filters) Card -->
             <div class="card">
               <div class="card-header">
-                <div class="card-title">🤖 Автожооптор (Текст фильтрлери)</div>
+                <div class="card-title"><i class="fa-solid fa-robot" style="color: var(--accent); margin-right: 8px;"></i>Автожооптор</div>
                 <div class="card-description">Колдонуучу белгилүү бир сөздү жазганда бот автоматтык түрдө алдын ала даярдалган жоопту кайтарат.</div>
               </div>
               <div class="card-body">
@@ -1749,7 +1798,7 @@
             <!-- Swear Words Card -->
             <div class="card">
               <div class="card-header">
-                <div class="card-title">🤬 Сөгүнүү сөздөрдүн базасы</div>
+                <div class="card-title"><i class="fa-solid fa-comment-slash" style="color: var(--accent); margin-right: 8px;"></i>Сөгүнүү сөздөрүнүн базасы</div>
                 <div class="card-description">Бул базадагы сөздөр Анти-Сөгүнүү системасы иштетилгенде автоматтык түрдө бөгөттөлөт.</div>
               </div>
               <div class="card-body">
@@ -1769,7 +1818,7 @@
             <!-- Notes Card -->
             <div class="card">
               <div class="card-header">
-                <div class="card-title">📝 Тайпа белгилери (Notes)</div>
+                <div class="card-title"><i class="fa-solid fa-note-sticky" style="color: var(--accent); margin-right: 8px;"></i>Тайпа белгилери</div>
                 <div class="card-description">Бул белгини чатта <b>#белги</b> аркылуу чакырса болот.</div>
               </div>
               <div class="card-body">
@@ -1797,7 +1846,7 @@
             <!-- Backup Import/Export Card -->
             <div class="card">
               <div class="card-header">
-                <div class="card-title">📋 Көчүрмөлөө (Backup & Restore)</div>
+                <div class="card-title"><i class="fa-solid fa-copy" style="color: var(--accent); margin-right: 8px;"></i>Көчүрмөлөө</div>
                 <div class="card-description">Тайпанын автожоопторун, кара тизмесин, сөгүнүү сөздөрүн жана белгилерин экспорттоп, башка топторго оңой чаптасаңыз болот.</div>
               </div>
               <div class="card-body">
@@ -1806,8 +1855,8 @@
                   <textarea class="form-textarea" id="backupJsonArea" rows="4" placeholder="Бул жерге экспорттолгон JSON текстти чаптаңыз же экспорттоону басыңыз..."></textarea>
                 </div>
                 <div style="display: flex; gap: 10px; margin-top: 10px;">
-                  <button class="btn" style="flex: 1;" onclick="exportBackup()">📤 Экспорттоо (Код алуу)</button>
-                  <button class="btn btn-primary" style="flex: 1;" onclick="importBackup()">📥 Импорттоо (Жүктөө)</button>
+                  <button class="btn" style="flex: 1;" onclick="exportBackup()"><i class="fa-solid fa-file-export" style="margin-right: 6px;"></i>Экспорттоо</button>
+                  <button class="btn btn-primary" style="flex: 1;" onclick="importBackup()"><i class="fa-solid fa-file-import" style="margin-right: 6px;"></i>Импорттоо</button>
                 </div>
               </div>
             </div>
@@ -1817,8 +1866,8 @@
           <div id="tab-commands" class="tab-content">
             <div class="card">
               <div class="card-header">
-                <div class="card-title">🤖 Буйруктарды ырастоо</div>
-                <div class="card-description">Боттун негизги админ буйруктарын жана кыска сөздөрүн (сокращенная команда) өзгөртүү. Ар бир буйрукка автожооп жана авто-өчүрүү жөндөөсүн кошсо болот.</div>
+                <div class="card-title"><i class="fa-solid fa-terminal" style="color: var(--accent); margin-right: 8px;"></i>Буйруктарды ырастоо</div>
+                <div class="card-description">Боттун негизги админ буйруктарын жана кыска сөздөрүн өзгөртүү. Ар бир буйрукка автожооп жана авто-өчүрүү жөндөөсүн кошсо болот.</div>
               </div>
               <div class="card-body">
                 <p style="font-size:12px; color:var(--text-muted); margin-bottom:16px;">Буйруктарды өзгөртүү үчүн ар бирин басып жайып алыңыз:</p>
@@ -1831,7 +1880,7 @@
           <div id="tab-users" class="tab-content">
             <div class="card">
               <div class="card-header">
-                <div class="card-title">👥 Катышуучуларды көзөмөлдөө жана башкаруу</div>
+                <div class="card-title"><i class="fa-solid fa-users" style="color: var(--accent); margin-right: 8px;"></i>Катышуучуларды көзөмөлдөө жана башкаруу</div>
                 <div class="card-description">Тайпадагы колдонуучулардын эскертүүлөрүн, рейтингдерин көрүү жана укуктарын башкаруу.</div>
               </div>
               <div class="card-body">
@@ -1840,18 +1889,18 @@
                   
                   <select class="form-select" id="user_filter_select" onchange="filterUsersList()" style="flex: 1; min-width: 150px;">
                     <option value="all">Бардык катышуучулар</option>
-                    <option value="admins">🛡️ Администраторлор</option>
-                    <option value="regular">👤 Кадимки колдонуучулар</option>
-                    <option value="warned">⚠️ Варны барлар</option>
-                    <option value="high_karma">🌟 Жогорку Карма (>0)</option>
-                    <option value="low_karma">💔 Төмөнкү Карма (&lt;0)</option>
+                    <option value="admins">Администраторлор</option>
+                    <option value="regular">Кадимки колдонуучулар</option>
+                    <option value="warned">Варны барлар</option>
+                    <option value="high_karma">Жогорку Карма</option>
+                    <option value="low_karma">Төмөнкү Карма</option>
                   </select>
 
                   <select class="form-select" id="user_sort_select" onchange="filterUsersList()" style="flex: 1; min-width: 150px;">
-                    <option value="karma_desc">🌟 Карма боюнча (Азаюу)</option>
-                    <option value="karma_asc">🌟 Карма боюнча (Өсүү)</option>
-                    <option value="warns_desc">⚠️ Варндар боюнча (Көп)</option>
-                    <option value="name_asc">🔤 Аты боюнча (А-Я)</option>
+                    <option value="karma_desc">Карма боюнча (Азаюу)</option>
+                    <option value="karma_asc">Карма боюнча (Өсүү)</option>
+                    <option value="warns_desc">Варндар боюнча (Көп)</option>
+                    <option value="name_asc">Аты боюнча (А-Я)</option>
                   </select>
                 </div>
                 
@@ -1867,7 +1916,7 @@
             <!-- Stats overview cards row -->
             <div class="stats-header-grid">
               <div class="stat-mini-card" id="card-stats-overview" onclick="openStatsSubTab('overview')">
-                <div class="stat-mini-val" style="color:var(--accent); font-size:22px;">📊</div>
+                <div class="stat-mini-val" style="color:var(--accent); font-size:22px;"><i class="fa-solid fa-chart-pie"></i></div>
                 <div class="stat-mini-lbl">Жалпы көрүнүш</div>
               </div>
               <div class="stat-mini-card" id="card-stats-total" onclick="openStatsSubTab('total')">
@@ -1892,7 +1941,7 @@
             <div class="stats-subview" id="view-stats-overview">
               <div class="card" style="margin-bottom: 20px;">
                 <div class="card-header">
-                  <div class="card-title">📈 Активдүүлүк аналитикасы (Акыркы 7 күн)</div>
+                  <div class="card-title"><i class="fa-solid fa-chart-line" style="color: var(--accent); margin-right: 8px;"></i>Активдүүлүк аналитикасы</div>
                   <div class="card-description">Тайпанын акыркы жумадагы билдирүүлөрүнүн динамикасы.</div>
                 </div>
                 <div class="card-body">
@@ -1946,10 +1995,10 @@
                       <span style="font-size: 24px; font-weight: 700; color: var(--warn);" id="kpi_mod_actions_count">0</span>
                       <span style="font-size: 12px; color: var(--text-muted);">жалпы чаралар</span>
                     </div>
-                    <div style="font-size: 11px; color: var(--text-muted); display: flex; justify-content: space-between; flex-wrap: wrap; gap: 4px;">
-                      <span>🚫 Бан: <b id="kpi_bans_count">0</b></span>
-                      <span>🔇 Мут: <b id="kpi_mutes_count">0</b></span>
-                      <span>⚠️ Варн: <b id="kpi_warns_count">0</b></span>
+                    <div style="font-size: 11px; color: var(--text-muted); display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
+                      <span style="display: inline-flex; align-items: center; gap: 4px;"><i class="fa-solid fa-ban" style="color: var(--danger); font-size: 10px;"></i> Бан: <b id="kpi_bans_count">0</b></span>
+                      <span style="display: inline-flex; align-items: center; gap: 4px;"><i class="fa-solid fa-volume-xmark" style="color: var(--warn); font-size: 10px;"></i> Мут: <b id="kpi_mutes_count">0</b></span>
+                      <span style="display: inline-flex; align-items: center; gap: 4px;"><i class="fa-solid fa-triangle-exclamation" style="color: var(--accent); font-size: 10px;"></i> Варн: <b id="kpi_warns_count">0</b></span>
                     </div>
                     <div class="progress-bar-bg" style="width:100%; height: 6px; background: rgba(255,255,255,0.06); border-radius:3px; margin-top:8px; overflow:hidden;">
                       <div id="kpi_mod_progress" style="width: 0%; height: 100%; background: var(--warn); border-radius:3px; transition: width 0.8s ease;"></div>
@@ -1977,11 +2026,11 @@
               </div>
 
               <!-- Insight card -->
-              <div class="card" style="margin-bottom: 20px; border-left: 4px solid var(--accent); background: linear-gradient(90deg, rgba(168, 85, 247, 0.05), transparent);">
+              <div class="card" style="margin-bottom: 20px; border-left: 4px solid var(--accent); background: linear-gradient(90deg, rgba(0, 112, 243, 0.05), transparent);">
                 <div class="card-body" style="padding: 16px; display: flex; align-items: center; gap: 12px;">
-                  <div style="font-size: 24px;">💡</div>
+                  <div><i class="fa-solid fa-lightbulb" style="color: var(--accent); font-size: 20px;"></i></div>
                   <div>
-                    <div style="font-weight: 600; font-size: 13px; color: var(--text-color);">Аналитикалык байкоо (AI Insight)</div>
+                    <div style="font-weight: 600; font-size: 13px; color: var(--text-color);">Аналитикалык байкоо</div>
                     <div style="font-size: 12px; color: var(--text-muted); margin-top: 2px;" id="kpi_ai_insight">Күтө туруңуз, маалыматтар анализдөөдө...</div>
                   </div>
                 </div>
@@ -1992,7 +2041,7 @@
             <div class="stats-subview" id="view-stats-total">
               <div class="card">
                 <div class="card-header">
-                  <div class="card-title">💬 Эң активдүү колдонуучулар (Жалпы статистика)</div>
+                  <div class="card-title">Эң активдүү колдонуучулар</div>
                   <div class="card-description">Тайпа ачылгандан берки эң көп СМС жазгандар.</div>
                 </div>
                 <div class="card-body" id="stats_total_body">
@@ -2005,7 +2054,7 @@
             <div class="stats-subview" id="view-stats-today">
               <div class="card">
                 <div class="card-header">
-                  <div class="card-title">📅 Бүгүнкү активдүү колдонуучулар</div>
+                  <div class="card-title">Бүгүнкү активдүү колдонуучулар</div>
                   <div class="card-description">Бүгүн эң көп билдирүү жөнөткөн катышуучулар.</div>
                 </div>
                 <div class="card-body" id="stats_today_body">
@@ -2018,7 +2067,7 @@
             <div class="stats-subview" id="view-stats-bans">
               <div class="card">
                 <div class="card-header">
-                  <div class="card-title">🚫 Четтетилгендердин тизмеси (Бандар)</div>
+                  <div class="card-title">Четтетилгендердин тизмеси</div>
                   <div class="card-description">Тайпадан биротоло бөгөттөлгөн катышуучулар. Бул жерден разбан кылса болот.</div>
                 </div>
                 <div class="card-body">
@@ -2031,7 +2080,7 @@
             <div class="stats-subview" id="view-stats-mutes">
               <div class="card">
                 <div class="card-header">
-                  <div class="card-title">🔇 Чектөөгө алынгандардын тизмеси (Муттар)</div>
+                  <div class="card-title">Чектөөгө алынгандардын тизмеси</div>
                   <div class="card-description">Азыркы учурда жазуу укугунан убактылуу ажыратылган катышуучулар.</div>
                 </div>
                 <div class="card-body">
@@ -2044,7 +2093,7 @@
             <div class="stats-subview" id="view-stats-warns">
               <div class="card">
                 <div class="card-header">
-                  <div class="card-title">⚠️ Эскертүүлөр тизмеси (Варндар)</div>
+                  <div class="card-title">Эскертүүлөр тизмеси</div>
                   <div class="card-description">Эскертүү алган колдонуучулардын тизмеси жана алардын эскертүү саны.</div>
                 </div>
                 <div class="card-body">
@@ -2057,7 +2106,7 @@
             <div class="stats-subview" id="view-stats-logs">
               <div class="card">
                 <div class="card-header">
-                  <div class="card-title">🕵️ Аракеттер журналы</div>
+                  <div class="card-title">Аракеттер журналы</div>
                   <div class="card-description">Бот жана админдер тарабынан тайпада жасалган акыркы аракеттер.</div>
                 </div>
                 <div class="card-body" id="stats_logs_body" style="padding: 0;">
@@ -2070,7 +2119,7 @@
             <div class="stats-subview" id="view-stats-admins">
               <div class="card">
                 <div class="card-header">
-                  <div class="card-title">👑 Администраторлордун активдүүлүгү</div>
+                  <div class="card-title">Администраторлордун активдүүлүгү</div>
                   <div class="card-description">Модераторлордун жалпы саны, алардын даражасы жана жасаган модерациялык аракеттери.</div>
                 </div>
                 <div class="card-body">
@@ -2128,20 +2177,20 @@
     let usersMap = {}; // userId -> info
 
     const DEFAULT_BOT_COMMANDS = {
-      ban: { label: "Бан (бөгөттөө)", action: "ban", alias: "бан, ban", replyText: "", autoDelete: false },
-      unban: { label: "Разбан (бөгөттөн чыгаруу)", action: "unban", alias: "разбан, unban", replyText: "", autoDelete: false },
-      mute: { label: "Мут (убактылуу чектөө)", action: "mute", alias: "мут, mute", replyText: "", autoDelete: false, muteDuration: 120 },
-      unmute: { label: "Анмут (муттон чыгаруу)", action: "unmute", alias: "анмут, unmute", replyText: "", autoDelete: false },
-      kick: { label: "Кик (тайпадан чыгаруу)", action: "kick", alias: "кик, kick", replyText: "", autoDelete: false },
-      warn: { label: "Варн (эскертүү берүү)", action: "warn", alias: "эскертүү, warn", replyText: "", autoDelete: false, warnCount: 1 },
+      ban: { label: "Бандоо", action: "ban", alias: "бан, ban", replyText: "", autoDelete: false },
+      unban: { label: "Бөгөттөн чыгаруу", action: "unban", alias: "разбан, unban", replyText: "", autoDelete: false },
+      mute: { label: "Муттоо", action: "mute", alias: "мут, mute", replyText: "", autoDelete: false, muteDuration: 120 },
+      unmute: { label: "Муттон чыгаруу", action: "unmute", alias: "анмут, unmute", replyText: "", autoDelete: false },
+      kick: { label: "Тайпадан чыгаруу", action: "kick", alias: "кик, kick", replyText: "", autoDelete: false },
+      warn: { label: "Эскертүү берүү", action: "warn", alias: "эскертүү, warn", replyText: "", autoDelete: false, warnCount: 1 },
       unwarn: { label: "Варнды өчүрүү", action: "unwarn", alias: "анwarn, unwarn", replyText: "", autoDelete: false },
       warns: { label: "Эскертүү санын көрүү", action: "warns", alias: "эскертүүлөр, warns", replyText: "", autoDelete: false },
-      del: { label: "Өчүрүү (билдирүүнү өчүрүү)", action: "del", alias: "өчүр, del", replyText: "", autoDelete: false },
-      purge: { label: "Тазалоо (бир нече билдирүүнү өчүрүү)", action: "purge", alias: "тазалоо, purge", replyText: "", autoDelete: false },
-      report: { label: "Админдерге кабарлоо (Репорт)", action: "report", alias: "репорт, report", replyText: "", autoDelete: false },
-      pin: { label: "Билдирүүнү кадап коюу (Пин)", action: "pin", alias: "када, pin", replyText: "", autoDelete: false },
-      unpin: { label: "Билдирүүнү кадоодон чыгаруу (Анпин)", action: "unpin", alias: "анпин, unpin", replyText: "", autoDelete: false },
-      slowmode: { label: "Жай Режим (Slowmode)", action: "slowmode", alias: "жайрежим, slowmode", replyText: "", autoDelete: false },
+      del: { label: "Билдирүүнү өчүрүү", action: "del", alias: "өчүр, del", replyText: "", autoDelete: false },
+      purge: { label: "Катар билдирүүлөрдү өчүрүү", action: "purge", alias: "тазалоо, purge", replyText: "", autoDelete: false },
+      report: { label: "Админдерге кабарлоо", action: "report", alias: "репорт, report", replyText: "", autoDelete: false },
+      pin: { label: "Билдирүүнү кадап коюу", action: "pin", alias: "када, pin", replyText: "", autoDelete: false },
+      unpin: { label: "Билдирүүнү кадоодон чыгаруу", action: "unpin", alias: "анпин, unpin", replyText: "", autoDelete: false },
+      slowmode: { label: "Жай режим", action: "slowmode", alias: "жайрежим, slowmode", replyText: "", autoDelete: false },
       promote: { label: "Админ даражасын берүү", action: "promote", alias: "админ кыл, promote", replyText: "", autoDelete: false },
       demote: { label: "Админден алуу", action: "demote", alias: "админден ал, demote", replyText: "", autoDelete: false },
       rules: { label: "Тайпа эрежелери", action: "rules", alias: "эрежелер, rules", replyText: "", autoDelete: false },
@@ -2152,7 +2201,7 @@
       link: { label: "Тайпа шилтемесин алуу", action: "link", alias: "шилтеме, link", replyText: "", autoDelete: false },
       kickme: { label: "Өзүн чаттан чыгаруу", action: "kickme", alias: "чыгуу, kickme", replyText: "", autoDelete: false },
       muteall: { label: "Тайпада жазууну толук бөгөттөө", action: "muteall", alias: "жабуу, muteall", replyText: "", autoDelete: false },
-      unmuteall: { label: "Чатты ачуу (Бөгөттү алуу)", action: "unmuteall", alias: "ачуу, unmuteall", replyText: "", autoDelete: false },
+      unmuteall: { label: "Чатты ачуу", action: "unmuteall", alias: "ачуу, unmuteall", replyText: "", autoDelete: false },
       zombies: { label: "Өчүрүлгөн аккаунттарды тазалоо", action: "zombies", alias: "зомби, zombies", replyText: "", autoDelete: false },
       id: { label: "ID маалыматтарын алуу", action: "id", alias: "ид, id", replyText: "", autoDelete: false }
     };
@@ -2826,19 +2875,19 @@
       let karmaStatus = "Тынчтык";
       let karmaProgress = 50;
       if (avgKarma > 2) {
-        karmaStatus = "Эң ынтымактуу 🌟";
+        karmaStatus = '<i class="fa-solid fa-star" style="color: #fbbf24; margin-right: 4px;"></i> Эң ынтымактуу';
         karmaProgress = Math.min(50 + (avgKarma / 10) * 50, 100);
       } else if (avgKarma > 0) {
-        karmaStatus = "Позитивдүү 👍";
+        karmaStatus = '<i class="fa-solid fa-thumbs-up" style="color: var(--success); margin-right: 4px;"></i> Позитивдүү';
         karmaProgress = 50 + (avgKarma / 10) * 50;
       } else if (avgKarma < -2) {
-        karmaStatus = "Конфликттүү ⚠️";
+        karmaStatus = '<i class="fa-solid fa-triangle-exclamation" style="color: var(--danger); margin-right: 4px;"></i> Конфликттүү';
         karmaProgress = Math.max(50 + (avgKarma / 10) * 50, 0);
       } else if (avgKarma < 0) {
-        karmaStatus = "Чыңалуу бар 💔";
+        karmaStatus = '<i class="fa-solid fa-heart-crack" style="color: var(--danger); margin-right: 4px;"></i> Чыңалуу бар';
         karmaProgress = 50 + (avgKarma / 10) * 50;
       }
-      document.getElementById('kpi_karma_status').innerText = karmaStatus;
+      document.getElementById('kpi_karma_status').innerHTML = karmaStatus;
       document.getElementById('kpi_karma_progress').style.width = karmaProgress + '%';
 
       // Insight
@@ -2954,7 +3003,7 @@
             <tr>
               <td><b>${u.name}</b> ${u.username ? '(@'+u.username+')' : ''}<br><span style="font-size:11px;color:var(--text-muted)">ID: ${u.id}</span></td>
               <td><span style="color:var(--warn); font-weight:bold; font-size:16px;">${u.warns}</span> / ${appData.config.warnLimit || 3}</td>
-              <td><button class="btn btn-sm btn-danger" onclick="doAction('resetwarns', ${u.id})">Тазалоо (Reset)</button></td>
+              <td><button class="btn btn-sm btn-danger" onclick="doAction('resetwarns', ${u.id})">Тазалоо</button></td>
             </tr>
           `).join('') + `</tbody></table></div>`;
       } else {
@@ -3049,29 +3098,29 @@
         let bg = "rgba(255,255,255,0.05)";
 
         if (role === "owner") {
-          label = "👑 Чат Ээси";
+          label = '<i class="fa-solid fa-crown" style="margin-right: 4px; color: #ff4500;"></i> Чат Ээси';
           color = "#ff4500";
           bg = "rgba(255, 69, 0, 0.15)";
         } else if (role === "coowner") {
-          label = "⭐ Жардамчы (Co-owner)";
+          label = '<i class="fa-solid fa-star" style="margin-right: 4px; color: var(--accent);"></i> Башкы жардамчы';
           color = "var(--accent)";
           bg = "var(--accent-glow)";
         } else if (role === "senior") {
-          label = "🛡️ Улуу админ";
+          label = '<i class="fa-solid fa-shield-halved" style="margin-right: 4px; color: var(--success);"></i> Улуу админ';
           color = "var(--success)";
           bg = "var(--success-glow)";
         } else if (role === "middle") {
-          label = "🛡️ Орто админ";
+          label = '<i class="fa-solid fa-shield-halved" style="margin-right: 4px; color: var(--warn);"></i> Орто админ';
           color = "var(--warn)";
           bg = "var(--warn-glow)";
         } else if (role === "junior") {
-          label = "🛡️ Кичүү админ";
+          label = '<i class="fa-solid fa-shield-halved" style="margin-right: 4px; color: var(--text-muted);"></i> Кичүү админ';
           color = "var(--text-muted)";
           bg = "rgba(255,255,255,0.05)";
         }
 
         const titleText = customTitle ? ` [${customTitle}]` : "";
-        return `<span class="badge" style="background: ${bg}; color: ${color}; font-size:11px; padding: 3px 8px; border-radius: 4px; font-weight: 600;">${label}${titleText}</span>`;
+        return `<span class="badge" style="background: ${bg}; color: ${color}; font-size:11px; padding: 3px 8px; border-radius: 4px; font-weight: 600; display: inline-flex; align-items: center; gap: 4px;">${label}${titleText}</span>`;
       };
 
       const tableHtml = `
@@ -3081,11 +3130,11 @@
             <tr>
               <th>Администратор</th>
               <th>Ролу / Статусу</th>
-              <th>🚫 Бан</th>
-              <th>🔇 Мут</th>
-              <th>⚠️ Варн</th>
-              <th>👢 Кик</th>
-              <th>📊 Жалпы</th>
+              <th><i class="fa-solid fa-ban" style="margin-right: 4px; color: var(--danger);"></i> Бан</th>
+              <th><i class="fa-solid fa-volume-xmark" style="margin-right: 4px; color: var(--warn);"></i> Мут</th>
+              <th><i class="fa-solid fa-triangle-exclamation" style="margin-right: 4px; color: var(--accent);"></i> Варн</th>
+              <th><i class="fa-solid fa-user-minus" style="margin-right: 4px; color: var(--danger);"></i> Кик</th>
+              <th><i class="fa-solid fa-chart-bar" style="margin-right: 4px; color: var(--text-main);"></i> Жалпы</th>
               <th>Аракеттер</th>
             </tr>
           </thead>
@@ -3146,7 +3195,13 @@
     }
 
     function toggleMemberCard(elem) {
-      elem.closest('.member-item').classList.toggle('expanded');
+      const card = elem.closest('.member-item');
+      card.classList.toggle('expanded');
+      if (card.classList.contains('expanded')) {
+        setTimeout(() => {
+          card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }, 150);
+      }
     }
 
     async function submitUserKarma(uid) {
@@ -3225,7 +3280,7 @@
           logsListHtml = `<div style="text-align:center; padding:10px; font-size:11px; color:var(--text-muted);">Аракеттер журналы таза.</div>`;
         }
 
-        const isUserAdminBadge = u.isAdmin ? `<span class="badge" style="background: var(--success-glow); color: var(--success); font-size:10px; padding: 2px 6px; border-radius: 4px; font-weight: 600;">🛡️ Админ</span>` : "";
+        const isUserAdminBadge = u.isAdmin ? `<span class="badge" style="background: var(--success-glow); color: var(--success); font-size:10px; padding: 2px 6px; border-radius: 4px; font-weight: 600; display: inline-flex; align-items: center; gap: 4px;"><i class="fa-solid fa-shield-halved" style="font-size: 9px;"></i> Админ</span>` : "";
 
         return `
         <div class="member-item" id="member_card_${u.id}">
@@ -3238,9 +3293,9 @@
                   ${u.username ? '<span style="color:var(--text-muted); font-weight:normal;">(@' + u.username + ')</span>' : ''}
                   ${isUserAdminBadge}
                 </div>
-                <div class="member-meta" style="margin-top: 4px;">
-                  <span>⚠️ Варндар: <b style="${u.warns > 0 ? 'color: var(--warn);' : ''}">${u.warns}</b></span>
-                  <span>🌟 Сый-Урмат: <b style="${u.urmat > 0 ? 'color: var(--success);' : (u.urmat < 0 ? 'color: var(--danger);' : '')}">${u.urmat}</b></span>
+                <div class="member-meta" style="margin-top: 4px; display: flex; gap: 12px; align-items: center;">
+                  <span style="display: inline-flex; align-items: center; gap: 4px;"><i class="fa-solid fa-triangle-exclamation" style="color: var(--warn); font-size: 11px;"></i> Варндар: <b style="${u.warns > 0 ? 'color: var(--warn);' : ''}">${u.warns}</b></span>
+                  <span style="display: inline-flex; align-items: center; gap: 4px;"><i class="fa-solid fa-star" style="color: #fbbf24; font-size: 11px;"></i> Сый-Урмат: <b style="${u.urmat > 0 ? 'color: var(--success);' : (u.urmat < 0 ? 'color: var(--danger);' : '')}">${u.urmat}</b></span>
                 </div>
               </div>
             </div>
@@ -3269,10 +3324,10 @@
                 </div>
 
                 <div style="display:flex; gap: 8px; flex-wrap: wrap; margin-top: 4px;">
-                  <button class="btn btn-sm btn-danger" onclick="doAction('kick', ${u.id})">👢 Кик (Чыгаруу)</button>
-                  <button class="btn btn-sm" onclick="doAction('unmute', ${u.id})">🔊 Анмут</button>
-                  <button class="btn btn-sm" onclick="doAction('unban', ${u.id})">🔓 Разбан</button>
-                  <button class="btn btn-sm" onclick="doAction('resetwarns', ${u.id})">🔄 Варндарды тазалоо</button>
+                  <button class="btn btn-sm btn-danger" onclick="doAction('kick', ${u.id})"><i class="fa-solid fa-user-minus" style="margin-right: 4px;"></i> Кик (Чыгаруу)</button>
+                  <button class="btn btn-sm" onclick="doAction('unmute', ${u.id})"><i class="fa-solid fa-volume-high" style="margin-right: 4px;"></i> Анмут</button>
+                  <button class="btn btn-sm" onclick="doAction('unban', ${u.id})"><i class="fa-solid fa-lock-open" style="margin-right: 4px;"></i> Разбан</button>
+                  <button class="btn btn-sm" onclick="doAction('resetwarns', ${u.id})"><i class="fa-solid fa-rotate-left" style="margin-right: 4px;"></i> Варндарды тазалоо</button>
                 </div>
 
                 <hr style="border:none; border-top: 1px solid var(--border-color); margin: 8px 0;">
@@ -3293,9 +3348,9 @@
                 <div style="font-size: 12px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">Администратор даражасын берүү</div>
                 <div class="action-row">
                   <select class="form-select form-select-sm" id="user_role_${u.id}" style="flex:1;">
-                    <option value="junior">Младший админ (Өчүрүү гана)</option>
+                    <option value="junior">Кичүү админ (Өчүрүү гана)</option>
                     <option value="middle" selected>Орто админ (Өчүрүү + Муттоо)</option>
-                    <option value="senior">Старший админ (Өчүрүү + Муттоо + Орнотуулар)</option>
+                    <option value="senior">Улуу админ (Өчүрүү + Муттоо + Орнотуулар)</option>
                     <option value="coowner">Жардамчы (Толук мүмкүнчүлүк)</option>
                   </select>
                   <button class="btn btn-sm btn-primary" onclick="submitUserPromote(${u.id})">Админ кылуу</button>
@@ -3304,7 +3359,7 @@
 
                 <hr style="border:none; border-top: 1px solid var(--border-color); margin: 8px 0;">
 
-                <div style="font-size: 12px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">Аракеттер тарыхы (Audit Log)</div>
+                <div style="font-size: 12px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">Аракеттер журналы</div>
                 <div class="user-logs-timeline" style="max-height: 160px; overflow-y: auto; padding: 4px; background: rgba(0,0,0,0.2); border-radius: 8px; border: 1px solid var(--border-color);">
                   ${logsListHtml}
                 </div>
