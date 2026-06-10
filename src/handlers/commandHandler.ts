@@ -45,21 +45,21 @@ async function checkModeratorPermissionsAndGetTarget(
 
   // Проверяем, что команда отправлена в группе, а не в ЛС
   if (ctx.chat.type === "private") {
-    await ctx.reply("❌ Эта команда может быть использована только в группах.");
+    await ctx.reply("❌ Бул буйрук тайпаларда гана иштейт.");
     return { success: false };
   }
 
   // Проверяем, является ли отправитель админом чата
   const isSenderAdmin = await isUserAdmin(ctx);
   if (!isSenderAdmin) {
-    await ctx.reply("❌ У вас нет прав на использование этой команды (требуются права администратора).");
+    await ctx.reply("❌ Бул буйрукту колдонууга сизде укук жок. Администратор укугу талап кылынат.");
     return { success: false };
   }
 
   // Цель команды — пользователь, на чье сообщение ответили
   const replyMessage = ctx.message?.reply_to_message;
   if (!replyMessage || !replyMessage.from) {
-    await ctx.reply("💡 Ответьте этой командой на сообщение пользователя, к которому хотите применить действие.");
+    await ctx.reply("💡 Бул буйрукту колдонуучунун билдирүүсүнө жооп иретинде жазыңыз.");
     return { success: false };
   }
 
@@ -68,7 +68,7 @@ async function checkModeratorPermissionsAndGetTarget(
   // Проверяем, не является ли цель команды администратором
   const isTargetAdmin = await isUserAdmin(ctx, targetUser.id);
   if (isTargetAdmin) {
-    await ctx.reply("❌ Невозможно применить модераторское действие к администратору группы.");
+    await ctx.reply("❌ Администраторлорго карата чектөөлөрдү колдонууга болбойт.");
     return { success: false };
   }
 
@@ -94,14 +94,25 @@ export async function handleMuteCommand(ctx: Context): Promise<void> {
   const durationArg = args && args.length > 1 ? args[1] : undefined;
   const durationSeconds = parseDuration(durationArg);
 
-  const durationText = durationArg ? `на ${durationArg}` : "навсегда";
+  let durationText = "";
+  if (durationArg) {
+    const val = parseInt(durationArg, 10);
+    const unit = durationArg.slice(-1);
+    if (unit === "m") durationText = `${val} мүнөткө`;
+    else if (unit === "h") durationText = `${val} саатка`;
+    else if (unit === "d") durationText = `${val} күнгө`;
+    else if (unit === "s") durationText = `${val} секундка`;
+    else durationText = `${durationArg}`;
+  } else {
+    durationText = "биротоло";
+  }
 
   const success = await muteUser(ctx.api, ctx.chat!.id, check.targetUserId, durationSeconds);
   if (success) {
-    await logAction(ctx.api, ctx.chat!.id, check.targetUserId, check.targetName, "Мут", `Мут жазасы берилди (${durationText})`, ctx.from?.first_name || "Админ");
-    await replyMaybeSilent(ctx, `🔇 Пользователь <b>${check.targetName}</b> был заглушен ${durationText}.`);
+    await logAction(ctx.api, ctx.chat!.id, check.targetUserId, check.targetName, "Мут", `Мут жазасы берилди, мөөнөтү: ${durationText}`, ctx.from?.first_name || "Админ");
+    await replyMaybeSilent(ctx, `🔇 Колдонуучу <b>${check.targetName}</b> жазуу укугунан ажыратылды. Мөөнөтү: ${durationText}.`);
   } else {
-    await ctx.reply("❌ Не удалось заглушить пользователя. Проверьте права бота.");
+    await ctx.reply("❌ Колдонуучуну мутка салуу мүмкүн болбоду. Боттун укуктарын текшериңиз.");
   }
 }
 
@@ -126,11 +137,11 @@ export async function handleUnmuteCommand(ctx: Context): Promise<void> {
       can_send_other_messages: true,
       can_add_web_page_previews: true,
     });
-    await logAction(ctx.api, ctx.chat!.id, check.targetUserId, check.targetName, "Анмут", "Мут жазасы алынды (/unmute)", ctx.from?.first_name || "Админ");
-    await replyMaybeSilent(ctx, `🔊 Пользователь <b>${check.targetName}</b> разглушен.`);
+    await logAction(ctx.api, ctx.chat!.id, check.targetUserId, check.targetName, "Анмут", "Мут жазасы алынды", ctx.from?.first_name || "Админ");
+    await replyMaybeSilent(ctx, `🔊 Колдонуучу <b>${check.targetName}</b> жазуу укугу кайтарылды.`);
   } catch (error) {
     logger.error("Ошибка при разглушении пользователя", error);
-    await ctx.reply("❌ Не удалось разглушить пользователя. Проверьте права бота.");
+    await ctx.reply("❌ Колдонуучуну муттон чыгаруу мүмкүн болбоду. Боттун укуктарын текшериңиз.");
   }
 }
 
@@ -145,14 +156,25 @@ export async function handleBanCommand(ctx: Context): Promise<void> {
   const durationArg = args && args.length > 1 ? args[1] : undefined;
   const durationSeconds = parseDuration(durationArg);
 
-  const durationText = durationArg ? `на ${durationArg}` : "навсегда";
+  let durationText = "";
+  if (durationArg) {
+    const val = parseInt(durationArg, 10);
+    const unit = durationArg.slice(-1);
+    if (unit === "m") durationText = `${val} мүнөткө`;
+    else if (unit === "h") durationText = `${val} саатка`;
+    else if (unit === "d") durationText = `${val} күнгө`;
+    else if (unit === "s") durationText = `${val} секундка`;
+    else durationText = `${durationArg}`;
+  } else {
+    durationText = "биротоло";
+  }
 
   const success = await banUser(ctx.api, ctx.chat!.id, check.targetUserId, durationSeconds);
   if (success) {
-    await logAction(ctx.api, ctx.chat!.id, check.targetUserId, check.targetName, "Бан", `Бан жазасы берилди (${durationText})`, ctx.from?.first_name || "Админ");
-    await replyMaybeSilent(ctx, `🚷 Пользователь <b>${check.targetName}</b> заблокирован в чате ${durationText}.`);
+    await logAction(ctx.api, ctx.chat!.id, check.targetUserId, check.targetName, "Бан", `Бан жазасы берилди, мөөнөтү: ${durationText}`, ctx.from?.first_name || "Админ");
+    await replyMaybeSilent(ctx, `🚷 Колдонуучу <b>${check.targetName}</b> тайпадан бөгөттөлдү. Мөөнөтү: ${durationText}.`);
   } else {
-    await ctx.reply("❌ Не удалось заблокировать пользователя. Проверьте права бота.");
+    await ctx.reply("❌ Колдонуучуну бөгөттөө мүмкүн болбоду. Боттун укуктарын текшериңиз.");
   }
 }
 
@@ -164,13 +186,13 @@ export async function handleUnbanCommand(ctx: Context): Promise<void> {
   if (!ctx.chat || !ctx.from) return;
 
   if (ctx.chat.type === "private") {
-    await ctx.reply("❌ Эта команда может быть использована только в группах.");
+    await ctx.reply("❌ Бул буйрук тайпаларда гана иштейт.");
     return;
   }
 
   const isSenderAdmin = await isUserAdmin(ctx);
   if (!isSenderAdmin) {
-    await ctx.reply("❌ У вас нет прав на использование этой команды.");
+    await ctx.reply("❌ Бул буйрукту колдонууга сизде укук жок.");
     return;
   }
 
@@ -190,9 +212,9 @@ export async function handleUnbanCommand(ctx: Context): Promise<void> {
 
   if (!targetUserId || isNaN(targetUserId)) {
     await ctx.reply(
-      "💡 Чтобы разблокировать пользователя:\n" +
-      "1. Ответьте на его сообщение командой <code>/unban</code>\n" +
-      "2. Или введите ID пользователя: <code>/unban 12345678</code>",
+      "💡 Колдонуучуну бөгөттөн чыгаруу үчүн:\n" +
+      "1. Анын билдирүүсүнө жооп кылып <code>/unban</code> жазыңыз\n" +
+      "2. Же анын ID номерин көрсөтүңүз: <code>/unban 12345678</code>",
       { parse_mode: "HTML" }
     );
     return;
@@ -200,9 +222,9 @@ export async function handleUnbanCommand(ctx: Context): Promise<void> {
 
   const success = await unbanUser(ctx.api, ctx.chat.id, targetUserId);
   if (success) {
-    await logAction(ctx.api, ctx.chat.id, targetUserId, `Колдонуучу (${targetUserId})`, "Разбан", "Бан жазасы алынды (/unban)", ctx.from?.first_name || "Админ");
-    await replyMaybeSilent(ctx, `✅ Пользователь с ID <code>${targetUserId}</code> разблокирован.`);
+    await logAction(ctx.api, ctx.chat.id, targetUserId, `Колдонуучу ${targetUserId}`, "Разбан", "Бан жазасы алынды", ctx.from?.first_name || "Админ");
+    await replyMaybeSilent(ctx, `✅ Колдонуучу бөгөттөн чыгарылды. ID номери: <code>${targetUserId}</code>.`);
   } else {
-    await ctx.reply("❌ Не удалось разблокировать пользователя. Убедитесь, что ID верен и у бота есть права администратора.");
+    await ctx.reply("❌ Колдонуучуну бөгөттөн чыгаруу мүмкүн болбоду. ID номери туура экенин жана ботто администратор укуктары бар экенин текшериңиз.");
   }
 }

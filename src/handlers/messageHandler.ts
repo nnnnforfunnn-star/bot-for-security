@@ -99,7 +99,7 @@ async function handleWarn(ctx: Context, userId: number, chatId: number, name: st
     logger.error("Error setting warn expiration:", e);
   }
   
-  await logAction(ctx.api, chatId, userId, name, "Эскертүү", `${reason} (${warns}/${warnLimit})`, adminName);
+  await logAction(ctx.api, chatId, userId, name, "Эскертүү", `${reason}, чек: ${warns}/${warnLimit}`, adminName);
 
   if (warns < warnLimit) {
     await ctx.reply(`⚠️ **${warns}-эскертүү!** Урматтуу [${name}](tg://user?id=${userId}), тайпанын эрежелерин бузбаңыз.\nСебеби: ${reason}`, { parse_mode: "Markdown" });
@@ -115,7 +115,7 @@ async function handleWarn(ctx: Context, userId: number, chatId: number, name: st
       await ctx.reply(`👢 **Лимит толду!** [${name}](tg://user?id=${userId}) тайпадан чыгарылды.`, { parse_mode: "Markdown" });
     } else {
       await muteUser(ctx.api, chatId, userId, muteMinutes * 60);
-      await logAction(ctx.api, chatId, userId, name, "Мут", `Эскертүүлөрдүн чегине жетти (${muteMinutes} мүнөт)`, adminName);
+      await logAction(ctx.api, chatId, userId, name, "Мут", `Эскертүүлөрдүн чегине жетти, мөөнөтү: ${muteMinutes} мүнөт`, adminName);
       await ctx.reply(`🔇 **Лимит толду!** [${name}](tg://user?id=${userId}) ${muteMinutes} мүнөткө жазуу укугунан ажыратылды.`, { parse_mode: "Markdown" });
     }
     await db.del(warnKey);
@@ -198,19 +198,19 @@ export async function messageHandler(ctx: Context, next: NextFunction): Promise<
       } else if (action === "mute") {
         const dur = config.muteDurationMinutes || 120;
         await muteUser(ctx.api, chatId, userId, dur * 60);
-        await logAction(ctx.api, chatId, userId, name, "Мут", `${reason} (${dur} мүнөт)`, "Система (Бот)");
-        await ctx.reply(`🔇 [${name}](tg://user?id=${userId}) ${reason} үчүн жазуу укугунан ажыратылды (${dur} мүнөт).`, { parse_mode: "Markdown" });
+        await logAction(ctx.api, chatId, userId, name, "Мут", `${reason}, мөөнөтү: ${dur} мүнөт`, "Система");
+        await ctx.reply(`🔇 [${name}](tg://user?id=${userId}) ${reason} үчүн жазуу укугунан ажыратылды. Мөөнөтү: ${dur} мүнөт.`, { parse_mode: "Markdown" });
       } else if (action === "kick") {
         await ctx.api.banChatMember(chatId, userId).catch(() => {});
         await ctx.api.unbanChatMember(chatId, userId).catch(() => {});
-        await logAction(ctx.api, chatId, userId, name, "Кик", reason, "Система (Бот)");
+        await logAction(ctx.api, chatId, userId, name, "Кик", reason, "Система");
         await ctx.reply(`👢 [${name}](tg://user?id=${userId}) ${reason} үчүн чыгарылды.`, { parse_mode: "Markdown" });
       } else if (action === "ban") {
         await banUser(ctx.api, chatId, userId);
-        await logAction(ctx.api, chatId, userId, name, "Бан", reason, "Система (Бот)");
+        await logAction(ctx.api, chatId, userId, name, "Бан", reason, "Система");
         await ctx.reply(`🚫 [${name}](tg://user?id=${userId}) ${reason} үчүн бөгөттөлдү.`, { parse_mode: "Markdown" });
       } else {
-        await logAction(ctx.api, chatId, userId, name, "Өчүрүү", reason, "Система (Бот)");
+        await logAction(ctx.api, chatId, userId, name, "Өчүрүү", reason, "Система");
       }
     } catch (e) {
       logger.error("Error executing violation action:", e);
@@ -438,6 +438,14 @@ export async function messageHandler(ctx: Context, next: NextFunction): Promise<
         return;
       }
 
+      if (targetUserId && ["ban", "mute", "kick", "warn", "demote"].includes(action)) {
+        const isTargetAdmin = await isUserAdmin(ctx, targetUserId);
+        if (isTargetAdmin) {
+          await ctx.reply("❌ Администраторлорго карата чектөөлөрдү колдонууга болбойт.");
+          return;
+        }
+      }
+
       // Если мы нашли targetUser по аргументу в тексте, уберем его имя/ID из причины
       let reason = parsedReason;
       const targetMsg = ctx.message.reply_to_message;
@@ -447,25 +455,25 @@ export async function messageHandler(ctx: Context, next: NextFunction): Promise<
           reason = args.slice(1).join(" ");
         }
       }
-      reason = reason || "Башкаруучунун буйругу (Custom Command)";
+      reason = reason || "Башкаруучунун буйругу";
 
       let replyMsgText = "";
 
       if (action === "ban" && targetUserId) {
         await banUser(ctx.api, chatId, targetUserId, durationSeconds);
         await logAction(ctx.api, chatId, targetUserId, targetName, "Бан", reason, ctx.from.first_name);
-        const durationText = durationSeconds > 0 ? ` (${Math.round(durationSeconds/60)} мүнөткө)` : "";
-        replyMsgText = customReply || `🚷 [${targetName}](tg://user?id=${targetUserId}) бөгөттөлдү (Бан)${durationText}.\nСебеби: ${reason}`;
+        const durationText = durationSeconds > 0 ? ` ${Math.round(durationSeconds/60)} мүнөткө` : "";
+        replyMsgText = customReply || `🚷 [${targetName}](tg://user?id=${targetUserId}) бөгөттөлдү${durationText}.\nСебеби: ${reason}`;
       } else if (action === "mute" && targetUserId) {
         const finalDuration = durationSeconds > 0 ? durationSeconds : (matchedCmd.muteDuration || config.muteDurationMinutes || 120) * 60;
         await muteUser(ctx.api, chatId, targetUserId, finalDuration);
         await logAction(ctx.api, chatId, targetUserId, targetName, "Мут", `${reason} (${Math.round(finalDuration/60)} мүнөт)`, ctx.from.first_name);
-        replyMsgText = customReply || `🔇 [${targetName}](tg://user?id=${targetUserId}) жазуу укугунан ажыратылды (Мут: ${Math.round(finalDuration/60)} мүнөт).\nСебеби: ${reason}`;
+        replyMsgText = customReply || `🔇 [${targetName}](tg://user?id=${targetUserId}) жазуу укугунан ажыратылды. Мүнөтү: ${Math.round(finalDuration/60)}.\nСебеби: ${reason}`;
       } else if (action === "kick" && targetUserId) {
         await ctx.api.banChatMember(chatId, targetUserId).catch(() => {});
         await ctx.api.unbanChatMember(chatId, targetUserId).catch(() => {});
         await logAction(ctx.api, chatId, targetUserId, targetName, "Кик", reason, ctx.from.first_name);
-        replyMsgText = customReply || `👢 ${targetName} чаттан чыгарылды (Кик). Себеби: ${reason}`;
+        replyMsgText = customReply || `👢 ${targetName} чаттан чыгарылды. Себеби: ${reason}`;
       } else if (action === "warn" && targetUserId) {
         const warnIncrement = matchedCmd.warnCount || 1;
         await handleWarn(ctx, targetUserId, chatId, targetName, reason, config.muteDurationMinutes, config.warnLimit, config.warnAction, ctx.from.first_name, warnIncrement);
@@ -473,7 +481,7 @@ export async function messageHandler(ctx: Context, next: NextFunction): Promise<
       } else if (action === "unban" && targetUserId) {
         await unbanUser(ctx.api, chatId, targetUserId);
         await logAction(ctx.api, chatId, targetUserId, targetName, "Разбан", reason, ctx.from.first_name);
-        replyMsgText = customReply || `✅ [${targetName}](tg://user?id=${targetUserId}) бөгөттөн чыгарылды (Разбан).`;
+        replyMsgText = customReply || `✅ [${targetName}](tg://user?id=${targetUserId}) бөгөттөн чыгарылды.`;
       } else if (action === "unmute" && targetUserId) {
         await ctx.api.restrictChatMember(chatId, targetUserId, {
           can_send_messages: true, can_send_audios: true, can_send_documents: true,
@@ -482,7 +490,7 @@ export async function messageHandler(ctx: Context, next: NextFunction): Promise<
           can_add_web_page_previews: true,
         });
         await logAction(ctx.api, chatId, targetUserId, targetName, "Анмут", reason, ctx.from.first_name);
-        replyMsgText = customReply || `🔊 [${targetName}](tg://user?id=${targetUserId}) жазуу укугу кайтарылды (Анмут).`;
+        replyMsgText = customReply || `🔊 [${targetName}](tg://user?id=${targetUserId}) жазуу укугу кайтарылды.`;
       } else if (action === "del") {
         if (targetMsg) {
           await ctx.api.deleteMessage(chatId, targetMsg.message_id).catch(() => {});
