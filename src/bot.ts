@@ -170,9 +170,9 @@ bot.command("help", helpCommand);
 
 async function sendStartMenu(ctx: any, editMessage = false) {
   const keyboard = new InlineKeyboard()
-    .url("➕ Тайпага кошуу (Добавить в группу)", `https://t.me/${ctx.me.username}?startgroup=true`).row()
-    .text("📖 Буйруктар (Команды)", "help:main").row()
-    .url("🆘 Тех. Колдоо (Поддержка)", "https://t.me/noneaibek");
+    .url("➕ Тайпага кошуу", `https://t.me/${ctx.me.username}?startgroup=true`).row()
+    .text("📖 Буйруктар", "help:main").row()
+    .url("🆘 Тех. Колдоо", "https://t.me/noneaibek");
 
   const text = `👋 Салам, <b>${ctx.from?.first_name || 'досум'}</b>!\n\n` +
     `🛡 <b>Коопсузбек</b> — тайпаңызды коргоо жана башкаруу үчүн түзүлгөн эң күчтүү, заманбап кыргызча модератор-бот.\n\n` +
@@ -210,7 +210,7 @@ bot.command("start", async (ctx) => {
             logger.warn("Не удалось удалить сообщения /settings", { error: e as any });
           }
         } else {
-          await ctx.reply("Кечиресиз, Web-Панельди ачуу үчүн сиз тайпанын ээси (creator) же толук укуктуу старший админ болушуңуз керек!");
+          await ctx.reply("Кечиресиз, веб-панелди ачуу үчүн сиз тайпанын ээси же башкы администратору болушуңуз керек!");
         }
         return;
       }

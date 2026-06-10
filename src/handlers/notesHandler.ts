@@ -76,7 +76,7 @@ export async function saveNoteCommand(ctx: Context) {
   }
 
   await db.hset(`chat:${ctx.chat.id}:notes`, name, text);
-  await ctx.reply(`✅ **${name}** белгиси (заметка) ийгиликтүү сакталды!\nАлуу үчүн: \`#${name}\` же \`/get ${name}\``, { parse_mode: "Markdown" });
+  await ctx.reply(`✅ **${name}** белгиси ийгиликтүү сакталды!\nАлуу үчүн: \`#${name}\` же \`/get ${name}\``, { parse_mode: "Markdown" });
 }
 
 // /get [name] or #name
@@ -144,7 +144,7 @@ export async function notesListCommand(ctx: Context) {
   
   const notes = await db.hgetall(`chat:${ctx.chat.id}:notes`);
   if (!notes || Object.keys(notes).length === 0) {
-    await ctx.reply("Тайпада белгилер (заметка) жок.");
+    await ctx.reply("Тайпада белгилер жок.");
     return;
   }
 

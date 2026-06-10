@@ -136,22 +136,22 @@ export async function joinHandler(ctx: Context, next: NextFunction): Promise<voi
         });
 
         if (mode === "button") {
-          keyboard = new InlineKeyboard().text("✅ Мен адаммын / Я человек", `cpt:${member.id}:1`);
+          keyboard = new InlineKeyboard().text("✅ Мен адаммын", `cpt:${member.id}:1`);
           captchaText = `👋 Кош келдиңиз, [${member.first_name}](tg://user?id=${member.id})!\n` +
             `Сураныч, төмөнкү баскычты басып, адам экениңизди далилдеңиз:`;
         } else if (mode === "button_timer") {
-          keyboard = new InlineKeyboard().text("⏳ Текшерүү / Проверить", `cpt:${member.id}:timer:${Date.now()}`);
+          keyboard = new InlineKeyboard().text("⏳ Текшерүү", `cpt:${member.id}:timer:${Date.now()}`);
           captchaText = `👋 Кош келдиңиз, [${member.first_name}](tg://user?id=${member.id})!\n` +
             `Бул тайпада *ыкчам басуудан коргоо* (Timer) иштеп жатат.\n` +
             `Сураныч, **5 секунд күтө туруңуз**, андан кийин төмөнкү баскычты басыңыз:`;
         } else if (mode === "emoji") {
           const emojiOptions = [
-            { emoji: "🍎", name: "алма / яблоко" },
-            { emoji: "🍌", name: "банан / банан" },
-            { emoji: "🍒", name: "чие / вишня" },
-            { emoji: "🍇", name: "жүзүм / виноград" },
-            { emoji: "🍓", name: "кулпунай / клубника" },
-            { emoji: "🍍", name: "ананас / ананас" }
+            { emoji: "🍎", name: "алма" },
+            { emoji: "🍌", name: "банан" },
+            { emoji: "🍒", name: "чие" },
+            { emoji: "🍇", name: "жүзүм" },
+            { emoji: "🍓", name: "кулпунай" },
+            { emoji: "🍍", name: "ананас" }
           ].sort(() => Math.random() - 0.5);
 
           const target = emojiOptions[0];
@@ -321,7 +321,7 @@ async function sendWelcomeFlow(ctx: Context, member: { id: number; first_name: s
 
       let keyboard = new InlineKeyboard();
       if (needsRules) {
-        keyboard = new InlineKeyboard().text("📖 Эрежелерди кабыл алдым / Согласен", `rules_agree:${member.id}`);
+        keyboard = new InlineKeyboard().text("📖 Эрежелерди кабыл алдым", `rules_agree:${member.id}`);
       }
 
       // Удаление предыдущего приветствия (Clean Welcome)
