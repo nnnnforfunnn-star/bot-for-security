@@ -1,5 +1,6 @@
 import { Api, Bot, Context } from "grammy";
 import { logger } from "./logger.js";
+import { db } from "./db.js";
 
 // Вспомогательная функция задержки
 export const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -79,7 +80,12 @@ export async function isUserSeniorAdminInChat(api: Api, chatId: string | number,
 
     if (member.status === "administrator") {
       // @ts-ignore
-      return member.can_change_info && member.can_restrict_members && member.can_delete_messages;
+      const isCoowner = member.can_change_info && member.can_restrict_members && member.can_delete_messages;
+      if (isCoowner) return true;
+
+      // Check explicit grant of access
+      const hasAccess = await db.get<string>(`chat:${chatId}:user:${userId}:web_access`);
+      if (hasAccess === "true") return true;
     }
 
     return false;

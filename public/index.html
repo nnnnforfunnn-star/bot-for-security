@@ -3411,6 +3411,7 @@
               <th><i class="fa-solid fa-triangle-exclamation" style="margin-right: 4px; color: var(--accent);"></i> Варн</th>
               <th><i class="fa-solid fa-user-minus" style="margin-right: 4px; color: var(--danger);"></i> Кик</th>
               <th><i class="fa-solid fa-chart-bar" style="margin-right: 4px; color: var(--text-main);"></i> Жалпы</th>
+              <th><i class="fa-solid fa-laptop" style="margin-right: 4px; color: var(--success);"></i> Веб-панель</th>
               <th>Аракеттер</th>
             </tr>
           </thead>
@@ -3429,6 +3430,16 @@
                 }).join('');
               } else {
                 recentActionsHtml = `<div style="font-size:11px; color:var(--text-muted); font-style:italic;">Аракеттер журналында маалымат жок.</div>`;
+              }
+
+              let webPanelHtml = "";
+              if (u.adminRole === "owner" || u.adminRole === "coowner") {
+                webPanelHtml = `<span class="badge" style="background: rgba(16, 185, 129, 0.15); color: var(--success); font-size:11px;">Жеткиликтүү (ээси/жардамчы)</span>`;
+              } else if (u.webAccess === true) {
+                webPanelHtml = `<button class="btn btn-sm btn-danger" style="background: var(--danger); font-size: 11px; padding: 2px 8px;" onclick="promptRevokeWebAccess(${u.id}, '${u.name.replace(/'/g, "\\'")}')">Алып салуу</button>`;
+              } else {
+                const roleType = u.adminRole || 'junior';
+                webPanelHtml = `<button class="btn btn-sm" style="font-size: 11px; padding: 2px 8px;" onclick="promptGrantWebAccess(${u.id}, '${roleType}', '${u.name.replace(/'/g, "\\'")}')">Уруксат берүү</button>`;
               }
 
               return `
@@ -3450,6 +3461,7 @@
                 <td><span style="${item.warns > 0 ? 'color:var(--warn); font-weight:bold;' : 'color:var(--text-muted);'}">${item.warns}</span></td>
                 <td><span style="${item.kicks > 0 ? 'color:var(--danger); font-weight:bold;' : 'color:var(--text-muted);'}">${item.kicks}</span></td>
                 <td><span style="color:var(--accent); font-weight:bold; font-size:14px;">${item.total}</span></td>
+                <td>${webPanelHtml}</td>
                 <td>
                   <div style="position:relative; display:inline-block;">
                     <button class="btn btn-sm" onclick="toggleActionsPopup(this, event)" style="padding: 2px 8px; font-size:11px;">Көрүү</button>
@@ -3468,6 +3480,33 @@
       `;
 
       body.innerHTML = tableHtml;
+    }
+
+    function promptGrantWebAccess(userId, role, name) {
+      if (role === 'junior') {
+        tg.showAlert("Кенже администраторлорго веб-панелге кирүүгө уруксат берилбейт! Адегенде бул колдонуучуну Башкы администратор кылып көтөрүңүз.");
+        return;
+      }
+      
+      tg.showConfirm(
+        `Сиз бул чечимге толук ишеничтүүсүзбү? ${name} администраторуна веб-панелге кирүүгө уруксат бергенден кийин, ал тайпаны толук башкара алат (бардык орнотууларды өзгөртө алат).`,
+        async (confirmed) => {
+          if (confirmed) {
+            await doAction('grant_web_access', userId);
+          }
+        }
+      );
+    }
+
+    function promptRevokeWebAccess(userId, name) {
+      tg.showConfirm(
+        `Бул администратордон (${name}) веб-панелге кирүү уруксатын алып салууну каалайсызбы?`,
+        async (confirmed) => {
+          if (confirmed) {
+            await doAction('revoke_web_access', userId);
+          }
+        }
+      );
     }
 
     function toggleMemberCard(elem) {

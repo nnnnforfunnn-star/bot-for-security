@@ -99,6 +99,7 @@ export default async function handler(req: any, res: any) {
         
         let adminRole: string | null = null;
         let adminCustomTitle = "";
+        let webAccess = false;
         
         if (isUserAdmin) {
           const adm = adminsMap.get(numericId);
@@ -116,6 +117,12 @@ export default async function handler(req: any, res: any) {
             }
             adminCustomTitle = adm.custom_title || "";
           }
+          if (adminRole === "owner" || adminRole === "coowner") {
+            webAccess = true;
+          } else {
+            const hasWebAccess = await db.get<string>(`chat:${chatId}:user:${uid}:web_access`);
+            webAccess = hasWebAccess === "true";
+          }
         }
         
         usersInfo.push({
@@ -127,7 +134,8 @@ export default async function handler(req: any, res: any) {
           title,
           isAdmin: isUserAdmin,
           adminRole,
-          adminCustomTitle
+          adminCustomTitle,
+          webAccess
         });
       }
 
@@ -152,6 +160,14 @@ export default async function handler(req: any, res: any) {
             }
           }
 
+          let webAccess = false;
+          if (adminRole === "owner" || adminRole === "coowner") {
+            webAccess = true;
+          } else {
+            const hasWebAccess = await db.get<string>(`chat:${chatId}:user:${uid}:web_access`);
+            webAccess = hasWebAccess === "true";
+          }
+
           usersInfo.push({
             id: adm.user.id,
             name: info?.name || [adm.user.first_name, adm.user.last_name].filter(Boolean).join(" ") || "Администратор",
@@ -161,7 +177,8 @@ export default async function handler(req: any, res: any) {
             title,
             isAdmin: true,
             adminRole,
-            adminCustomTitle: adm.custom_title || ""
+            adminCustomTitle: adm.custom_title || "",
+            webAccess
           });
         }
       }

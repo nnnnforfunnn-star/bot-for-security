@@ -54,7 +54,7 @@ export default async function handler(req: any, res: any) {
 
     const { action, targetUserId, reason } = req.body;
 
-    const requiresTarget = ["ban", "mute", "unmute", "kick", "unban", "promote", "demote", "resetwarns", "warn", "setkarma", "setusertitle"];
+    const requiresTarget = ["ban", "mute", "unmute", "kick", "unban", "promote", "demote", "resetwarns", "warn", "setkarma", "setusertitle", "grant_web_access", "revoke_web_access"];
     if (!action || (requiresTarget.includes(action) && !targetUserId)) {
       return res.status(400).json({ error: "Bad Request: missing action or targetUserId" });
     }
@@ -199,6 +199,60 @@ export default async function handler(req: any, res: any) {
         await db.set(`chat:${chatId}:user:${targetUserId}:title`, titleText);
         await logAction(bot.api, chatId, targetUserId, targetName, "Наам", `Жаңы наам берилди: ${titleText || "өчүрүлдү"}`, user.first_name || "Админ");
         break;
+      case "grant_web_access": {
+        const requester = await bot.api.getChatMember(chatId, user.id);
+        const isOwnerOrCoowner = requester.status === "creator" || 
+          (requester.status === "administrator" && requester.can_change_info && requester.can_restrict_members && requester.can_delete_messages);
+        
+        if (!isOwnerOrCoowner) {
+          return res.status(403).json({ error: "Кечиресиз, бул аракетти аткарууга сизде укук жок! Ал чаттын ээсине же совладелецине гана жеткиликтүү." });
+        }
+
+        const targetMember = await bot.api.getChatMember(chatId, targetUserId);
+        const isJunior = targetMember.status !== "creator" && 
+          (targetMember.status !== "administrator" || !targetMember.can_restrict_members);
+
+        if (isJunior) {
+          return res.status(400).json({ error: "Кенже администраторлорго веб-панелге кирүүгө уруксат берилбейт! Адегенде бул колдонуучуну Башкы администратор кылып көтөрүңүз." });
+        }
+
+        await db.set(`chat:${chatId}:user:${targetUserId}:web_access`, "true");
+        await logAction(bot.api, chatId, targetUserId, targetName, "Веб-панель", "Веб-панелге кирүүгө уруксат берилди", user.first_name || "Админ");
+        
+        const notificationText = `🔔 Урматтуу [${targetName}](tg://user?id=${targetUserId}), сизге веб-панелге кирүүгө уруксат берилди!`;
+        const keyboard = {
+          inline_keyboard: [
+            [
+              {
+                text: "⚙️ Башкаруу панели",
+                callback_data: `web_grant_goto:${chatId}:${targetUserId}`
+              }
+            ]
+          ]
+        };
+        await bot.api.sendMessage(chatId, notificationText, {
+          parse_mode: "Markdown",
+          reply_markup: keyboard
+        }).catch(() => {});
+        break;
+      }
+      case "revoke_web_access": {
+        const requester = await bot.api.getChatMember(chatId, user.id);
+        const isOwnerOrCoowner = requester.status === "creator" || 
+          (requester.status === "administrator" && requester.can_change_info && requester.can_restrict_members && requester.can_delete_messages);
+        
+        if (!isOwnerOrCoowner) {
+          return res.status(403).json({ error: "Кечиресиз, бул аракетти аткарууга сизде укук жок! Ал чаттын ээсине же совладелецине гана жеткиликтүү." });
+        }
+
+        await db.del(`chat:${chatId}:user:${targetUserId}:web_access`);
+        await logAction(bot.api, chatId, targetUserId, targetName, "Веб-панель", "Веб-панелге кирүү уруксаты алып салынды", user.first_name || "Админ");
+        
+        await bot.api.sendMessage(chatId, `🔕 Урматтуу [${targetName}](tg://user?id=${targetUserId}), сиздин веб-панелге кирүү уруксатыңыз алып салынды.`, {
+          parse_mode: "Markdown"
+        }).catch(() => {});
+        break;
+      }
       default:
         return res.status(400).json({ error: "Unknown action" });
     }

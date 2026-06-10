@@ -235,9 +235,35 @@ bot.command("start", async (ctx) => {
 });
 
 bot.on("callback_query:data", async (ctx, next) => {
-  if (ctx.callbackQuery.data === "start:main") {
+  const data = ctx.callbackQuery.data;
+  if (data === "start:main") {
     await sendStartMenu(ctx, true);
     await ctx.answerCallbackQuery();
+  } else if (data && data.startsWith("web_grant_goto:")) {
+    const parts = data.split(":");
+    const chatId = parseInt(parts[1], 10);
+    const targetUserId = parseInt(parts[2], 10);
+
+    if (ctx.from.id !== targetUserId) {
+      await ctx.answerCallbackQuery({
+        text: "Кечиресиз, сизге бул жерден кирүүгө уруксат жок!",
+        show_alert: true
+      });
+      return;
+    }
+
+    // Set settings_owner in db so deep linking works
+    await db.set(`chat:${chatId}:settings_owner`, targetUserId, 300);
+
+    const botInfo = ctx.me;
+    const deepLink = `https://t.me/${botInfo.username}?start=settings_${chatId}_${targetUserId}`;
+    
+    await ctx.answerCallbackQuery({
+      url: deepLink
+    });
+
+    // Delete the notification message in the chat
+    await ctx.deleteMessage().catch(() => {});
   } else {
     await next();
   }
