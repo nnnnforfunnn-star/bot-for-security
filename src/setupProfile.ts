@@ -20,15 +20,7 @@ async function setupProfile() {
 
   await bot.api.setMyCommands([
     { command: "start", description: "Ботту ишке киргизүү" },
-    { command: "help", description: "Буйруктар жана жардам" },
-    { command: "settings", description: "Web-Панель (Орнотуулар)" },
-    { command: "ban", description: "Колдонуучуну бөгөттөө" },
-    { command: "mute", description: "Жазуу укугунан ажыратуу" },
-    { command: "warn", description: "Эскертүү берүү" },
-    { command: "kick", description: "Тайпадан чыгаруу" },
-    { command: "rules", description: "Тайпанын эрежелери" },
-    { command: "locks", description: "Бөгөттөлгөн нерселер" },
-    { command: "staff", description: "Админдер тизмеси" }
+    { command: "settings", description: "Web-Панель (Орнотуулар)" }
   ]);
 
   console.log("Profile successfully updated!");
