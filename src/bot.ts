@@ -7,7 +7,6 @@ import { db } from "./utils/db.js";
 import { joinHandler, captchaCallbackHandler, rulesAgreementCallbackHandler, goodbyeHandler } from "./handlers/joinHandler.js";
 import { messageHandler } from "./handlers/messageHandler.js";
 import { adminPanelCommand, adminPanelCallback, sendAdminPanel } from "./handlers/adminPanel.js";
-import { bataCommand } from "./handlers/funHandler.js";
 import { filterCommand, stopFilterCommand, filtersListCommand } from "./handlers/filterHandler.js";
 import { helpCommand, helpCallback } from "./handlers/helpHandler.js";
 import { kickCommand, pinCommand, unpinCommand, warnCommand, unwarnCommand, warnsCommand, idCommand, kickmeCommand, muteallCommand, unmuteallCommand, zombiesCommand } from "./handlers/modCommands.js";
@@ -146,7 +145,6 @@ bot.command("me", meCommand);
 bot.command("settings", adminPanelCommand);
 
 // 6. Fun & Filters
-bot.command("bata", bataCommand);
 bot.command("filter", filterCommand);
 bot.command("stop", stopFilterCommand);
 bot.command("filters", filtersListCommand);

@@ -9,7 +9,6 @@ import { logAction } from "../utils/actionLogger.js";
 import { zombiesCommand, muteallCommand, unmuteallCommand, pinCommand, unpinCommand, kickmeCommand, idCommand, warnsCommand, unwarnCommand } from "./modCommands.js";
 import { rulesCommand, meCommand, purgeCommand, reportCommand } from "./adminCommands.js";
 import { linkCommand, adminsCommand, infoCommand, slowmodeCommand, promoteCommand, demoteCommand } from "./groupCommands.js";
-import { bataCommand } from "./funHandler.js";
 import { handleMuteCommand, handleUnmuteCommand, handleBanCommand, handleUnbanCommand } from "./commandHandler.js";
 import { adminPanelCommand } from "./adminPanel.js";
 
@@ -332,9 +331,6 @@ export async function messageHandler(ctx: Context, next: NextFunction): Promise<
     "report": { handler: reportCommand, requiresAdmin: false },
     "жалоо": { handler: reportCommand, requiresAdmin: false },
     
-    "бата": { handler: bataCommand, requiresAdmin: false },
-    "bata": { handler: bataCommand, requiresAdmin: false },
-    
     "мен": { handler: meCommand, requiresAdmin: false },
     "профиль": { handler: meCommand, requiresAdmin: false },
     "профилим": { handler: meCommand, requiresAdmin: false },
@@ -382,7 +378,6 @@ export async function messageHandler(ctx: Context, next: NextFunction): Promise<
       if (matchedBuiltin.handler === rulesCommand) cmdName = "rules";
       else if (matchedBuiltin.handler === adminsCommand) cmdName = "admins";
       else if (matchedBuiltin.handler === reportCommand) cmdName = "report";
-      else if (matchedBuiltin.handler === bataCommand) cmdName = "bata";
       else if (matchedBuiltin.handler === meCommand) cmdName = "me";
       else if (matchedBuiltin.handler === idCommand) cmdName = "id";
       else if (matchedBuiltin.handler === warnsCommand) cmdName = "warns";
