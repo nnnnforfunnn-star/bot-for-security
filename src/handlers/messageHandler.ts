@@ -99,14 +99,14 @@ async function handleWarn(ctx: Context, userId: number, chatId: number, name: st
     logger.error("Error setting warn expiration:", e);
   }
   
-  await logAction(ctx.api, chatId, userId, name, "Эскертүү (Warn)", `${reason} (${warns}/${warnLimit})`, adminName);
+  await logAction(ctx.api, chatId, userId, name, "Эскертүү", `${reason} (${warns}/${warnLimit})`, adminName);
 
   if (warns < warnLimit) {
     await ctx.reply(`⚠️ **${warns}-эскертүү!** Урматтуу [${name}](tg://user?id=${userId}), тайпанын эрежелерин бузбаңыз.\nСебеби: ${reason}`, { parse_mode: "Markdown" });
   } else if (warns >= warnLimit) {
     if (warnAction === "ban") {
       await banUser(ctx.api, chatId, userId);
-      await logAction(ctx.api, chatId, userId, name, "Бан", "Эскертүүлөрдүн чегине жетти (Warn Limit)", adminName);
+      await logAction(ctx.api, chatId, userId, name, "Бан", "Эскертүүлөрдүн чеги толду", adminName);
       await ctx.reply(`🚫 **Лимит толду!** [${name}](tg://user?id=${userId}) тайпадан биротоло бөгөттөлдү. Кош болуңуз!`, { parse_mode: "Markdown" });
     } else if (warnAction === "kick") {
       await ctx.api.banChatMember(chatId, userId).catch(() => {});
@@ -248,10 +248,12 @@ export async function messageHandler(ctx: Context, next: NextFunction): Promise<
             let replyText = replyContent;
             let keyboard: InlineKeyboard | undefined = undefined;
 
+            let photoUrl: string | undefined = undefined;
             try {
               if (replyContent.startsWith("{") && replyContent.endsWith("}")) {
                 const parsed = JSON.parse(replyContent);
                 replyText = parsed.text || "";
+                photoUrl = parsed.photo;
                 
                 const kb = new InlineKeyboard();
                 let hasButtons = false;
@@ -277,6 +279,19 @@ export async function messageHandler(ctx: Context, next: NextFunction): Promise<
             }
 
             const formattedText = formatMessageToHtml(replyText);
+
+            if (photoUrl) {
+              try {
+                await ctx.replyWithPhoto(photoUrl, {
+                  caption: formattedText,
+                  reply_markup: keyboard,
+                  parse_mode: "HTML"
+                });
+                break;
+              } catch (e) {
+                // Fallback
+              }
+            }
 
             await ctx.reply(formattedText, {
               reply_markup: keyboard,
@@ -845,25 +860,5 @@ export async function messageHandler(ctx: Context, next: NextFunction): Promise<
       }
     } catch (e) {}
   }
-
-  // 4. Карма (Рахмат / + / -)
-  if (config.karmaEnabled && ctx.message.reply_to_message && text) {
-    const targetUser = ctx.message.reply_to_message.from;
-    if (targetUser && !targetUser.is_bot && targetUser.id !== userId) {
-      const isThanking = KARMA_WORDS.some(word => new RegExp(`(?<![a-zA-Zа-яА-ЯөүңӨҮҢёЁ0-9])${word}(?![a-zA-Zа-яА-ЯөүңӨҮҢёЁ0-9])`, 'i').test(lowerText)) || lowerText === "+";
-      const isMinus = lowerText === "-";
-      
-      if (isThanking) {
-        const urmat = await db.zincrby(`chat:${chatId}:urmat_leaderboard`, 1, targetUser.id);
-        await db.set(`chat:${chatId}:user:${targetUser.id}:urmat`, urmat);
-        await ctx.reply(`🌟 [${name}](tg://user?id=${userId}), [${targetUser.first_name}](tg://user?id=${targetUser.id}) аттуу колдонуучунун рейтингин көтөрдү!\nАнын «Сый-Урмат» деңгээли: **${urmat}**`, { parse_mode: "Markdown" });
-      } else if (isMinus) {
-        const urmat = await db.zincrby(`chat:${chatId}:urmat_leaderboard`, -1, targetUser.id);
-        await db.set(`chat:${chatId}:user:${targetUser.id}:urmat`, urmat);
-        await ctx.reply(`📉 [${name}](tg://user?id=${userId}), [${targetUser.first_name}](tg://user?id=${targetUser.id}) аттуу колдонуучунун рейтингин түшүрдү.\nЖаңы деңгээли: **${urmat}**`, { parse_mode: "Markdown" });
-      }
-    }
-  }
-
   await next();
 }

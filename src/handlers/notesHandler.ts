@@ -6,11 +6,13 @@ import { isUserAdminInChat, formatMessageToHtml } from "../utils/telegram.js";
 async function replyWithStructuredContent(ctx: Context, content: string) {
   let text = content;
   let keyboard: InlineKeyboard | undefined = undefined;
+  let photoUrl: string | undefined = undefined;
 
   try {
     if (content.startsWith("{") && content.endsWith("}")) {
       const parsed = JSON.parse(content);
       text = parsed.text || "";
+      photoUrl = parsed.photo;
       
       const kb = new InlineKeyboard();
       let hasButtons = false;
@@ -36,6 +38,19 @@ async function replyWithStructuredContent(ctx: Context, content: string) {
   }
 
   const formattedText = formatMessageToHtml(text);
+
+  if (photoUrl) {
+    try {
+      await ctx.replyWithPhoto(photoUrl, {
+        caption: formattedText,
+        reply_markup: keyboard,
+        parse_mode: "HTML"
+      });
+      return;
+    } catch (e) {
+      // Fallback
+    }
+  }
 
   await ctx.reply(formattedText, {
     reply_markup: keyboard,

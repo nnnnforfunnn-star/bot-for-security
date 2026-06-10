@@ -1852,6 +1852,10 @@
                   <textarea class="form-textarea" id="fl_reply" rows="3" placeholder="Мисалы: Саламатсызбы! Кандай жардам керек?"></textarea>
                 </div>
                 <div class="form-group" style="margin-top: 10px;">
+                  <label class="form-label">Сүрөт шилтемеси (URL) — кааласаңыз</label>
+                  <input type="text" class="form-input" id="fl_photo" placeholder="Мисалы: https://example.com/image.jpg">
+                </div>
+                <div class="form-group" style="margin-top: 10px;">
                   <label class="form-label">Шилтеме баскычтары (Ар бир сапта: Баскычтын Аты | Ссылка)</label>
                   <textarea class="form-textarea" id="fl_buttons" rows="2" placeholder="Мисалы:&#10;Каналга өтүү | https://t.me/kanal&#10;Чатка өтүү | https://t.me/chat"></textarea>
                 </div>
@@ -1898,6 +1902,10 @@
                 <div class="form-group">
                   <label class="form-label">Белгинин тексти</label>
                   <textarea class="form-textarea" id="nt_text" rows="3" placeholder="Биздин негизги эрежелер..."></textarea>
+                </div>
+                <div class="form-group" style="margin-top: 10px;">
+                  <label class="form-label">Сүрөт шилтемеси (URL) — кааласаңыз</label>
+                  <input type="text" class="form-input" id="nt_photo" placeholder="Мисалы: https://example.com/image.jpg">
                 </div>
                 <div class="form-group" style="margin-top: 10px;">
                   <label class="form-label">Шилтеме баскычтары (Ар бир сапта: Баскычтын Аты | Ссылка)</label>
@@ -2769,6 +2777,7 @@
       const w = document.getElementById('fl_word').value.trim().toLowerCase();
       const r = document.getElementById('fl_reply').value.trim();
       const btnTextVal = document.getElementById('fl_buttons').value.trim();
+      const photoUrl = document.getElementById('fl_photo') ? document.getElementById('fl_photo').value.trim() : '';
 
       if (!w || !r) { showToast("Ачкыч сөз жана боттун жообу толтурулушу керек!", 'error'); return; }
 
@@ -2788,14 +2797,20 @@
       }
 
       let valueStr = r;
-      if (buttons.length > 0) {
-        valueStr = JSON.stringify({ text: r, buttons: buttons });
+      if (buttons.length > 0 || photoUrl) {
+        const payload = { text: r };
+        if (buttons.length > 0) payload.buttons = buttons;
+        if (photoUrl) payload.photo = photoUrl;
+        valueStr = JSON.stringify(payload);
       }
 
       appData.filters[w] = valueStr;
       document.getElementById('fl_word').value = '';
       document.getElementById('fl_reply').value = '';
       document.getElementById('fl_buttons').value = '';
+      if (document.getElementById('fl_photo')) {
+        document.getElementById('fl_photo').value = '';
+      }
       renderLists();
       showToast("Автожооп сакталды, Сактоо баскычын басыңыз.");
     }
@@ -2804,6 +2819,7 @@
       const n = document.getElementById('nt_name').value.trim().toLowerCase();
       const t = document.getElementById('nt_text').value.trim();
       const btnTextVal = document.getElementById('nt_buttons').value.trim();
+      const photoUrl = document.getElementById('nt_photo') ? document.getElementById('nt_photo').value.trim() : '';
 
       if (!n || !t) { showToast("Белгинин аталышы жана тексти толтурулушу керек!", 'error'); return; }
 
@@ -2823,14 +2839,20 @@
       }
 
       let valueStr = t;
-      if (buttons.length > 0) {
-        valueStr = JSON.stringify({ text: t, buttons: buttons });
+      if (buttons.length > 0 || photoUrl) {
+        const payload = { text: t };
+        if (buttons.length > 0) payload.buttons = buttons;
+        if (photoUrl) payload.photo = photoUrl;
+        valueStr = JSON.stringify(payload);
       }
 
       appData.notes[n] = valueStr;
       document.getElementById('nt_name').value = '';
       document.getElementById('nt_text').value = '';
       document.getElementById('nt_buttons').value = '';
+      if (document.getElementById('nt_photo')) {
+        document.getElementById('nt_photo').value = '';
+      }
       renderLists();
       showToast("Белги сакталды, Сактоо баскычын басыңыз.");
     }
