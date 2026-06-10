@@ -50,18 +50,23 @@ bot.use(rateLimiter);
 
 // Middleware для проверки отключенных команд в группе
 bot.use(async (ctx, next) => {
-  if (ctx.chat && ctx.chat.type !== "private" && ctx.message?.text?.startsWith("/")) {
-    const fullCmd = ctx.message.text.split(" ")[0].substring(1);
-    const cmdName = fullCmd.split("@")[0].toLowerCase();
+  if (ctx.chat && ctx.chat.type !== "private") {
+    // Сохраняем ID чата в глобальный список для прямого управления
+    await db.sadd("bot:chats", ctx.chat.id).catch(() => {});
 
-    try {
-      const config = await getGroupConfig(ctx.chat.id);
-      if (config.disabledCommands && config.disabledCommands[cmdName] === true) {
-        // Команда отключена администратором чата через веб-панель
-        return; 
+    if (ctx.message?.text?.startsWith("/")) {
+      const fullCmd = ctx.message.text.split(" ")[0].substring(1);
+      const cmdName = fullCmd.split("@")[0].toLowerCase();
+
+      try {
+        const config = await getGroupConfig(ctx.chat.id);
+        if (config.disabledCommands && config.disabledCommands[cmdName] === true) {
+          // Команда отключена администратором чата через веб-панель
+          return; 
+        }
+      } catch (e) {
+        logger.error("Error checking disabled commands in middleware:", e);
       }
-    } catch (e) {
-      logger.error("Error checking disabled commands in middleware:", e);
     }
   }
   await next();
@@ -189,12 +194,25 @@ bot.command("start", async (ctx) => {
   if (ctx.chat.type === "private") {
     const payload = ctx.match;
     if (payload && payload.startsWith("settings_")) {
-      const chatIdStr = payload.replace("settings_", "");
-      const chatId = parseInt(chatIdStr, 10);
+      const parts = payload.split("_");
+      const chatId = parseInt(parts[1], 10);
+      const ownerId = parseInt(parts[2], 10);
+      
       if (!isNaN(chatId) && ctx.from) {
+        // Проверяем, совпадает ли тот, кто перешел, с тем, кто вызвал команду settings в чате
+        const settingsOwner = await db.get<number>(`chat:${chatId}:settings_owner`);
+        
+        if (ctx.from.id !== ownerId || (settingsOwner && settingsOwner !== ctx.from.id)) {
+          await ctx.reply("Кечиресиз, бул шилтеме сиз үчүн эмес же анын мөөнөтү бүтүп калган.");
+          return;
+        }
+
         const isAdmin = await isUserSeniorAdminInChat(ctx.api, chatId, ctx.from.id);
         if (isAdmin) {
           await sendAdminPanel(ctx, chatId, false);
+
+          // Сразу удаляем сохраненного владельца команды, чтобы ссылка стала недействительной
+          await db.del(`chat:${chatId}:settings_owner`);
 
           // Автоматически удаляем сообщения команды /settings в чате группы
           try {
