@@ -43,6 +43,8 @@ export default async function handler(req: any, res: any) {
       return res.status(400).json({ error: "Bad Request: Missing or invalid chatId" });
     }
 
+    await db.sadd(`user:${user.id}:chats`, chatId.toString());
+
     if (!isBotInitialized) {
       await bot.init();
       isBotInitialized = true;

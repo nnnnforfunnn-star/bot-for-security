@@ -175,13 +175,51 @@ export default async function handler(req: any, res: any) {
         }
       } catch (e) {}
 
+      // 5. User's other chats
+      await db.sadd(`user:${user.id}:chats`, chatId.toString());
+      await db.set(`chat:${chatId}:title`, groupTitle);
+      
+      const userChatsRaw = await db.smembers(`user:${user.id}:chats`) || [];
+      const myChats = [];
+      for (const cidStr of userChatsRaw) {
+        const cid = parseInt(cidStr, 10);
+        if (isNaN(cid)) continue;
+        
+        if (cid === chatId) {
+          myChats.push({ id: cid, title: groupTitle });
+          continue;
+        }
+        
+        try {
+          const isUserAdminInThisChat = await isUserSeniorAdminInChat(bot.api, cid, user.id);
+          if (isUserAdminInThisChat) {
+            let title = await db.get<string>(`chat:${cid}:title`);
+            if (!title) {
+              const chatDetails = await bot.api.getChat(cid);
+              if (chatDetails && ("title" in chatDetails)) {
+                title = chatDetails.title as string;
+                await db.set(`chat:${cid}:title`, title);
+              } else {
+                title = `Тайпа (${cid})`;
+              }
+            }
+            myChats.push({ id: cid, title });
+          } else {
+            await db.srem(`user:${user.id}:chats`, cidStr);
+          }
+        } catch (e) {
+          await db.srem(`user:${user.id}:chats`, cidStr);
+        }
+      }
+
       return res.status(200).json({ 
         logs, 
         stats: { msgCount, bansCount, mutesCount, warnsCount, msgsToday, history },
         users: usersInfo,
         topUsersAll: topUsersAllTimeRaw,
         topUsersToday: topUsersTodayRaw,
-        groupTitle
+        groupTitle,
+        myChats
       });
     }
 

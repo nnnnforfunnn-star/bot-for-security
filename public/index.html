@@ -176,6 +176,68 @@
       color: var(--text-muted);
     }
 
+    .profile-dropdown {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      background: #111827;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      margin-top: 8px;
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -4px rgba(0, 0, 0, 0.5);
+      z-index: 100;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      padding: 6px;
+      max-height: 250px;
+      overflow-y: auto;
+    }
+
+    .profile-dropdown-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 10px;
+      border-radius: 6px;
+      cursor: pointer;
+      color: var(--text-muted);
+      transition: all 0.2s;
+      font-size: 13px;
+    }
+
+    .profile-dropdown-item:hover {
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text-main);
+    }
+
+    .profile-dropdown-item.active {
+      background: rgba(var(--accent-rgb), 0.15) !important;
+      color: var(--accent) !important;
+      font-weight: 600;
+    }
+    
+    .profile-dropdown-item .avatar {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: var(--accent);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      font-weight: 600;
+    }
+
+    .profile-dropdown-item .title {
+      flex-grow: 1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
     /* Nav Items */
     .nav-items {
       flex-grow: 1;
@@ -1076,13 +1138,18 @@
           <div class="brand-logo" style="background: none; box-shadow: none; width: auto; height: auto; font-size: 20px; color: var(--accent);"><i class="fa-solid fa-shield-halved"></i></div>
           <div class="brand-title">KOOPSUZBEK</div>
         </div>
-        <div class="profile-switcher" onclick="toggleSidebarGroupMenu()">
-          <div class="profile-avatar" id="sidebar_avatar">T</div>
-          <div class="profile-info">
-            <div class="profile-user" id="sidebar_username">@user</div>
-            <div class="profile-group" id="sidebar_group_title">Жүктөлүүдө...</div>
+        <div class="profile-container" style="position: relative; margin-top: 10px;">
+          <div class="profile-switcher" id="profile_switcher" onclick="toggleSidebarGroupMenu(event)">
+            <div class="profile-avatar" id="sidebar_avatar">T</div>
+            <div class="profile-info">
+              <div class="profile-user" id="sidebar_username">@user</div>
+              <div class="profile-group" id="sidebar_group_title">Жүктөлүүдө...</div>
+            </div>
+            <div class="profile-arrow" id="profile_arrow"><i class="fa-solid fa-chevron-down" style="font-size: 10px; transition: transform 0.2s;"></i></div>
           </div>
-          <div class="profile-arrow"><i class="fa-solid fa-chevron-down" style="font-size: 10px;"></i></div>
+          <div class="profile-dropdown" id="profile_dropdown" style="display: none;">
+            <!-- Бул жерге тайпалардын тизмеси динамикалык түрдө жүктөлөт -->
+          </div>
         </div>
       </div>
 
@@ -2226,6 +2293,56 @@
       }
     }
 
+    function toggleSidebarGroupMenu(event) {
+      if (event) event.stopPropagation();
+      const dropdown = document.getElementById('profile_dropdown');
+      const arrowIcon = document.getElementById('profile_arrow').querySelector('i');
+      const isVisible = dropdown.style.display === 'flex';
+      
+      if (isVisible) {
+        dropdown.style.display = 'none';
+        arrowIcon.style.transform = 'rotate(0deg)';
+      } else {
+        dropdown.style.display = 'flex';
+        arrowIcon.style.transform = 'rotate(180deg)';
+        
+        // Auto-close on click outside
+        const closeMenu = (e) => {
+          if (!document.getElementById('profile_switcher').contains(e.target) && !dropdown.contains(e.target)) {
+            dropdown.style.display = 'none';
+            arrowIcon.style.transform = 'rotate(0deg)';
+            document.removeEventListener('click', closeMenu);
+          }
+        };
+        document.addEventListener('click', closeMenu);
+      }
+    }
+
+    function renderGroupDropdown() {
+      const dropdown = document.getElementById('profile_dropdown');
+      if (!dropdown) return;
+      
+      const chats = statsData.myChats || [];
+      dropdown.innerHTML = chats.map(c => {
+        const isActive = Number(c.id) === Number(chatId);
+        const firstLetter = (c.title || 'T').substring(0, 1).toUpperCase();
+        return `
+          <div class="profile-dropdown-item ${isActive ? 'active' : ''}" onclick="switchGroup(${c.id})">
+            <div class="avatar">${firstLetter}</div>
+            <div class="title">${c.title}</div>
+            ${isActive ? '<i class="fa-solid fa-check" style="font-size: 10px; margin-left: auto;"></i>' : ''}
+          </div>
+        `;
+      }).join('');
+    }
+
+    function switchGroup(newChatId) {
+      if (Number(newChatId) === Number(chatId)) return;
+      const params = new URLSearchParams(window.location.search);
+      params.set('chatId', newChatId);
+      window.location.search = params.toString();
+    }
+
     function toggleBlacklistFields() {
       const action = document.getElementById('bl_action').value;
       const container = document.getElementById('bl_duration_container');
@@ -2330,6 +2447,7 @@
         renderStatsAndLogs();
         renderUsersList();
         renderCommandsList();
+        renderGroupDropdown();
 
         document.getElementById('loader').style.display = 'none';
         document.getElementById('content').style.display = 'block';
