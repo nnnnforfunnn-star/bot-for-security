@@ -84,6 +84,22 @@ function isLinkWhitelisted(text: string, entities: any[], whitelist: string[]): 
 }
 
 /**
+ * Безопасное удаление сообщения с логированием ошибки и выводом предупреждения о правах.
+ */
+async function safeDeleteMessage(ctx: Context, chatId: number | string, messageId: number, silent = false): Promise<boolean> {
+  try {
+    await ctx.api.deleteMessage(chatId, messageId);
+    return true;
+  } catch (err: any) {
+    logger.error("Failed to delete message:", err);
+    if (!silent && err.description && (err.description.includes("not enough rights") || err.description.includes("admin") || err.description.includes("write privileges") || err.description.includes("privilege"))) {
+      await ctx.reply("⚠️ Боттун билдирүүлөрдү өчүрүүгө укугу (Delete Messages) жок! Сураныч, ботко администратор орнотууларынан билдирүүлөрдү өчүрүүгө уруксат бериңиз.").catch(() => {});
+    }
+    return false;
+  }
+}
+
+/**
  * Обработчик выдачи предупреждений (Страйков).
  */
 async function handleWarn(ctx: Context, userId: number, chatId: number, name: string, reason: string, muteMinutes: number, warnLimit: number, warnAction: "mute" | "ban" | "kick" = "mute", adminName: string = "Система (Бот)", warnIncrement: number = 1) {
@@ -192,7 +208,7 @@ export async function messageHandler(ctx: Context, next: NextFunction): Promise<
 
   const executeViolation = async (action: string, reason: string) => {
     try {
-      await ctx.deleteMessage().catch(() => {});
+      await safeDeleteMessage(ctx, chatId, ctx.message!.message_id);
       if (action === "warn") {
         await handleWarn(ctx, userId, chatId, name, reason, config.muteDurationMinutes, config.warnLimit, config.warnAction);
       } else if (action === "mute") {
@@ -493,9 +509,9 @@ export async function messageHandler(ctx: Context, next: NextFunction): Promise<
         replyMsgText = customReply || `🔊 [${targetName}](tg://user?id=${targetUserId}) жазуу укугу кайтарылды.`;
       } else if (action === "del") {
         if (targetMsg) {
-          await ctx.api.deleteMessage(chatId, targetMsg.message_id).catch(() => {});
+          await safeDeleteMessage(ctx, chatId, targetMsg.message_id);
         }
-        await ctx.deleteMessage().catch(() => {});
+        await safeDeleteMessage(ctx, chatId, ctx.message!.message_id, true);
         if (targetUserId) {
           await logAction(ctx.api, chatId, targetUserId, targetName, "Удаление", reason, ctx.from.first_name);
         }
@@ -520,9 +536,9 @@ export async function messageHandler(ctx: Context, next: NextFunction): Promise<
         
         if (autoDelete) {
           setTimeout(async () => {
-            await ctx.deleteMessage().catch(() => {});
+            await safeDeleteMessage(ctx, chatId, ctx.message!.message_id, true);
             if (sentReply) {
-              await ctx.api.deleteMessage(chatId, sentReply.message_id).catch(() => {});
+              await safeDeleteMessage(ctx, chatId, sentReply.message_id, true);
             }
           }, 5000);
         }
@@ -601,9 +617,9 @@ export async function messageHandler(ctx: Context, next: NextFunction): Promise<
       } else if ((triggerUsed === "өчүр" || triggerUsed === "del") && !(config.disabledCommands?.del)) {
         const customReason = reason || "Администратордун буйругу";
         if (targetMsg) {
-          await ctx.api.deleteMessage(chatId, targetMsg.message_id).catch(() => {});
+          await safeDeleteMessage(ctx, chatId, targetMsg.message_id);
         }
-        await ctx.deleteMessage().catch(() => {});
+        await safeDeleteMessage(ctx, chatId, ctx.message!.message_id, true);
         await logAction(ctx.api, chatId, targetUserId, targetName, "Удаление", customReason, ctx.from.first_name);
         return;
       }
@@ -616,7 +632,7 @@ export async function messageHandler(ctx: Context, next: NextFunction): Promise<
   if (config.antiChannel && ctx.message?.sender_chat?.type === "channel") {
     if (!ctx.message.is_automatic_forward) {
       const act = config.channelAction || "ban";
-      await ctx.deleteMessage().catch(() => {});
+      await safeDeleteMessage(ctx, chatId, ctx.message.message_id);
       if (act === "ban") {
         await ctx.api.banChatSenderChat(chatId, ctx.message.sender_chat.id).catch(() => {});
       }
@@ -635,7 +651,7 @@ export async function messageHandler(ctx: Context, next: NextFunction): Promise<
       await db.expire(floodKey, config.antiflood.seconds);
     }
     if (msgCount > config.antiflood.messages) {
-      await ctx.deleteMessage().catch(() => {});
+      await safeDeleteMessage(ctx, chatId, ctx.message!.message_id);
       const action = config.antiflood.action;
       if (action === "mute") {
         const floodMute = config.floodMuteDuration || 120;
@@ -718,25 +734,25 @@ export async function messageHandler(ctx: Context, next: NextFunction): Promise<
         const currentCount = await db.get<number>(rateLimitKey) || 0;
         
         if (currentCount >= rateLimitCount) {
-          await ctx.deleteMessage().catch(() => {});
-          const limitReason = `Медиа жана шилтеме лимити ашты (${rateLimitCount} билдирүү / ${rateLimitPeriod}с)`;
+          await safeDeleteMessage(ctx, chatId, ctx.message!.message_id);
+          const limitReason = `Медиа жана шилтеме лимити ашты (чек: ${rateLimitCount} билдирүү / ${rateLimitPeriod}с)`;
           
           if (rateLimitAction === "delete") {
-            await logAction(ctx.api, chatId, userId, name, "Удаление", limitReason, "Система (Бот)");
+            await logAction(ctx.api, chatId, userId, name, "Удаление", limitReason, "Система");
           } else if (rateLimitAction === "mute") {
             await muteUser(ctx.api, chatId, userId, 2 * 60 * 60);
-            await logAction(ctx.api, chatId, userId, name, "Мут", `${limitReason} (120 мүнөт)`, "Система (Бот)");
+            await logAction(ctx.api, chatId, userId, name, "Мут", `${limitReason}, мөөнөтү: 120 мүнөт`, "Система");
             await ctx.reply(`🔇 [${name}](tg://user?id=${userId}) ${limitReason} үчүн 2 саатка жазуу укугунан ажыратылды.`, { parse_mode: "Markdown" });
           } else if (rateLimitAction === "warn") {
-            await handleWarn(ctx, userId, chatId, name, limitReason, config.muteDurationMinutes, config.warnLimit, config.warnAction, "Система (Бот)", 1);
+            await handleWarn(ctx, userId, chatId, name, limitReason, config.muteDurationMinutes, config.warnLimit, config.warnAction, "Система", 1);
           } else if (rateLimitAction === "kick") {
             await ctx.api.banChatMember(chatId, userId).catch(() => {});
             await ctx.api.unbanChatMember(chatId, userId).catch(() => {});
-            await logAction(ctx.api, chatId, userId, name, "Кик", limitReason, "Система (Бот)");
+            await logAction(ctx.api, chatId, userId, name, "Кик", limitReason, "Система");
             await ctx.reply(`👢 [${name}](tg://user?id=${userId}) тайпадан чыгарылды. Себеби: ${limitReason}`, { parse_mode: "Markdown" });
           } else if (rateLimitAction === "ban") {
             await banUser(ctx.api, chatId, userId);
-            await logAction(ctx.api, chatId, userId, name, "Бан", limitReason, "Система (Бот)");
+            await logAction(ctx.api, chatId, userId, name, "Бан", limitReason, "Система");
             await ctx.reply(`🚷 [${name}](tg://user?id=${userId}) бөгөттөлдү. Себеби: ${limitReason}`, { parse_mode: "Markdown" });
           }
           return;
@@ -756,7 +772,7 @@ export async function messageHandler(ctx: Context, next: NextFunction): Promise<
       if (blacklist) {
         for (const word of Object.keys(blacklist)) {
           if (lowerText.includes(word)) {
-            await ctx.deleteMessage().catch(() => {});
+            await safeDeleteMessage(ctx, chatId, ctx.message!.message_id);
             const rawAction = blacklist[word] || "warn";
             let action = "warn";
             let duration = 60 * 60; // 1h default
@@ -779,22 +795,22 @@ export async function messageHandler(ctx: Context, next: NextFunction): Promise<
             }
 
             if (action === "delete") {
-              await logAction(ctx.api, chatId, userId, name, "Удаление", customReason, "Система (Бот)");
+              await logAction(ctx.api, chatId, userId, name, "Удаление", customReason, "Система");
             } else if (action === "mute") {
               await muteUser(ctx.api, chatId, userId, duration);
-              await logAction(ctx.api, chatId, userId, name, "Мут", `${customReason} (${Math.round(duration/60)} мүнөт)`, "Система (Бот)");
-              await ctx.reply(`🔇 [${name}](tg://user?id=${userId}) ${customReason} үчүн жазуу укугунан ажыратылды (${Math.round(duration/60)} мүнөт).`, { parse_mode: "Markdown" });
+              await logAction(ctx.api, chatId, userId, name, "Мут", `${customReason}, мөөнөтү: ${Math.round(duration/60)} мүнөт`, "Система");
+              await ctx.reply(`🔇 [${name}](tg://user?id=${userId}) ${customReason} үчүн жазуу укугунан ажыратылды. Мөөнөтү: ${Math.round(duration/60)} мүнөт.`, { parse_mode: "Markdown" });
             } else if (action === "kick") {
               await ctx.api.banChatMember(chatId, userId).catch(() => {});
               await ctx.api.unbanChatMember(chatId, userId).catch(() => {});
-              await logAction(ctx.api, chatId, userId, name, "Кик", customReason, "Система (Бот)");
+              await logAction(ctx.api, chatId, userId, name, "Кик", customReason, "Система");
               await ctx.reply(`👢 [${name}](tg://user?id=${userId}) ${customReason} үчүн чыгарылды.`, { parse_mode: "Markdown" });
             } else if (action === "ban") {
               await banUser(ctx.api, chatId, userId);
-              await logAction(ctx.api, chatId, userId, name, "Бан", customReason, "Система (Бот)");
-              await ctx.reply(`🚫 [${name}](tg://user?id=${userId}) ${customReason} для биротоло бөгөттөлдү.`, { parse_mode: "Markdown" });
+              await logAction(ctx.api, chatId, userId, name, "Бан", customReason, "Система");
+              await ctx.reply(`🚫 [${name}](tg://user?id=${userId}) ${customReason} үчүн биротоло бөгөттөлдү.`, { parse_mode: "Markdown" });
             } else {
-              await handleWarn(ctx, userId, chatId, name, customReason, config.muteDurationMinutes, config.warnLimit, config.warnAction, "Система (Бот)", warnCount);
+              await handleWarn(ctx, userId, chatId, name, customReason, config.muteDurationMinutes, config.warnLimit, config.warnAction, "Система", warnCount);
             }
             return; // stop further checks
           }
