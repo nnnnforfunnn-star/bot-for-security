@@ -181,7 +181,9 @@
       top: 100%;
       left: 0;
       right: 0;
-      background: #111827;
+      background: rgba(17, 24, 39, 0.95);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
       border: 1px solid var(--border-color);
       border-radius: 8px;
       margin-top: 8px;
@@ -2293,12 +2295,19 @@
       }
     }
 
+    let closeDropdownMenuHandler = null;
+
     function toggleSidebarGroupMenu(event) {
       if (event) event.stopPropagation();
       const dropdown = document.getElementById('profile_dropdown');
       const arrowIcon = document.getElementById('profile_arrow').querySelector('i');
       const isVisible = dropdown.style.display === 'flex';
       
+      if (closeDropdownMenuHandler) {
+        document.removeEventListener('click', closeDropdownMenuHandler);
+        closeDropdownMenuHandler = null;
+      }
+
       if (isVisible) {
         dropdown.style.display = 'none';
         arrowIcon.style.transform = 'rotate(0deg)';
@@ -2306,15 +2315,53 @@
         dropdown.style.display = 'flex';
         arrowIcon.style.transform = 'rotate(180deg)';
         
-        // Auto-close on click outside
-        const closeMenu = (e) => {
+        closeDropdownMenuHandler = (e) => {
           if (!document.getElementById('profile_switcher').contains(e.target) && !dropdown.contains(e.target)) {
             dropdown.style.display = 'none';
             arrowIcon.style.transform = 'rotate(0deg)';
-            document.removeEventListener('click', closeMenu);
+            document.removeEventListener('click', closeDropdownMenuHandler);
+            closeDropdownMenuHandler = null;
           }
         };
-        document.addEventListener('click', closeMenu);
+        document.addEventListener('click', closeDropdownMenuHandler);
+      }
+    }
+
+    let activeActionsPopup = null;
+    let activeActionsPopupCloseHandler = null;
+
+    function toggleActionsPopup(btn, event) {
+      if (event) event.stopPropagation();
+      const popup = btn.nextElementSibling;
+      const isVisible = popup.style.display === 'block';
+
+      if (activeActionsPopup && activeActionsPopup !== popup) {
+        activeActionsPopup.style.display = 'none';
+        if (activeActionsPopupCloseHandler) {
+          document.removeEventListener('click', activeActionsPopupCloseHandler);
+        }
+      }
+
+      if (isVisible) {
+        popup.style.display = 'none';
+        activeActionsPopup = null;
+        if (activeActionsPopupCloseHandler) {
+          document.removeEventListener('click', activeActionsPopupCloseHandler);
+          activeActionsPopupCloseHandler = null;
+        }
+      } else {
+        popup.style.display = 'block';
+        activeActionsPopup = popup;
+
+        activeActionsPopupCloseHandler = (e) => {
+          if (!popup.contains(e.target) && e.target !== btn) {
+            popup.style.display = 'none';
+            document.removeEventListener('click', activeActionsPopupCloseHandler);
+            activeActionsPopupCloseHandler = null;
+            if (activeActionsPopup === popup) activeActionsPopup = null;
+          }
+        };
+        document.addEventListener('click', activeActionsPopupCloseHandler);
       }
     }
 
@@ -3294,7 +3341,7 @@
                 <td><span style="color:var(--accent); font-weight:bold; font-size:14px;">${item.total}</span></td>
                 <td>
                   <div style="position:relative; display:inline-block;">
-                    <button class="btn btn-sm" onclick="const popup = this.nextElementSibling; popup.style.display = popup.style.display === 'none' ? 'block' : 'none'; event.stopPropagation(); document.addEventListener('click', () => popup.style.display = 'none', {once: true});" style="padding: 2px 8px; font-size:11px;">Көрүү</button>
+                    <button class="btn btn-sm" onclick="toggleActionsPopup(this, event)" style="padding: 2px 8px; font-size:11px;">Көрүү</button>
                     <div style="display:none; position:absolute; right:0; background:var(--card-bg); border:1px solid var(--border-color); border-radius:8px; padding:10px; margin-top:5px; z-index:100; min-width:240px; box-shadow: 0 4px 12px rgba(0,0,0,0.5);" onclick="event.stopPropagation();">
                       <div style="font-weight:600; font-size:11px; margin-bottom:6px; color:var(--text-main); border-bottom:1px solid var(--border-color); padding-bottom:4px; text-align:left;">Акыркы 5 аракет:</div>
                       ${recentActionsHtml}
