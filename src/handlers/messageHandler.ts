@@ -41,10 +41,6 @@ const commandHandlers: Record<string, (ctx: Context) => Promise<any>> = {
 
 // Регулярное выражение для поиска арабской вязи и иероглифов
 const ARABIC_HIEROGLYPH_REGEX = /[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF\u4E00-\u9FFF\u3400-\u4DBF\u20000-\u2A6DF]/;
-
-// Слова-триггеры для системы Кармы (Сый-Урмат)
-const KARMA_WORDS = ["рахмат", "рхм", "ыраазымын", "чоң рахмат", "спс", "спасибо"];
-
 function isLinkWhitelisted(text: string, entities: any[], whitelist: string[]): boolean {
   if (!entities || entities.length === 0) return true;
   if (!whitelist || whitelist.length === 0) return false;

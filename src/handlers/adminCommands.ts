@@ -79,12 +79,10 @@ export async function titleCommand(ctx: Context) {
 export async function meCommand(ctx: Context) {
   if (!ctx.chat || ctx.chat.type === "private" || !ctx.from) return;
   const title = await db.get<string>(`chat:${ctx.chat.id}:user:${ctx.from.id}:title`);
-  const urmat = (await db.get<number>(`chat:${ctx.chat.id}:user:${ctx.from.id}:urmat`)) || 0;
   
   let text = `👤 **Сиздин профиль:**\n\n`;
   text += `Аты-жөнү: ${ctx.from.first_name}\n`;
   if (title) text += `🏅 Наамы: **${title}**\n`;
-  text += `🌟 Сый-Урмат деңгээли: **${urmat}**\n`;
   
   await ctx.reply(text, { parse_mode: "Markdown" });
 }
