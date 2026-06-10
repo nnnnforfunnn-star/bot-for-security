@@ -1,6 +1,7 @@
 import { validateWebAppData, getUserFromInitData } from "../src/utils/telegramAuth.js";
 import { isUserSeniorAdminInChat } from "../src/utils/telegram.js";
 import { bot } from "../src/bot.js";
+import FormData from "form-data";
 
 let isBotInitialized = false;
 
@@ -64,16 +65,24 @@ export default async function handler(req: any, res: any) {
     const base64Data = file.includes(";base64,") ? file.split(";base64,").pop() : file;
     const buffer = Buffer.from(base64Data, "base64");
     
-    // Создаем Blob из буфера
-    const blob = new Blob([buffer], { type: mimeType || "image/jpeg" });
-    
     const formData = new FormData();
     formData.append("reqtype", "fileupload");
-    formData.append("fileToUpload", blob, name || "image.jpg");
+    formData.append("fileToUpload", buffer, {
+      filename: name || "image.jpg",
+      contentType: mimeType || "image/jpeg"
+    });
 
     const response = await fetch("https://catbox.moe/user/api.php", {
       method: "POST",
-      body: formData
+      body: formData as any,
+      headers: {
+        ...formData.getHeaders(),
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Accept": "*/*",
+        "Accept-Language": "en-US,en;q=0.9",
+        "Origin": "https://catbox.moe",
+        "Referer": "https://catbox.moe/"
+      }
     });
 
     if (!response.ok) {
