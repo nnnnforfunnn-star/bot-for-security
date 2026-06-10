@@ -180,7 +180,7 @@ async function sendStartMenu(ctx: any, editMessage = false) {
 
   const text = `👋 Салам, <b>${ctx.from?.first_name || 'досум'}</b>!\n\n` +
     `🛡 <b>Коопсузбек</b> — тайпаңызды коргоо жана башкаруу үчүн түзүлгөн эң күчтүү, заманбап кыргызча модератор-бот.\n\n` +
-    `🚀 Мени тайпаңызга кошуп, администратор укугун бериңиз да, <code>/settings</code> буйругу менен баарын өзүңүзгө ылайыктап алыңыз!`;
+    `⚙️ <b>Башкаруу панелине кирүү үчүн:</b> Ботко түз ушул жерден (же тайпаңыздан) <code>/settings</code> буйругун жөнөтүңүз. Ал сиз администратор болгон топтордун тизмесин көрсөтүп, веб-панелди ачат!`;
 
   if (editMessage) {
     await ctx.editMessageText(text, { parse_mode: "HTML", reply_markup: keyboard }).catch(() => {});

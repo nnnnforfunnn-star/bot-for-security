@@ -238,7 +238,7 @@ export async function messageHandler(ctx: Context, next: NextFunction): Promise<
   const lowerText = text.toLowerCase().trim();
 
   // 0. Автожооптор (Filters) - Текшерүү баарына тиешелүү, эгер өчүрүлбөсө
-  if (text && !config.disableFilters) {
+  if (text && config.disableFilters !== true && (config.disableFilters as any) !== "true") {
     try {
       const filters = await db.hgetall(`chat:${chatId}:filters`);
       if (filters) {

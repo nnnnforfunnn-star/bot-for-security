@@ -1853,7 +1853,11 @@
                 </div>
                 <div class="form-group" style="margin-top: 10px;">
                   <label class="form-label">Сүрөт шилтемеси (URL) — кааласаңыз</label>
-                  <input type="text" class="form-input" id="fl_photo" placeholder="Мисалы: https://example.com/image.jpg">
+                  <div style="display: flex; gap: 8px;">
+                    <input type="text" class="form-input" id="fl_photo" placeholder="Мисалы: https://example.com/image.jpg" style="flex: 1;">
+                    <button class="btn btn-secondary" onclick="document.getElementById('fl_file_input').click()" style="padding: 0 16px; white-space: nowrap;"><i class="fa-solid fa-upload"></i></button>
+                  </div>
+                  <input type="file" id="fl_file_input" style="display: none;" accept="image/*" onchange="handleImageUpload(this, 'fl_photo')">
                 </div>
                 <div class="form-group" style="margin-top: 10px;">
                   <label class="form-label">Шилтеме баскычтары (Ар бир сапта: Баскычтын Аты | Ссылка)</label>
@@ -1905,7 +1909,11 @@
                 </div>
                 <div class="form-group" style="margin-top: 10px;">
                   <label class="form-label">Сүрөт шилтемеси (URL) — кааласаңыз</label>
-                  <input type="text" class="form-input" id="nt_photo" placeholder="Мисалы: https://example.com/image.jpg">
+                  <div style="display: flex; gap: 8px;">
+                    <input type="text" class="form-input" id="nt_photo" placeholder="Мисалы: https://example.com/image.jpg" style="flex: 1;">
+                    <button class="btn btn-secondary" onclick="document.getElementById('nt_file_input').click()" style="padding: 0 16px; white-space: nowrap;"><i class="fa-solid fa-upload"></i></button>
+                  </div>
+                  <input type="file" id="nt_file_input" style="display: none;" accept="image/*" onchange="handleImageUpload(this, 'nt_photo')">
                 </div>
                 <div class="form-group" style="margin-top: 10px;">
                   <label class="form-label">Шилтеме баскычтары (Ар бир сапта: Баскычтын Аты | Ссылка)</label>
@@ -2867,6 +2875,55 @@
           renderLists();
           showToast("Сөз кошулду, Сактоо баскычын басыңыз.");
         }
+      }
+    }
+
+    async function handleImageUpload(inputEl, targetInputId) {
+      const file = inputEl.files[0];
+      if (!file) return;
+
+      if (file.size > 4 * 1024 * 1024) {
+        showToast("Файлдын көлөмү 4MB ашпоосу керек!", "error");
+        return;
+      }
+
+      showToast("Сүрөт жүктөлүүдө...", "info");
+      
+      try {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = async () => {
+          const base64Data = reader.result;
+          const res = await fetch('/api/upload?chatId=' + chatId, {
+            method: 'POST',
+            headers: {
+              'Authorization': 'tma ' + initData,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              file: base64Data,
+              name: file.name,
+              mimeType: file.type
+            })
+          });
+
+          if (!res.ok) {
+            const errData = await res.json().catch(() => ({}));
+            throw new Error(errData.error || "Сервердин катасы");
+          }
+
+          const data = await res.json();
+          if (data.success && data.url) {
+            document.getElementById(targetInputId).value = data.url;
+            showToast("Сүрөт ийгиликтүү жүктөлдү!");
+            tg.HapticFeedback.notificationOccurred("success");
+          } else {
+            throw new Error("Ката кетти");
+          }
+        };
+      } catch (e) {
+        console.error(e);
+        showToast("Сүрөттү жүктөөдө ката кетти: " + e.message, "error");
       }
     }
 
