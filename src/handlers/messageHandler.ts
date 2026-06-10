@@ -93,7 +93,7 @@ async function safeDeleteMessage(ctx: Context, chatId: number | string, messageI
   } catch (err: any) {
     logger.error("Failed to delete message:", err);
     if (!silent && err.description && (err.description.includes("not enough rights") || err.description.includes("admin") || err.description.includes("write privileges") || err.description.includes("privilege"))) {
-      await ctx.reply("⚠️ Боттун билдирүүлөрдү өчүрүүгө укугу (Delete Messages) жок! Сураныч, ботко администратор орнотууларынан билдирүүлөрдү өчүрүүгө уруксат бериңиз.").catch(() => {});
+      await ctx.reply("⚠️ Боттун билдирүүлөрдү өчүрүүгө укугу жок! Сураныч, ботко администратор орнотууларынан билдирүүлөрдү өчүрүүгө уруксат бериңиз.").catch(() => {});
     }
     return false;
   }
