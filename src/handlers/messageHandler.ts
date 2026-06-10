@@ -9,7 +9,7 @@ import { logAction } from "../utils/actionLogger.js";
 import { zombiesCommand, muteallCommand, unmuteallCommand, pinCommand, unpinCommand, kickmeCommand, idCommand, warnsCommand, unwarnCommand } from "./modCommands.js";
 import { rulesCommand, meCommand, purgeCommand, reportCommand } from "./adminCommands.js";
 import { linkCommand, adminsCommand, infoCommand, slowmodeCommand, promoteCommand, demoteCommand } from "./groupCommands.js";
-import { topUrmatCommand, bataCommand } from "./funHandler.js";
+import { bataCommand } from "./funHandler.js";
 import { handleMuteCommand, handleUnmuteCommand, handleBanCommand, handleUnbanCommand } from "./commandHandler.js";
 import { adminPanelCommand } from "./adminPanel.js";
 
@@ -26,7 +26,6 @@ const commandHandlers: Record<string, (ctx: Context) => Promise<any>> = {
   link: linkCommand,
   admins: adminsCommand,
   info: infoCommand,
-  top: topUrmatCommand,
   warns: warnsCommand,
   unwarn: unwarnCommand,
   slowmode: slowmodeCommand,
@@ -337,9 +336,6 @@ export async function messageHandler(ctx: Context, next: NextFunction): Promise<
     "report": { handler: reportCommand, requiresAdmin: false },
     "жалоо": { handler: reportCommand, requiresAdmin: false },
     
-    "топ": { handler: topUrmatCommand, requiresAdmin: false },
-    "top": { handler: topUrmatCommand, requiresAdmin: false },
-    
     "бата": { handler: bataCommand, requiresAdmin: false },
     "bata": { handler: bataCommand, requiresAdmin: false },
     
@@ -390,7 +386,6 @@ export async function messageHandler(ctx: Context, next: NextFunction): Promise<
       if (matchedBuiltin.handler === rulesCommand) cmdName = "rules";
       else if (matchedBuiltin.handler === adminsCommand) cmdName = "admins";
       else if (matchedBuiltin.handler === reportCommand) cmdName = "report";
-      else if (matchedBuiltin.handler === topUrmatCommand) cmdName = "top";
       else if (matchedBuiltin.handler === bataCommand) cmdName = "bata";
       else if (matchedBuiltin.handler === meCommand) cmdName = "me";
       else if (matchedBuiltin.handler === idCommand) cmdName = "id";
