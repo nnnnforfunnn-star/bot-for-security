@@ -72,7 +72,7 @@ export default async function handler(req: any, res: any) {
     }
 
     if (req.method === "POST") {
-      const { action, id, type, text, options, answer, photo, buttons, chatId, configData } = req.body;
+      const { action, id, type, text, options, answer, photo, buttons, chatId, configData, deleteAfterMinutes } = req.body;
 
       // Leave Chat Action
       if (action === "leave_chat") {
@@ -162,8 +162,9 @@ export default async function handler(req: any, res: any) {
               replyMarkup = keyboard;
             }
 
+            let sentMsg: any = null;
             if (photo) {
-              await bot.api.sendPhoto(cid, photo, {
+              sentMsg = await bot.api.sendPhoto(cid, photo, {
                 caption: text,
                 reply_markup: replyMarkup,
                 parse_mode: "Markdown"
@@ -174,7 +175,7 @@ export default async function handler(req: any, res: any) {
                 });
               });
             } else {
-              await bot.api.sendMessage(cid, text, {
+              sentMsg = await bot.api.sendMessage(cid, text, {
                 reply_markup: replyMarkup,
                 parse_mode: "Markdown"
               }).catch(async () => {
@@ -182,6 +183,11 @@ export default async function handler(req: any, res: any) {
                   reply_markup: replyMarkup
                 });
               });
+            }
+
+            if (sentMsg && deleteAfterMinutes && deleteAfterMinutes > 0) {
+              const deleteAt = Date.now() + deleteAfterMinutes * 60 * 1000;
+              await db.rpush(`chat:${cid}:broadcast_deletions`, JSON.stringify({ messageId: sentMsg.message_id, deleteAt }));
             }
             successCount++;
           } catch (e) {

@@ -2440,6 +2440,20 @@
                   <label class="form-label">Шилтеме баскычтары (Кааласаңыз. Сапта: Баскычтын Аты | Ссылка)</label>
                   <textarea class="form-textarea" id="bc_buttons" rows="2" placeholder="Мисалы: Жаңылыкты окуу | https://t.me/channel"></textarea>
                 </div>
+                <div class="form-group" style="margin-top: 10px;">
+                  <label class="form-label">Билдирүүнү автоматтык түрдө өчүрүү</label>
+                  <select class="form-select" id="bc_delete_after" style="width: 100%;">
+                    <option value="0">Өчүрбөө (түбөлүк калтыруу)</option>
+                    <option value="1">1 мүнөттөн кийин</option>
+                    <option value="5">5 мүнөттөн кийин</option>
+                    <option value="15">15 мүнөттөн кийин</option>
+                    <option value="30">30 мүнөттөн кийин</option>
+                    <option value="60">1 сааттан кийин</option>
+                    <option value="360">6 сааттан кийин</option>
+                    <option value="1440">24 сааттан кийин</option>
+                  </select>
+                  <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">Белгиленген мөөнөт бүткөндө, бот бул билдирүүнү бардык тайпалардан автоматтык түрдө өчүрөт.</div>
+                </div>
                 <button type="button" class="btn btn-primary" style="width: 100%; margin-top: 14px;" onclick="sendGlobalBroadcast()"><i class="fa-solid fa-paper-plane" style="margin-right: 8px;"></i>Билдирүүнү таратуу</button>
               </div>
             </div>
@@ -5029,6 +5043,7 @@
       const text = document.getElementById('bc_text').value.trim();
       const photo = document.getElementById('bc_photo').value.trim();
       const btnTextVal = document.getElementById('bc_buttons').value.trim();
+      const deleteAfterMinutes = parseInt(document.getElementById('bc_delete_after').value) || 0;
 
       if (!text) {
         showToast("Таратылуучу текст бош болбошу керек!", 'error');
@@ -5065,7 +5080,8 @@
             action: 'broadcast',
             text,
             photo,
-            buttons
+            buttons,
+            deleteAfterMinutes
           })
         });
 
@@ -5075,6 +5091,7 @@
           document.getElementById('bc_text').value = '';
           document.getElementById('bc_photo').value = '';
           document.getElementById('bc_buttons').value = '';
+          document.getElementById('bc_delete_after').value = '0';
         } else {
           showToast("Таратууда ката кетти", "error");
         }

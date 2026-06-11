@@ -372,5 +372,24 @@ export const db = {
       memCache.set(key, Array.from(set));
       saveLocalDB();
     } catch (e) {}
+  },
+
+  async rpush(key: string, value: any): Promise<void> {
+    try {
+      const strVal = typeof value === "string" ? value : JSON.stringify(value);
+      const tcp = await getRedisTCPClient();
+      if (tcp) {
+        await tcp.rPush(key, strVal);
+        return;
+      }
+      if (upstashClient) {
+        await upstashClient.rpush(key, strVal);
+        return;
+      }
+      const list = memCache.get(key) || [];
+      list.push(strVal);
+      memCache.set(key, list);
+      saveLocalDB();
+    } catch (e) {}
   }
 };
