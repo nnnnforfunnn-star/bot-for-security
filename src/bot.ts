@@ -177,6 +177,37 @@ bot.on("message:text", async (ctx, next) => {
 // Помощь
 bot.command("help", helpCommand);
 
+// Диагностика (Ping)
+bot.command("ping", async (ctx) => {
+  const start = Date.now();
+  const msg = await ctx.reply("🏓 Понг...");
+  const latency = Date.now() - start;
+  
+  let dbStatus = "Иштеп жатат ✅";
+  try {
+    await db.set("ping:test", "1", 5);
+    const test = await db.get("ping:test");
+    if (test !== "1") dbStatus = "Ката ❌";
+  } catch (e) {
+    dbStatus = "Иштебей жатат ❌";
+  }
+
+  const uptime = Math.round(process.uptime());
+  const hours = Math.floor(uptime / 3600);
+  const minutes = Math.floor((uptime % 3600) / 60);
+  const secs = uptime % 60;
+
+  await ctx.api.editMessageText(
+    ctx.chat.id,
+    msg.message_id,
+    `🏓 **Понг!**\n\n` +
+    `⚡️ **Боттун жооп убактысы:** \`${latency} мс\`\n` +
+    `🗄 **Базанын абалы (Redis):** \`${dbStatus}\`\n` +
+    `⏱ **Боттун иштөө убактысы:** \`${hours}саат ${minutes}мүн ${secs}сек\``,
+    { parse_mode: "Markdown" }
+  ).catch(() => {});
+});
+
 async function sendStartMenu(ctx: any, editMessage = false) {
   const keyboard = new InlineKeyboard()
     .url("➕ Тайпага кошуу", `https://t.me/${ctx.me.username}?startgroup=true`).row()
