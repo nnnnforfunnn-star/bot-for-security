@@ -199,9 +199,14 @@ async function checkAndSendAnnouncements(ctx: Context) {
       if (!announcementsMap) continue;
 
       for (const [annId, annValRaw] of Object.entries(announcementsMap)) {
-        if (typeof annValRaw !== "string") continue;
+        if (!annValRaw) continue;
         try {
-          const ann = JSON.parse(annValRaw);
+          let ann: any;
+          if (typeof annValRaw === "string") {
+            ann = JSON.parse(annValRaw);
+          } else {
+            ann = annValRaw;
+          }
           if (ann.enabled === false) continue;
 
           // Проверяем, нужно ли отправлять

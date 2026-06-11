@@ -111,6 +111,12 @@ export const db = {
         return;
       }
       memCache.set(key, value);
+      if (ttlSeconds) {
+        setTimeout(() => {
+          memCache.delete(key);
+          saveLocalDB();
+        }, ttlSeconds * 1000).unref?.();
+      }
       saveLocalDB();
     } catch (e) {}
   },
@@ -166,6 +172,10 @@ export const db = {
         await upstashClient.expire(key, ttlSeconds);
         return;
       }
+      setTimeout(() => {
+        memCache.delete(key);
+        saveLocalDB();
+      }, ttlSeconds * 1000).unref?.();
     } catch (e) {}
   },
 

@@ -45,6 +45,7 @@ export default async function handler(req: any, res: any) {
     }
 
     await db.sadd(`user:${user.id}:chats`, chatId.toString());
+    await db.sadd("bot:chats", chatId.toString()).catch(() => {});
 
     if (!isBotInitialized) {
       await bot.init();
@@ -69,6 +70,9 @@ export default async function handler(req: any, res: any) {
     if (req.method === "POST") {
       const { config, blacklist, filters, notes, swearwords, announcements } = req.body;
       const adminName = user.first_name || "Администратор";
+
+      // Сохраняем ID чата в список активных чатов
+      await db.sadd("bot:chats", chatId).catch(() => {});
 
       // Получаем старые состояния для логирования и отката
       const oldConfig = await getGroupConfig(chatId);
