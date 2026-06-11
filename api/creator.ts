@@ -49,6 +49,15 @@ export default async function handler(req: any, res: any) {
       const items = await db.hgetall(hashKey) || {};
       const allChatsRaw = await db.smembers("bot:chats") || [];
       
+      const chatsMetadataRaw = await db.hgetall("bot:chats_metadata") || {};
+      const chatsList = Object.values(chatsMetadataRaw).map(metaStr => {
+        try {
+          return typeof metaStr === "string" ? JSON.parse(metaStr) : metaStr;
+        } catch (e) {
+          return null;
+        }
+      }).filter(Boolean);
+      
       const stats = {
         activeGroups: allChatsRaw.length,
         totalIcebreakers: Object.keys(items).length,
@@ -59,11 +68,67 @@ export default async function handler(req: any, res: any) {
         platform: process.platform
       };
 
-      return res.status(200).json({ items, stats });
+      return res.status(200).json({ items, stats, chatsList });
     }
 
     if (req.method === "POST") {
-      const { action, id, type, text, options, answer, photo, buttons } = req.body;
+      const { action, id, type, text, options, answer, photo, buttons, chatId, configData } = req.body;
+
+      // Leave Chat Action
+      if (action === "leave_chat") {
+        if (!chatId) {
+          return res.status(400).json({ error: "chatId is required" });
+        }
+        if (!isBotInitialized) {
+          await bot.init();
+          isBotInitialized = true;
+        }
+        try {
+          await bot.api.leaveChat(parseInt(chatId, 10));
+        } catch (e) {}
+        await db.srem("bot:chats", String(chatId)).catch(() => {});
+        await db.hdel("bot:chats_metadata", String(chatId)).catch(() => {});
+        return res.status(200).json({ success: true });
+      }
+
+      // Send Message to specific Chat Action
+      if (action === "send_message") {
+        if (!chatId || !text) {
+          return res.status(400).json({ error: "chatId and text are required" });
+        }
+        if (!isBotInitialized) {
+          await bot.init();
+          isBotInitialized = true;
+        }
+        try {
+          await bot.api.sendMessage(parseInt(chatId, 10), text, { parse_mode: "Markdown" }).catch(async () => {
+            return await bot.api.sendMessage(parseInt(chatId, 10), text);
+          });
+          return res.status(200).json({ success: true });
+        } catch (e) {
+          return res.status(500).json({ error: "Message sending failed: " + String(e) });
+        }
+      }
+
+      // Get Chat Config Action
+      if (action === "get_chat_config") {
+        if (!chatId) {
+          return res.status(400).json({ error: "chatId is required" });
+        }
+        const { getGroupConfig } = await import("../src/utils/configManager.js");
+        const config = await getGroupConfig(chatId);
+        return res.status(200).json({ success: true, config });
+      }
+
+      // Save Chat Config Action
+      if (action === "save_chat_config") {
+        if (!chatId || !configData) {
+          return res.status(400).json({ error: "chatId and configData are required" });
+        }
+        const { updateGroupConfig } = await import("../src/utils/configManager.js");
+        await updateGroupConfig(chatId, configData);
+        return res.status(200).json({ success: true });
+      }
 
       // Global Broadcast Action
       if (action === "broadcast") {

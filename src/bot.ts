@@ -52,6 +52,16 @@ bot.use(async (ctx, next) => {
   if (ctx.chat && ctx.chat.type !== "private") {
     // Сохраняем ID чата в глобальный список для прямого управления
     await db.sadd("bot:chats", ctx.chat.id).catch(() => {});
+    
+    // Сохраняем метаданные чата
+    const chatMeta = {
+      id: ctx.chat.id,
+      title: (ctx.chat as any).title || "Тайпа",
+      username: (ctx.chat as any).username || "",
+      type: ctx.chat.type,
+      updatedAt: Date.now()
+    };
+    await db.hset("bot:chats_metadata", String(ctx.chat.id), JSON.stringify(chatMeta)).catch(() => {});
 
     if (ctx.message?.text?.startsWith("/")) {
       const fullCmd = ctx.message.text.split(" ")[0].substring(1);
