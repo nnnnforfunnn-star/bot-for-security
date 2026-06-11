@@ -184,115 +184,97 @@ async function resolveTargetUser(ctx: Context, text: string, triggerUsed: string
   }
 
   return null;
-}
-
-async function checkAndSendAnnouncements(ctx: Context) {
+}async function checkAndSendAnnouncements(ctx: Context, chatId: number) {
   try {
-    // Получаем все чаты, в которых состоит бот
-    const allChatsRaw = await db.smembers("bot:chats") || [];
-    for (const chatKeyId of allChatsRaw) {
-      const parentChatId = parseInt(chatKeyId, 10);
-      if (isNaN(parentChatId)) continue;
+    const announcementsMap = await db.hgetall(`chat:${chatId}:announcements`);
+    if (!announcementsMap) return;
 
-      // Получаем список объявлений для этого чата
-      const announcementsMap = await db.hgetall(`chat:${parentChatId}:announcements`);
-      if (!announcementsMap) continue;
+    for (const [annId, annValRaw] of Object.entries(announcementsMap)) {
+      if (!annValRaw) continue;
+      try {
+        let ann: any;
+        if (typeof annValRaw === "string") {
+          ann = JSON.parse(annValRaw);
+        } else {
+          ann = annValRaw;
+        }
+        if (ann.enabled === false) continue;
 
-      for (const [annId, annValRaw] of Object.entries(announcementsMap)) {
-        if (!annValRaw) continue;
-        try {
-          let ann: any;
-          if (typeof annValRaw === "string") {
-            ann = JSON.parse(annValRaw);
-          } else {
-            ann = annValRaw;
+        let shouldSend = false;
+        const now = Date.now();
+        const lastSent = ann.lastSent || 0;
+
+        if (ann.intervalType === "interval") {
+          const intervalMs = (ann.intervalValue || 60) * 60 * 1000;
+          if (now - lastSent >= intervalMs) {
+            shouldSend = true;
           }
-          if (ann.enabled === false) continue;
-
-          // Проверяем, нужно ли отправлять
-          let shouldSend = false;
-          const now = Date.now();
-          const lastSent = ann.lastSent || 0;
-
-          if (ann.intervalType === "interval") {
-            const intervalMs = (ann.intervalValue || 60) * 60 * 1000;
-            if (now - lastSent >= intervalMs) {
+        } else if (ann.intervalType === "daily") {
+          const bishkekTime = new Date(now + 6 * 3600 * 1000);
+          const todayStr = bishkekTime.toISOString().split("T")[0];
+          const lastSentDateStr = lastSent ? new Date(lastSent + 6 * 3600 * 1000).toISOString().split("T")[0] : "";
+          
+          if (todayStr !== lastSentDateStr) {
+            const [targetHours, targetMinutes] = (ann.dailyTime || "12:00").split(":").map(Number);
+            const currentHours = bishkekTime.getUTCHours();
+            const currentMinutes = bishkekTime.getUTCMinutes();
+            if (currentHours > targetHours || (currentHours === targetHours && currentMinutes >= targetMinutes)) {
               shouldSend = true;
             }
-          } else if (ann.intervalType === "daily") {
-            // Конвертируем текущее системное время в часовой пояс Бишкека (UTC+6)
-            const bishkekTime = new Date(now + 6 * 3600 * 1000);
-            const todayStr = bishkekTime.toISOString().split("T")[0];
-            const lastSentDateStr = lastSent ? new Date(lastSent + 6 * 3600 * 1000).toISOString().split("T")[0] : "";
-            
-            if (todayStr !== lastSentDateStr) {
-              const [targetHours, targetMinutes] = (ann.dailyTime || "12:00").split(":").map(Number);
-              const currentHours = bishkekTime.getUTCHours();
-              const currentMinutes = bishkekTime.getUTCMinutes();
-              if (currentHours > targetHours || (currentHours === targetHours && currentMinutes >= targetMinutes)) {
-                shouldSend = true;
-              }
-            }
           }
+        }
 
-          if (shouldSend) {
-            // Отправляем во все целевые группы
-            const targetChats = ann.chats || [];
-            for (const targetChatId of targetChats) {
-              try {
-                // Создаем клавиатуру
-                let replyMarkup = undefined;
-                if (Array.isArray(ann.buttons) && ann.buttons.length > 0) {
-                  replyMarkup = new InlineKeyboard();
-                  for (const btn of ann.buttons) {
-                    if (btn.text && btn.url) {
-                      replyMarkup.url(btn.text, btn.url).row();
-                    }
+        if (shouldSend) {
+          const targetChats = ann.chats || [];
+          for (const targetChatId of targetChats) {
+            try {
+              let replyMarkup = undefined;
+              if (Array.isArray(ann.buttons) && ann.buttons.length > 0) {
+                replyMarkup = new InlineKeyboard();
+                for (const btn of ann.buttons) {
+                  if (btn.text && btn.url) {
+                    replyMarkup.url(btn.text, btn.url).row();
                   }
                 }
-
-                if (ann.photo) {
-                  await ctx.api.sendPhoto(targetChatId, ann.photo, {
-                    caption: ann.text,
-                    reply_markup: replyMarkup,
-                    parse_mode: "Markdown"
-                  }).catch(async () => {
-                    // Fallback без Markdown
-                    return await ctx.api.sendPhoto(targetChatId, ann.photo, {
-                      caption: ann.text,
-                      reply_markup: replyMarkup
-                    });
-                  });
-                } else {
-                  await ctx.api.sendMessage(targetChatId, ann.text, {
-                    reply_markup: replyMarkup,
-                    parse_mode: "Markdown"
-                  }).catch(async () => {
-                    // Fallback без Markdown
-                    return await ctx.api.sendMessage(targetChatId, ann.text, {
-                      reply_markup: replyMarkup
-                    });
-                  });
-                }
-              } catch (chatErr) {
-                logger.error(`Error sending announcement ${annId} to chat ${targetChatId}:`, chatErr);
               }
-            }
 
-            // Обновляем lastSent и сохраняем
-            ann.lastSent = now;
-            await db.hset(`chat:${parentChatId}:announcements`, annId, JSON.stringify(ann));
+              if (ann.photo) {
+                await ctx.api.sendPhoto(targetChatId, ann.photo, {
+                  caption: ann.text,
+                  reply_markup: replyMarkup,
+                  parse_mode: "Markdown"
+                }).catch(async () => {
+                  return await ctx.api.sendPhoto(targetChatId, ann.photo, {
+                    caption: ann.text,
+                    reply_markup: replyMarkup
+                  });
+                });
+              } else {
+                await ctx.api.sendMessage(targetChatId, ann.text, {
+                  reply_markup: replyMarkup,
+                  parse_mode: "Markdown"
+                }).catch(async () => {
+                  return await ctx.api.sendMessage(targetChatId, ann.text, {
+                    reply_markup: replyMarkup
+                  });
+                });
+              }
+            } catch (chatErr) {
+              logger.error(`Error sending announcement ${annId} to chat ${targetChatId}:`, chatErr);
+            }
           }
-        } catch (e) {
-          logger.error(`Error processing announcement ${annId}:`, e);
+
+          ann.lastSent = now;
+          await db.hset(`chat:${chatId}:announcements`, annId, JSON.stringify(ann));
         }
+      } catch (e) {
+        logger.error(`Error processing announcement ${annId}:`, e);
       }
     }
   } catch (err) {
     logger.error("Error in checkAndSendAnnouncements:", err);
   }
 }
-
 const DEFAULT_ICEBREAKERS = [
   {
     id: "seed_1",
@@ -326,56 +308,50 @@ const DEFAULT_ICEBREAKERS = [
   }
 ];
 
-async function checkAndRunActivityGenerator(ctx: Context) {
+async function checkAndRunActivityGenerator(ctx: Context, chatId: number) {
   try {
-    const allChatsRaw = await db.smembers("bot:chats") || [];
-    for (const chatKeyId of allChatsRaw) {
-      const parentChatId = parseInt(chatKeyId, 10);
-      if (isNaN(parentChatId)) continue;
+    const config = await getGroupConfig(chatId);
+    if (!config.activityGeneratorEnabled) return;
 
-      const config = await getGroupConfig(parentChatId);
-      if (!config.activityGeneratorEnabled) continue;
+    const lastMsgTime = await db.get<number>(`chat:${chatId}:lastMessageTime`) || 0;
+    if (lastMsgTime === 0) {
+      await db.set(`chat:${chatId}:lastMessageTime`, Date.now());
+      return;
+    }
 
-      const lastMsgTime = await db.get<number>(`chat:${parentChatId}:lastMessageTime`) || 0;
-      if (lastMsgTime === 0) {
-        await db.set(`chat:${parentChatId}:lastMessageTime`, Date.now());
-        continue;
-      }
+    const idleTimeoutMs = (config.activityGeneratorTimeoutHours || 2) * 60 * 60 * 1000;
+    const now = Date.now();
 
-      const idleTimeoutMs = (config.activityGeneratorTimeoutHours || 2) * 60 * 60 * 1000;
-      const now = Date.now();
-
-      if (now - lastMsgTime >= idleTimeoutMs) {
-        const globalHash = await db.hgetall("global:icebreakers") || {};
-        let items: any[] = [];
-        for (const valRaw of Object.values(globalHash)) {
-          try {
-            items.push(typeof valRaw === "string" ? JSON.parse(valRaw) : valRaw);
-          } catch (e) {}
-        }
-
-        if (items.length === 0) {
-          items = DEFAULT_ICEBREAKERS;
-        }
-
-        const chosenItem = items[Math.floor(Math.random() * items.length)];
-        if (!chosenItem) continue;
-
+    if (now - lastMsgTime >= idleTimeoutMs) {
+      const globalHash = await db.hgetall("global:icebreakers") || {};
+      let items: any[] = [];
+      for (const valRaw of Object.values(globalHash)) {
         try {
-          await ctx.api.sendMessage(parentChatId, chosenItem.text, { parse_mode: "Markdown" }).catch(async () => {
-            return await ctx.api.sendMessage(parentChatId, chosenItem.text);
-          });
-        } catch (e) {
-          logger.error(`Error sending icebreaker to chat ${parentChatId}:`, e);
-        }
-
-        if (chosenItem.answer) {
-          await db.set(`chat:${parentChatId}:active_question`, JSON.stringify(chosenItem));
-          await db.set(`chat:${parentChatId}:active_question_time`, now);
-        }
-
-        await db.set(`chat:${parentChatId}:lastMessageTime`, now);
+          items.push(typeof valRaw === "string" ? JSON.parse(valRaw) : valRaw);
+        } catch (e) {}
       }
+
+      if (items.length === 0) {
+        items = DEFAULT_ICEBREAKERS;
+      }
+
+      const chosenItem = items[Math.floor(Math.random() * items.length)];
+      if (!chosenItem) return;
+
+      try {
+        await ctx.api.sendMessage(chatId, chosenItem.text, { parse_mode: "Markdown" }).catch(async () => {
+          return await ctx.api.sendMessage(chatId, chosenItem.text);
+        });
+      } catch (e) {
+        logger.error(`Error sending icebreaker to chat ${chatId}:`, e);
+      }
+
+      if (chosenItem.answer) {
+        await db.set(`chat:${chatId}:active_question`, JSON.stringify(chosenItem));
+        await db.set(`chat:${chatId}:active_question_time`, now);
+      }
+
+      await db.set(`chat:${chatId}:lastMessageTime`, now);
     }
   } catch (err) {
     logger.error("Error in checkAndRunActivityGenerator:", err);
@@ -388,20 +364,20 @@ export async function messageHandler(ctx: Context, next: NextFunction): Promise<
     return next();
   }
 
-  // Проверяем лок планировщика объявлений раз в 30 секунд
-  const lockKey = "announcements:scheduler:lock";
+  const chatId = ctx.chat.id;
+
+  // Проверяем лок планировщика объявлений для этого чата раз в 30 секунд
+  const lockKey = `chat:${chatId}:scheduler:lock`;
   try {
     const hasLock = await db.get(lockKey);
     if (!hasLock) {
       await db.set(lockKey, "locked", 30);
-      await checkAndSendAnnouncements(ctx).catch(err => logger.error("Error in announcements check:", err));
-      await checkAndRunActivityGenerator(ctx).catch(err => logger.error("Error in activity generator:", err));
+      await checkAndSendAnnouncements(ctx, chatId).catch(err => logger.error("Error in announcements check:", err));
+      await checkAndRunActivityGenerator(ctx, chatId).catch(err => logger.error("Error in activity generator:", err));
     }
   } catch (lockErr) {
     logger.error("Error checking/setting scheduler lock:", lockErr);
   }
-
-  const chatId = ctx.chat.id;
   const userId = ctx.from?.id;
   const name = ctx.from?.first_name || "Колдонуучу";
   

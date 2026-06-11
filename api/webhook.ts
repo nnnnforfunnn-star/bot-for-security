@@ -2,7 +2,15 @@ import { bot } from "../src/bot.js";
 import { config } from "../src/config.js";
 import { logger } from "../src/utils/logger.js";
 
-// Инициализируем бота один раз (grammY рекомендует для Serverless)
+// Добавляем глобальные обработчики для защиты процесса от непредвиденных падений
+process.on("unhandledRejection", (reason, promise) => {
+  const err = reason instanceof Error ? reason : new Error(String(reason));
+  logger.error("Unhandled Rejection at Promise", err, { promise: String(promise) });
+});
+process.on("uncaughtException", (error) => {
+  logger.error("Uncaught Exception thrown", error);
+});
+
 let isBotInitialized = false;
 
 export default async function handler(req: any, res: any) {
@@ -26,11 +34,28 @@ export default async function handler(req: any, res: any) {
       logger.info("Бот инициализирован в Serverless-окружении.");
     }
 
-    await bot.handleUpdate(req.body);
+    // Таймаут-предохранитель на 8.5 секунд. Если Vercel Serverless Function висит слишком долго,
+    // мы принудительно возвращаем 200 OK, чтобы Telegram не уходил в бесконечный retry-цикл.
+    const timeoutPromise = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error("Update processing timeout")), 8500)
+    );
+
+    await Promise.race([
+      bot.handleUpdate(req.body),
+      timeoutPromise
+    ]);
+
     return res.status(200).send("OK");
-  } catch (error) {
+  } catch (error: any) {
+    if (error?.message === "Update processing timeout") {
+      logger.warn(`Update ${req.body?.update_id} timed out. Responding with 200 OK to prevent Telegram retry loop.`);
+      return res.status(200).send("OK");
+    }
+    
     logger.error("Error handling update", error);
-    return res.status(500).send("Internal Server Error");
+    // Возвращаем 200 OK при любых внутренних ошибках обработки сообщения,
+    // чтобы Telegram не спамил повторными запросами этого же апдейта.
+    return res.status(200).send("OK");
   }
 }
 

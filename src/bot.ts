@@ -48,20 +48,31 @@ bot.catch(globalErrorHandler);
 bot.use(rateLimiter);
 
 // Middleware для проверки отключенных команд в группе
+// Memory cache to throttle chat metadata updates to Redis
+const lastChatMetadataUpdate = new Map<number, number>();
+
 bot.use(async (ctx, next) => {
   if (ctx.chat && ctx.chat.type !== "private") {
-    // Сохраняем ID чата в глобальный список для прямого управления
-    await db.sadd("bot:chats", ctx.chat.id).catch(() => {});
-    
-    // Сохраняем метаданные чата
-    const chatMeta = {
-      id: ctx.chat.id,
-      title: (ctx.chat as any).title || "Тайпа",
-      username: (ctx.chat as any).username || "",
-      type: ctx.chat.type,
-      updatedAt: Date.now()
-    };
-    await db.hset("bot:chats_metadata", String(ctx.chat.id), JSON.stringify(chatMeta)).catch(() => {});
+    const chatId = ctx.chat.id;
+    const now = Date.now();
+    const lastUpdate = lastChatMetadataUpdate.get(chatId) || 0;
+
+    // Обновляем метаданные в базе только раз в 30 минут
+    if (now - lastUpdate > 30 * 60 * 1000) {
+      lastChatMetadataUpdate.set(chatId, now);
+      
+      // Выполняем в фоне без await, чтобы не задерживать обработку сообщения
+      db.sadd("bot:chats", chatId).catch(() => {});
+      
+      const chatMeta = {
+        id: chatId,
+        title: (ctx.chat as any).title || "Тайпа",
+        username: (ctx.chat as any).username || "",
+        type: ctx.chat.type,
+        updatedAt: now
+      };
+      db.hset("bot:chats_metadata", String(chatId), JSON.stringify(chatMeta)).catch(() => {});
+    }
 
     if (ctx.message?.text?.startsWith("/")) {
       const fullCmd = ctx.message.text.split(" ")[0].substring(1);
