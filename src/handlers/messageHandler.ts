@@ -293,6 +293,95 @@ async function checkAndSendAnnouncements(ctx: Context) {
   }
 }
 
+const DEFAULT_ICEBREAKERS = [
+  {
+    id: "seed_1",
+    type: "proverb",
+    text: "🤔 **Тайпада унчукпоо өкүм сүрүүдө. Келиңиздер, кыргыз макалын уланталы:**\n\n«Өнөрлүү өр тилейт, ...»",
+    answer: "өнөрсүз төр тилейт"
+  },
+  {
+    id: "seed_2",
+    type: "proverb",
+    text: "🤔 **Келиңиздер, кыргыз макалын уланталы:**\n\n«Ата көрүп ок жонат, ...»",
+    answer: "эне көрүп тон бычат"
+  },
+  {
+    id: "seed_3",
+    type: "proverb",
+    text: "🤔 **Келиңиздер, кыргыз макалын уланталы:**\n\n«Ойноп сүйлөсөң да, ...»",
+    answer: "ойлоп сүйлө"
+  },
+  {
+    id: "seed_4",
+    type: "question",
+    text: "🤔 **Группада тынчтык болуп жатат. Келиңиздер, ойлонуп көрөлү:**\n\n«Сиздин оюңузча, жашоодогу эң маанилүү нерсе эмне?»",
+    answer: ""
+  },
+  {
+    id: "seed_5",
+    type: "proverb",
+    text: "🤔 **Келиңиздер, кыргыз макалын уланталы:**\n\n«Жакшы сөз жан эргитет, ...»",
+    answer: "жаман сөз жан кейитет"
+  }
+];
+
+async function checkAndRunActivityGenerator(ctx: Context) {
+  try {
+    const allChatsRaw = await db.smembers("bot:chats") || [];
+    for (const chatKeyId of allChatsRaw) {
+      const parentChatId = parseInt(chatKeyId, 10);
+      if (isNaN(parentChatId)) continue;
+
+      const config = await getGroupConfig(parentChatId);
+      if (!config.activityGeneratorEnabled) continue;
+
+      const lastMsgTime = await db.get<number>(`chat:${parentChatId}:lastMessageTime`) || 0;
+      if (lastMsgTime === 0) {
+        await db.set(`chat:${parentChatId}:lastMessageTime`, Date.now());
+        continue;
+      }
+
+      const idleTimeoutMs = (config.activityGeneratorTimeoutHours || 2) * 60 * 60 * 1000;
+      const now = Date.now();
+
+      if (now - lastMsgTime >= idleTimeoutMs) {
+        const globalHash = await db.hgetall("global:icebreakers") || {};
+        let items: any[] = [];
+        for (const valRaw of Object.values(globalHash)) {
+          try {
+            items.push(typeof valRaw === "string" ? JSON.parse(valRaw) : valRaw);
+          } catch (e) {}
+        }
+
+        if (items.length === 0) {
+          items = DEFAULT_ICEBREAKERS;
+        }
+
+        const chosenItem = items[Math.floor(Math.random() * items.length)];
+        if (!chosenItem) continue;
+
+        try {
+          await ctx.api.sendMessage(parentChatId, chosenItem.text, { parse_mode: "Markdown" }).catch(async () => {
+            return await ctx.api.sendMessage(parentChatId, chosenItem.text);
+          });
+        } catch (e) {
+          logger.error(`Error sending icebreaker to chat ${parentChatId}:`, e);
+        }
+
+        if (chosenItem.answer) {
+          await db.set(`chat:${parentChatId}:active_question`, JSON.stringify(chosenItem));
+          await db.set(`chat:${parentChatId}:active_question_time`, now);
+        }
+
+        await db.set(`chat:${parentChatId}:lastMessageTime`, now);
+      }
+    }
+  } catch (err) {
+    logger.error("Error in checkAndRunActivityGenerator:", err);
+  }
+}
+
 export async function messageHandler(ctx: Context, next: NextFunction): Promise<void> {
   const msg = ctx.message || ctx.editedMessage;
   if (!msg || !ctx.chat || ctx.chat.type === "private") {
@@ -306,6 +395,7 @@ export async function messageHandler(ctx: Context, next: NextFunction): Promise<
     if (!hasLock) {
       await db.set(lockKey, "locked", 30);
       await checkAndSendAnnouncements(ctx).catch(err => logger.error("Error in announcements check:", err));
+      await checkAndRunActivityGenerator(ctx).catch(err => logger.error("Error in activity generator:", err));
     }
   } catch (lockErr) {
     logger.error("Error checking/setting scheduler lock:", lockErr);
@@ -996,5 +1086,74 @@ export async function messageHandler(ctx: Context, next: NextFunction): Promise<
       }
     } catch (e) {}
   }
+
+  // Сбрасываем таймер активности группы при сообщении от реального пользователя
+  if (ctx.from && !ctx.from.is_bot && (!text || !text.startsWith("/"))) {
+    await db.set(`chat:${chatId}:lastMessageTime`, Date.now()).catch(() => {});
+  }
+
+  // Проверка ответа на активный вопрос/макал
+  if (text && ctx.from && !ctx.from.is_bot) {
+    try {
+      const activeQuestionRaw = await db.get<string>(`chat:${chatId}:active_question`);
+      if (activeQuestionRaw) {
+        const activeQuestion = typeof activeQuestionRaw === "string" ? JSON.parse(activeQuestionRaw) : activeQuestionRaw;
+        if (activeQuestion && activeQuestion.answer) {
+          const cleanUserMsg = text.trim().toLowerCase().replace(/[.,\/#!$%\^&\*;:{}=\-_`~()?]/g, "").replace(/\s+/g, " ");
+          const cleanAnswer = activeQuestion.answer.trim().toLowerCase().replace(/[.,\/#!$%\^&\*;:{}=\-_`~()?]/g, "").replace(/\s+/g, " ");
+          const isMatch = cleanUserMsg.includes(cleanAnswer) || 
+            (cleanUserMsg.length >= Math.max(3, Math.round(cleanAnswer.length * 0.7)) && cleanAnswer.includes(cleanUserMsg));
+          if (isMatch) {
+            const reward = config.activityGeneratorKarmaReward || 1;
+            const karmaKey = `chat:${chatId}:user:${userId}:urmat`;
+            const currentKarma = await db.get<number>(karmaKey) || 0;
+            const newKarma = currentKarma + reward;
+            
+            await db.set(karmaKey, newKarma);
+            await db.zadd(`chat:${chatId}:urmat_leaderboard`, newKarma, String(userId));
+            await db.del(`chat:${chatId}:active_question`);
+            
+            await ctx.reply(`🎉 **Туура жооп!**\n\nСиз макалдын уландысын таптыңыз: *"${activeQuestion.answer}"*\n\nСизге \`+${reward}\` Сый-Урмат (карма) упайы берилди!`, {
+              parse_mode: "Markdown"
+            }).catch(() => {});
+          }
+        }
+      }
+    } catch (eqErr) {
+      logger.error("Error checking active question answer:", eqErr);
+    }
+  }
+
+  // Автоматическая выдача кармы (репутации) при ответах
+  if (config.karmaEnabled && msg.reply_to_message && msg.reply_to_message.from && !msg.reply_to_message.from.is_bot && text && ctx.from && !ctx.from.is_bot) {
+    const targetUser = msg.reply_to_message.from;
+    if (targetUser.id !== userId) {
+      const karmaTriggers = ["+", "+1", "рахмат", "спасибо", "лайк", "like", "👍", "ыраазычылык", "рахмаат"];
+      const trimmedText = text.trim().toLowerCase();
+      
+      const isTrigger = karmaTriggers.some(trigger => {
+        if (trigger === "+") return trimmedText === "+" || trimmedText.startsWith("+ ");
+        return trimmedText.startsWith(trigger);
+      });
+
+      if (isTrigger) {
+        try {
+          const karmaKey = `chat:${chatId}:user:${targetUser.id}:urmat`;
+          const currentKarma = await db.get<number>(karmaKey) || 0;
+          const newKarma = currentKarma + 1;
+          await db.set(karmaKey, newKarma);
+          await db.zadd(`chat:${chatId}:urmat_leaderboard`, newKarma, String(targetUser.id));
+
+          const targetName = targetUser.first_name || "Колдонуучу";
+          await ctx.reply(`😊 [${ctx.from.first_name}](tg://user?id=${userId}) колдонуучу [${targetName}](tg://user?id=${targetUser.id}) сый-урмат (карма) упайын көбөйттү!\n\n**Сый-Урмат:** \`${newKarma}\` (жаңы упай)`, {
+            parse_mode: "Markdown"
+          }).catch(() => {});
+        } catch (e) {
+          logger.error("Error setting karma automatically on reply:", e);
+        }
+      }
+    }
+  }
+
   await next();
 }

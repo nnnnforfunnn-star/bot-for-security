@@ -24,6 +24,9 @@ export interface GroupConfig {
   disabledCommands?: Record<string, boolean>;
   commandsEnabled?: boolean;
   linkWhitelist?: string[];
+  activityGeneratorEnabled?: boolean;
+  activityGeneratorTimeoutHours?: number;
+  activityGeneratorKarmaReward?: number;
   
   // Advanced Granular Actions
   lockdownAction?: "delete" | "mute" | "warn" | "kick" | "ban";
@@ -132,6 +135,9 @@ export const DEFAULT_CONFIG: GroupConfig = {
   disabledCommands: {},
   commandsEnabled: false,
   linkWhitelist: [],
+  activityGeneratorEnabled: false,
+  activityGeneratorTimeoutHours: 2,
+  activityGeneratorKarmaReward: 1,
   
   lockdownAction: "delete",
   swearAction: "warn",

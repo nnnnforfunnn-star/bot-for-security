@@ -64,7 +64,8 @@ export default async function handler(req: any, res: any) {
       const notes = (await db.hgetall(`chat:${chatId}:notes`)) || {};
       const swearwords = await db.smembers(`chat:${chatId}:swearwords`) || [];
       const announcements = (await db.hgetall(`chat:${chatId}:announcements`)) || {};
-      return res.status(200).json({ config, blacklist, filters, notes, swearwords, announcements });
+      const isCreator = process.env.CREATOR_ID ? user.id.toString() === process.env.CREATOR_ID : true;
+      return res.status(200).json({ config, blacklist, filters, notes, swearwords, announcements, isCreator });
     } 
     
     if (req.method === "POST") {

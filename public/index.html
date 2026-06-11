@@ -1172,6 +1172,9 @@
         <div class="nav-item" onclick="openTab('tab-users', this)">
           <div class="nav-item-inner"><i class="fa-solid fa-users" style="margin-right: 10px; width: 16px; text-align: center;"></i>Катышуучулар</div>
         </div>
+        <div class="nav-item" id="nav-creator" style="display: none;" onclick="openTab('tab-creator', this)">
+          <div class="nav-item-inner"><i class="fa-solid fa-crown" style="margin-right: 10px; width: 16px; text-align: center; color: #fbbf24;"></i>Глобалдык башкаруу</div>
+        </div>
 
         <div class="nav-label" style="margin-top: 10px;">Аналитика & Статистика</div>
         <!-- Accordion for Analytics -->
@@ -1789,6 +1792,80 @@
                 </div>
               </div>
             </div>
+
+            <!-- Activity Generator Card (Group Settings) -->
+            <div class="card" style="margin-top: 20px;">
+              <div class="card-header">
+                <div class="card-title"><i class="fa-solid fa-gamepad" style="color: var(--accent); margin-right: 8px;"></i>Активдүүлүк генератору (Генератор активности)</div>
+                <div class="card-description">Тайпада сүйлөшүү токтоп калганда, бот автоматтык түрдө кызыктуу суроолорду, кыргызча макалдарды же сурамжылоолорду жиберип турат. Туура жооп берген колдонуучуларга Карма (Сый-Урмат) упайлары берилет.</div>
+              </div>
+              <div class="card-body">
+                <div class="setting-row">
+                  <div class="setting-info">
+                    <div class="setting-name">Активдүүлүк генераторун күйгүзүү</div>
+                    <div class="setting-desc">Тайпадагы активдүүлүктү жогорулатуу үчүн суроо-жоопторду жиберип баштайт.</div>
+                  </div>
+                  <label class="switch">
+                    <input type="checkbox" id="activityGeneratorEnabled">
+                    <span class="slider"></span>
+                  </label>
+                </div>
+                
+                <div class="grid-2" style="margin-top: 14px;">
+                  <div class="form-group">
+                    <label class="form-label">Канча убакыт унчукпаганда? (саат)</label>
+                    <input type="number" class="form-input" id="activityGeneratorTimeoutHours" min="0.1" step="0.1" value="2">
+                    <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">Эгер тайпада ушунча убакыт сүйлөшүү болбосо, суроо жөнөтүлөт.</div>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Туура жооп үчүн берилүүчү Карма</label>
+                    <input type="number" class="form-input" id="activityGeneratorKarmaReward" min="1" value="1">
+                    <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">Макалды туура толуктаган колдонуучу ушунча упай алат.</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 6. ТАБ: ГЛОБАЛДЫК БАШКАРУУ (CREATOR PANEL) -->
+          <div id="tab-creator" class="tab-content">
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title"><i class="fa-solid fa-crown" style="color: #fbbf24; margin-right: 8px;"></i>Глобалдык Башкаруу Панели</div>
+                <div class="card-description">Боттун негиздөөчүсү үчүн гана. Топтордун активдүүлүгүн жогорулатуучу суроолорду жана макалдарды башкаруу.</div>
+              </div>
+              <div class="card-body">
+                <div style="background: rgba(251, 191, 36, 0.05); border: 1px solid rgba(251, 191, 36, 0.2); border-radius: 8px; padding: 12px; margin-bottom: 20px; font-size: 13px; color: #fde047;">
+                  <i class="fa-solid fa-triangle-exclamation" style="margin-right: 6px;"></i> Бул бөлүм боттун ээсине гана көрүнөт. Бул жерде кошулган мазмун бот кошулган бардык тайпалардагы активдүүлүк генераторунда колдонулат.
+                </div>
+
+                <div class="grid-2">
+                  <div class="form-group">
+                    <label class="form-label">Мазмундун түрү</label>
+                    <select class="form-select" id="ib_type" onchange="toggleIcebreakerFields()">
+                      <option value="proverb">Макал-лакап (Макалды улантуу)</option>
+                      <option value="question">Суроо (Ойлонуучу суроо)</option>
+                    </select>
+                  </div>
+                  <div class="form-group" id="ib_answer_container">
+                    <label class="form-label">Уландысы / Туура жооп</label>
+                    <input type="text" class="form-input" id="ib_answer" placeholder="Мисалы: өнөрсүз төр тилейт">
+                  </div>
+                </div>
+
+                <div class="form-group" style="margin-top: 14px;">
+                  <label class="form-label">Суроонун же Макалдын тексти</label>
+                  <textarea class="form-textarea" id="ib_text" rows="3" placeholder="Мисалы: Өнөрлүү өр тилейт, ..."></textarea>
+                </div>
+
+                <button class="btn btn-primary" style="width: 100%; margin-top: 10px;" onclick="saveIcebreaker()"><i class="fa-solid fa-plus" style="margin-right: 6px;"></i>Жаңы активдүүлүктү кошуу</button>
+
+                <div style="margin-top: 24px;">
+                  <h4 class="form-label">Учурдагы активдүүлүктөр базасы</h4>
+                  <div id="ib_list" style="margin-top: 10px; display: flex; flex-direction: column; gap: 10px;"></div>
+                </div>
+              </div>
+            </div>
           </div>
 
           <!-- 3. ТАБ: ЧЕКТӨӨЛӨР & ЭРЕЖЕЛЕР -->
@@ -2332,6 +2409,107 @@
               </div>
             </div>
           </div>
+
+          <!-- 7. ТАБ: ГЛОБАЛДЫК БАШКАРУУ (CREATOR PANEL) -->
+          <div id="tab-creator" class="tab-content">
+            <!-- System Diagnostics & Stats Row -->
+            <div class="card" style="border: 1px solid rgba(16, 185, 129, 0.3); background: rgba(16, 185, 129, 0.02);">
+              <div class="card-header" style="border-bottom: 1px solid rgba(16, 185, 129, 0.15);">
+                <div class="card-title" style="color: #6ee7b7;"><i class="fa-solid fa-server" style="color: #6ee7b7; margin-right: 8px;"></i>Системалык диагностика & Статистика</div>
+                <div class="card-description" style="color: #a7f3d0; opacity: 0.8;">Боттун серверинин абалы жана глобалдык көрсөткүчтөрү.</div>
+              </div>
+              <div class="card-body">
+                <div class="stats-header-grid" style="grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 0; padding: 0;">
+                  <div class="stat-mini-card">
+                    <div class="stat-mini-val" id="creator_stat_groups" style="color: var(--accent);">0</div>
+                    <div class="stat-mini-lbl">Активдүү тайпалар</div>
+                  </div>
+                  <div class="stat-mini-card">
+                    <div class="stat-mini-val" id="creator_stat_icebreakers" style="color: var(--success);">0</div>
+                    <div class="stat-mini-lbl">Активдүүлүктөр</div>
+                  </div>
+                  <div class="stat-mini-card">
+                    <div class="stat-mini-val" id="creator_stat_memory" style="color: var(--warn);">0 MB</div>
+                    <div class="stat-mini-lbl">Эс тутум (Heap)</div>
+                  </div>
+                  <div class="stat-mini-card">
+                    <div class="stat-mini-val" id="creator_stat_uptime" style="color: #a78bfa;">0с</div>
+                    <div class="stat-mini-lbl">Иштөө убактысы</div>
+                  </div>
+                </div>
+                <div style="margin-top: 12px; font-size: 11px; color: var(--text-muted); display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
+                  <span id="creator_stat_platform">Платформа: -</span>
+                  <span id="creator_stat_node">Node: -</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Global Broadcast Card -->
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title"><i class="fa-solid fa-tower-broadcast" style="color: var(--accent); margin-right: 8px;"></i>Жалпы Билдирүү Таратуу (Global Broadcast)</div>
+                <div class="card-description">Бот кошулган БАРДЫК тайпаларга бир убакта маанилүү билдирүү же жарнама жөнөтүү.</div>
+              </div>
+              <div class="card-body">
+                <div class="form-group">
+                  <label class="form-label">Билдирүүнүн тексти (Markdown колдоого алынат)</label>
+                  <textarea class="form-textarea" id="bc_text" rows="3" placeholder="Мисалы: Урматтуу колдонуучулар, бот жаңыланды!"></textarea>
+                </div>
+                <div class="form-group" style="margin-top: 10px;">
+                  <label class="form-label">Сүрөт шилтемеси (URL) — кааласаңыз</label>
+                  <div style="display: flex; gap: 8px;">
+                    <input type="text" class="form-input" id="bc_photo" placeholder="Мисалы: https://example.com/promo.jpg" style="flex: 1;">
+                    <button type="button" class="btn btn-secondary" onclick="document.getElementById('bc_file_input').click()" style="padding: 0 16px; white-space: nowrap;"><i class="fa-solid fa-upload"></i></button>
+                  </div>
+                  <input type="file" id="bc_file_input" style="display: none;" accept="image/*" onchange="handleImageUpload(this, 'bc_photo')">
+                </div>
+                <div class="form-group" style="margin-top: 10px;">
+                  <label class="form-label">Шилтеме баскычтары (Кааласаңыз. Сапта: Баскычтын Аты | Ссылка)</label>
+                  <textarea class="form-textarea" id="bc_buttons" rows="2" placeholder="Мисалы: Жаңылыкты окуу | https://t.me/channel"></textarea>
+                </div>
+                <button type="button" class="btn btn-primary" style="width: 100%; margin-top: 14px;" onclick="sendGlobalBroadcast()"><i class="fa-solid fa-paper-plane" style="margin-right: 8px;"></i>Билдирүүнү таратуу</button>
+              </div>
+            </div>
+
+            <!-- Global Icebreaker Manager Card -->
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title"><i class="fa-solid fa-brain" style="color: var(--accent); margin-right: 8px;"></i>Активдүүлүк суроолору & Макалдар базасы</div>
+                <div class="card-description">Бул жерден глобалдык суроолорду жана макалдарды башкара аласыз. Алар бардык группалардагы активдүүлүк генератору тарабынан колдонулат.</div>
+              </div>
+              <div class="card-body">
+                <div class="grid-2">
+                  <div class="form-group">
+                    <label class="form-label">Түрү</label>
+                    <select class="form-select" id="ib_type" onchange="toggleIcebreakerFields()">
+                      <option value="proverb">Кыргызча макал (улантуу)</option>
+                      <option value="question">Интеллектуалдык суроо</option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Текст (макалдын башы же суроо)</label>
+                    <input type="text" class="form-input" id="ib_text" placeholder="Мисалы: Өнөрлүү өрөгө жол табат, ...">
+                  </div>
+                </div>
+                <div class="form-group" id="ib_answer_container" style="margin-top: 10px;">
+                  <label class="form-label">Макалдын уландысы же туура жооп</label>
+                  <input type="text" class="form-input" id="ib_answer" placeholder="Мисалы: өнөрсүз төр тилейт">
+                </div>
+                <button type="button" class="btn btn-primary" style="width: 100%; margin-top: 14px;" onclick="saveIcebreaker()"><i class="fa-solid fa-plus" style="margin-right: 8px;"></i>Базага кошуу</button>
+
+                <!-- Quick Seed Templates Button -->
+                <div style="margin-top: 16px; display: flex; justify-content: space-between; align-items: center;">
+                  <span style="font-size: 11px; color: var(--text-muted);">Даяр шаблондорду кошуу:</span>
+                  <button type="button" class="btn btn-sm" onclick="seedDefaultTemplates()"><i class="fa-solid fa-magic" style="margin-right: 6px;"></i>Стандарттык шаблондорду жүктөө</button>
+                </div>
+
+                <div style="margin-top: 24px;">
+                  <h4 class="form-label">Сакталган глобалдык активдүүлүктөр</h4>
+                  <div id="ib_list" style="margin-top: 10px; display: flex; flex-direction: column; gap: 8px;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -2599,6 +2777,12 @@
         }
         document.getElementById('sidebar_group_title').innerText = statsData.groupTitle || "Тайпа";
 
+        if (appData.isCreator) {
+          const navCr = document.getElementById('nav-creator');
+          if (navCr) navCr.style.display = 'block';
+          fetchIcebreakers();
+        }
+
         // Render sections
         renderMain();
         renderLists();
@@ -2690,6 +2874,9 @@
       document.getElementById('mediaRateLimitPeriod').value = cfg.mediaRateLimitPeriod || 60;
       document.getElementById('mediaRateLimitAction').value = cfg.mediaRateLimitAction || 'delete';
       document.getElementById('commandsEnabled').checked = cfg.commandsEnabled || false;
+      document.getElementById('activityGeneratorEnabled').checked = cfg.activityGeneratorEnabled || false;
+      document.getElementById('activityGeneratorTimeoutHours').value = cfg.activityGeneratorTimeoutHours !== undefined ? cfg.activityGeneratorTimeoutHours : 2;
+      document.getElementById('activityGeneratorKarmaReward').value = cfg.activityGeneratorKarmaReward !== undefined ? cfg.activityGeneratorKarmaReward : 1;
     }
 
     function renderLists() {
@@ -4316,8 +4503,10 @@
       appData.config.mediaRateLimitEnabled = document.getElementById('mediaRateLimitEnabled').checked;
       appData.config.mediaRateLimitCount = parseInt(document.getElementById('mediaRateLimitCount').value) || 5;
       appData.config.mediaRateLimitPeriod = parseInt(document.getElementById('mediaRateLimitPeriod').value) || 60;
-      appData.config.mediaRateLimitAction = document.getElementById('mediaRateLimitAction').value;
       appData.config.commandsEnabled = document.getElementById('commandsEnabled').checked;
+      appData.config.activityGeneratorEnabled = document.getElementById('activityGeneratorEnabled').checked;
+      appData.config.activityGeneratorTimeoutHours = parseFloat(document.getElementById('activityGeneratorTimeoutHours').value) || 2;
+      appData.config.activityGeneratorKarmaReward = parseInt(document.getElementById('activityGeneratorKarmaReward').value) || 1;
 
       // Extract customCommands configs
       if (!appData.config.customCommands) appData.config.customCommands = {};
@@ -4348,6 +4537,249 @@
       } finally {
         btn.innerText = 'Өзгөртүүлөрдү Сактоо';
         btn.disabled = false;
+      }
+    }
+
+    let globalIcebreakers = {};
+
+    function toggleIcebreakerFields() {
+      const type = document.getElementById('ib_type').value;
+      const ansContainer = document.getElementById('ib_answer_container');
+      const label = ansContainer.previousElementSibling || ansContainer.querySelector('.form-label');
+      
+      if (type === 'proverb') {
+        ansContainer.style.display = 'block';
+        if (label) label.innerText = "Макалдын уландысы";
+        document.getElementById('ib_answer').placeholder = "Мисалы: өнөрсүз төр тилейт";
+      } else {
+        ansContainer.style.display = 'block';
+        if (label) label.innerText = "Туура жооп";
+        document.getElementById('ib_answer').placeholder = "Мисалы: 120";
+      }
+    }
+
+    async function fetchIcebreakers() {
+      try {
+        const res = await fetch('/api/creator', {
+          headers: { 'Authorization': 'tma ' + initData }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          globalIcebreakers = data.items || {};
+          renderIcebreakers();
+
+          if (data.stats) {
+            document.getElementById('creator_stat_groups').innerText = data.stats.activeGroups;
+            document.getElementById('creator_stat_icebreakers').innerText = data.stats.totalIcebreakers;
+            document.getElementById('creator_stat_memory').innerText = data.stats.memoryHeapUsed + ' MB';
+            
+            // Format uptime
+            const uptime = data.stats.uptime;
+            const hours = Math.floor(uptime / 3600);
+            const minutes = Math.floor((uptime % 3600) / 60);
+            const secs = uptime % 60;
+            document.getElementById('creator_stat_uptime').innerText = `${hours}с ${minutes}м ${secs}с`;
+            
+            document.getElementById('creator_stat_platform').innerText = 'Платформа: ' + data.stats.platform;
+            document.getElementById('creator_stat_node').innerText = 'Node: ' + data.stats.nodeVersion;
+          }
+        }
+      } catch (e) {
+        showToast("Активдүүлүктөрдү жүктөөдө ката кетти", 'error');
+      }
+    }
+
+    function renderIcebreakers() {
+      const container = document.getElementById('ib_list');
+      if (!container) return;
+
+      const entries = Object.entries(globalIcebreakers);
+      if (entries.length === 0) {
+        container.innerHTML = `<p style="font-size:12px; color:var(--text-muted)">Активдүүлүктөр базасы азырынча бош. Жаңыны кошуңуз!</p>`;
+        return;
+      }
+
+      container.innerHTML = entries.map(([id, itemRaw]) => {
+        let item = itemRaw;
+        if (typeof item === 'string') {
+          try { item = JSON.parse(itemRaw); } catch(e) {}
+        }
+        const typeLabel = item.type === 'proverb' ? 'Макал' : 'Суроо';
+        const typeBadgeStyle = item.type === 'proverb' 
+          ? 'background: rgba(16, 185, 129, 0.15); color: var(--success);' 
+          : 'background: rgba(0, 112, 243, 0.15); color: var(--accent);';
+
+        return `
+          <div class="list-item" style="border-left: 3px solid ${item.type === 'proverb' ? 'var(--success)' : 'var(--accent)'}; background: rgba(0, 0, 0, 0.15); margin-bottom: 8px;">
+            <div class="list-item-content">
+              <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 4px;">
+                <span class="badge" style="font-size: 10px; padding: 2px 6px; border-radius: 4px; ${typeBadgeStyle}">${typeLabel}</span>
+                <span style="font-size: 11px; color: var(--text-muted);">ID: ${item.id}</span>
+              </div>
+              <div class="list-item-title" style="font-size: 14px; font-weight: 500; line-height: 1.4; color: var(--text-main);">${item.text}</div>
+              <div class="list-item-subtitle" style="margin-top: 4px; font-size: 12px; color: var(--text-muted);">Жообу: <b style="color: var(--text-main);">${item.answer || 'Жок'}</b></div>
+            </div>
+            <div style="display: flex; align-items: center;">
+              <button class="btn btn-sm btn-danger" onclick="deleteIcebreaker('${item.id}')"><i class="fa-solid fa-trash"></i></button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    async function saveIcebreaker() {
+      const type = document.getElementById('ib_type').value;
+      const text = document.getElementById('ib_text').value.trim();
+      const answer = document.getElementById('ib_answer').value.trim();
+
+      if (!text) {
+        showToast("Суроонун же Макалдын тексти бош болбошу керек!", 'error');
+        return;
+      }
+
+      // Automatically format prompt depending on type
+      let formattedText = text;
+      if (type === 'proverb' && !text.includes('Келиңиздер, кыргыз макалын уланталы')) {
+        formattedText = `🤔 **Келиңиздер, кыргыз макалын уланталы:**\n\n«${text}»`;
+      } else if (type === 'question' && !text.startsWith('❓')) {
+        formattedText = `❓ **Активдүүлүк суроосу:**\n\n${text}`;
+      }
+
+      const id = 'ib_' + Date.now();
+      const payload = { id, type, text: formattedText, answer };
+
+      try {
+        const res = await fetch('/api/creator', {
+          method: 'POST',
+          headers: {
+            'Authorization': 'tma ' + initData,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(payload)
+        });
+
+        if (res.ok) {
+          showToast("Жаңы активдүүлүк ийгиликтүү кошулду!");
+          document.getElementById('ib_text').value = '';
+          document.getElementById('ib_answer').value = '';
+          fetchIcebreakers();
+        } else {
+          showToast("Сактоодо ката кетти", 'error');
+        }
+      } catch (e) {
+        showToast("Сактоодо ката кетти", 'error');
+      }
+    }
+
+    async function deleteIcebreaker(id) {
+      if (!confirm("Бул активдүүлүктү өчүрүүнү каалайсызбы?")) return;
+      try {
+        const res = await fetch(`/api/creator?id=${id}`, {
+          method: 'DELETE',
+          headers: { 'Authorization': 'tma ' + initData }
+        });
+        if (res.ok) {
+          showToast("Ийгиликтүү өчүрүлдү!");
+          fetchIcebreakers();
+        } else {
+          showToast("Өчүрүүдө ката кетти", 'error');
+        }
+      } catch (e) {
+        showToast("Өчүрүүдө ката кетти", 'error');
+      }
+    }
+
+    async function sendGlobalBroadcast() {
+      const text = document.getElementById('bc_text').value.trim();
+      const photo = document.getElementById('bc_photo').value.trim();
+      const btnTextVal = document.getElementById('bc_buttons').value.trim();
+
+      if (!text) {
+        showToast("Таратылуучу текст бош болбошу керек!", 'error');
+        return;
+      }
+
+      if (!confirm("Бул билдирүүнү бот кошулган бардык тайпаларга таратууну каалайсызбы?")) return;
+
+      const buttons = [];
+      if (btnTextVal) {
+        const btnLines = btnTextVal.split('\n');
+        for (const line of btnLines) {
+          if (line.includes('|')) {
+            const parts = line.split('|');
+            const bText = parts[0].trim();
+            const bUrl = parts.slice(1).join('|').trim();
+            if (bText && bUrl) {
+              buttons.push({ text: bText, url: bUrl });
+            }
+          }
+        }
+      }
+
+      showToast("Таратуу башталды...", "info");
+
+      try {
+        const res = await fetch('/api/creator', {
+          method: 'POST',
+          headers: {
+            'Authorization': 'tma ' + initData,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            action: 'broadcast',
+            text,
+            photo,
+            buttons
+          })
+        });
+
+        if (res.ok) {
+          const result = await res.json();
+          showToast(`Ийгиликтүү таратылды! Тайпалар: ${result.successCount}, Ката: ${result.failCount}`);
+          document.getElementById('bc_text').value = '';
+          document.getElementById('bc_photo').value = '';
+          document.getElementById('bc_buttons').value = '';
+        } else {
+          showToast("Таратууда ката кетти", "error");
+        }
+      } catch (e) {
+        showToast("Таратууда ката кетти", "error");
+      }
+    }
+
+    async function seedDefaultTemplates() {
+      const templates = [
+        { type: "proverb", text: "Ата Мекендин топурагы алтын, ...", answer: "абасы дары" },
+        { type: "proverb", text: "Өнөрлүү өрөгө жол табат, ...", answer: "өнөрсүз төр тилейт" },
+        { type: "proverb", text: "Окуу ийне менен кудук казгандай, ...", answer: "жалкоолук өмүрдү короткондой" },
+        { type: "question", text: "Кыргыз Республикасынын туусу кайсы жылы кабыл алынган?", answer: "1992" },
+        { type: "question", text: "Бишкек шаарынын мурдагы аталыштарын атаңыз (Фрунзе жана Пишпек)?", answer: "фрунзе пишпек" }
+      ];
+
+      showToast("Шаблондор жүктөлүүдө...", "info");
+      try {
+        for (const item of templates) {
+          let formattedText = item.text;
+          if (item.type === 'proverb') {
+            formattedText = `🤔 **Келиңиздер, кыргыз макалын уланталы:**\n\n«${item.text}»`;
+          } else {
+            formattedText = `❓ **Активдүүлүк суроосу:**\n\n${item.text}`;
+          }
+
+          const id = 'ib_' + Math.random().toString(36).substring(2, 11);
+          await fetch('/api/creator', {
+            method: 'POST',
+            headers: {
+              'Authorization': 'tma ' + initData,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ id, type: item.type, text: formattedText, answer: item.answer })
+          });
+        }
+        showToast("Баардык шаблондор ийгиликтүү кошулду!");
+        fetchIcebreakers();
+      } catch (e) {
+        showToast("Шаблондорду кошууда ката кетти", "error");
       }
     }
 
