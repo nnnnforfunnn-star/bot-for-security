@@ -1827,48 +1827,6 @@
               </div>
             </div>
           </div>
-
-          <!-- 6. ТАБ: ГЛОБАЛДЫК БАШКАРУУ (CREATOR PANEL) -->
-          <div id="tab-creator" class="tab-content">
-            <div class="card">
-              <div class="card-header">
-                <div class="card-title"><i class="fa-solid fa-crown" style="color: #fbbf24; margin-right: 8px;"></i>Глобалдык Башкаруу Панели</div>
-                <div class="card-description">Боттун негиздөөчүсү үчүн гана. Топтордун активдүүлүгүн жогорулатуучу суроолорду жана макалдарды башкаруу.</div>
-              </div>
-              <div class="card-body">
-                <div style="background: rgba(251, 191, 36, 0.05); border: 1px solid rgba(251, 191, 36, 0.2); border-radius: 8px; padding: 12px; margin-bottom: 20px; font-size: 13px; color: #fde047;">
-                  <i class="fa-solid fa-triangle-exclamation" style="margin-right: 6px;"></i> Бул бөлүм боттун ээсине гана көрүнөт. Бул жерде кошулган мазмун бот кошулган бардык тайпалардагы активдүүлүк генераторунда колдонулат.
-                </div>
-
-                <div class="grid-2">
-                  <div class="form-group">
-                    <label class="form-label">Мазмундун түрү</label>
-                    <select class="form-select" id="ib_type" onchange="toggleIcebreakerFields()">
-                      <option value="proverb">Макал-лакап (Макалды улантуу)</option>
-                      <option value="question">Суроо (Ойлонуучу суроо)</option>
-                    </select>
-                  </div>
-                  <div class="form-group" id="ib_answer_container">
-                    <label class="form-label">Уландысы / Туура жооп</label>
-                    <input type="text" class="form-input" id="ib_answer" placeholder="Мисалы: өнөрсүз төр тилейт">
-                  </div>
-                </div>
-
-                <div class="form-group" style="margin-top: 14px;">
-                  <label class="form-label">Суроонун же Макалдын тексти</label>
-                  <textarea class="form-textarea" id="ib_text" rows="3" placeholder="Мисалы: Өнөрлүү өр тилейт, ..."></textarea>
-                </div>
-
-                <button class="btn btn-primary" style="width: 100%; margin-top: 10px;" onclick="saveIcebreaker()"><i class="fa-solid fa-plus" style="margin-right: 6px;"></i>Жаңы активдүүлүктү кошуу</button>
-
-                <div style="margin-top: 24px;">
-                  <h4 class="form-label">Учурдагы активдүүлүктөр базасы</h4>
-                  <div id="ib_list" style="margin-top: 10px; display: flex; flex-direction: column; gap: 10px;"></div>
-                </div>
-              </div>
-            </div>
-          </div>
-
           <!-- 3. ТАБ: ЧЕКТӨӨЛӨР & ЭРЕЖЕЛЕР -->
           <div id="tab-rules" class="tab-content">
             <!-- Rules Text Card -->
