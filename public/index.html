@@ -1729,6 +1729,66 @@
                 </div>
               </div>
             </div>
+
+            <!-- Announcements Card -->
+            <div class="card" style="margin-top: 20px;">
+              <div class="card-header">
+                <div class="card-title"><i class="fa-solid fa-bullhorn" style="color: var(--accent); margin-right: 8px;"></i>Авто-кабарлар жана жарнамалар</div>
+                <div class="card-description">Тайпаларга маал-маалы менен же белгилүү бир убакта автоматтык түрдө жарыяларды, эскертүүлөрдү же жарнамаларды жөнөтүү.</div>
+              </div>
+              <div class="card-body">
+                <div class="form-group">
+                  <label class="form-label">Жарыянын тексти (Markdown колдоого алынат)</label>
+                  <textarea class="form-textarea" id="ann_text" rows="4" placeholder="Биздин өнөктөштөргө жазылыңыз..."></textarea>
+                </div>
+                
+                <div class="form-group" style="margin-top: 10px;">
+                  <label class="form-label">Сүрөт шилтемеси (URL) — кааласаңыз</label>
+                  <div style="display: flex; gap: 8px;">
+                    <input type="text" class="form-input" id="ann_photo" placeholder="Мисалы: https://example.com/image.jpg" style="flex: 1;">
+                    <button type="button" class="btn btn-secondary" onclick="document.getElementById('ann_file_input').click()" style="padding: 0 16px; white-space: nowrap;"><i class="fa-solid fa-upload"></i></button>
+                  </div>
+                  <input type="file" id="ann_file_input" style="display: none;" accept="image/*" onchange="handleImageUpload(this, 'ann_photo')">
+                </div>
+
+                <div class="form-group" style="margin-top: 10px;">
+                  <label class="form-label">Шилтеме баскычтары (Ар бир сапта: Баскычтын Аты | Ссылка)</label>
+                  <textarea class="form-textarea" id="ann_buttons" rows="2" placeholder="Мисалы:&#10;Каналга өтүү | https://t.me/mychannel"></textarea>
+                </div>
+
+                <div class="form-group" style="margin-top: 10px;">
+                  <label class="form-label">Кайсы тайпаларга жөнөтүлсүн? (Бир же бир нечесин тандаңыз)</label>
+                  <div id="ann_chats_container" style="display: flex; flex-direction: column; gap: 6px; max-height: 150px; overflow-y: auto; background: rgba(255,255,255,0.02); padding: 8px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.05);">
+                    <!-- Will be populated dynamically by JavaScript -->
+                  </div>
+                </div>
+
+                <div class="grid-2" style="margin-top: 14px;">
+                  <div class="form-group">
+                    <label class="form-label">Түрү</label>
+                    <select class="form-select" id="ann_interval_type" onchange="toggleAnnIntervalFields()">
+                      <option value="interval">Убакыт аралыгы (Ар бир N саатта/мүнөттө)</option>
+                      <option value="daily">Күн сайын белгилүү убакта</option>
+                    </select>
+                  </div>
+                  <div class="form-group" id="ann_interval_value_group">
+                    <label class="form-label">Аралыгы (мүнөт менен, мисалы 60)</label>
+                    <input type="number" class="form-input" id="ann_interval_value" min="5" value="60">
+                  </div>
+                  <div class="form-group" id="ann_daily_time_group" style="display: none;">
+                    <label class="form-label">Убактысы (HH:MM)</label>
+                    <input type="time" class="form-input" id="ann_daily_time" value="12:00">
+                  </div>
+                </div>
+
+                <button type="button" class="btn btn-primary" style="width: 100%; margin-top: 14px;" onclick="saveAnnouncement()">Жарыяны сактоо</button>
+
+                <div style="margin-top: 24px;">
+                  <h4 class="form-label">Активдүү жарыялар тизмеси</h4>
+                  <div id="ann_list" style="margin-top: 10px;"></div>
+                </div>
+              </div>
+            </div>
           </div>
 
           <!-- 3. ТАБ: ЧЕКТӨӨЛӨР & ЭРЕЖЕЛЕР -->
@@ -2292,7 +2352,7 @@
     const statsUrl = '/api/stats?chatId=' + chatId;
     const actionUrl = '/api/action?chatId=' + chatId;
 
-    let appData = { config: {}, blacklist: {}, filters: {}, notes: {}, swearwords: [] };
+     let appData = { config: {}, blacklist: {}, filters: {}, notes: {}, swearwords: [], announcements: {} };
     let statsData = { logs: [], stats: {}, users: [], topUsersAll: [], topUsersToday: [], groupTitle: "Тайпа" };
     let usersMap = {}; // userId -> info
 
@@ -2542,6 +2602,7 @@
         // Render sections
         renderMain();
         renderLists();
+        renderAnnChats();
         renderStatsAndLogs();
         renderUsersList();
         renderCommandsList();
@@ -2720,6 +2781,197 @@
         </div>`;
       }).join('');
       document.getElementById('nt_list').innerHTML = ntHtml || "<p style='font-size:12px;color:var(--text-muted)'>Тизме бош.</p>";
+
+      // Announcements rendering
+      const annHtml = Object.entries(appData.announcements || {}).map(([id, val]) => {
+        let text = val;
+        let scheduleLbl = "";
+        let chatLbls = [];
+        let enabled = true;
+        try {
+          const parsed = JSON.parse(val);
+          text = parsed.text || "";
+          enabled = parsed.enabled !== false;
+          if (parsed.intervalType === "interval") {
+            scheduleLbl = `Ар бир ${parsed.intervalValue} мүнөттө`;
+          } else {
+            scheduleLbl = `Күн сайын саат ${parsed.dailyTime} убактысында`;
+          }
+          if (Array.isArray(parsed.chats)) {
+            parsed.chats.forEach(cid => {
+              const matchingChat = (statsData.myChats || []).find(c => Number(c.id) === Number(cid));
+              if (matchingChat) {
+                chatLbls.push(matchingChat.title);
+              } else {
+                chatLbls.push(`Тайпа (${cid})`);
+              }
+            });
+          }
+        } catch (e) {}
+
+        const chatsStr = chatLbls.join(', ') || "Тандалган эмес";
+        
+        return `
+        <div class="list-item" style="border-left: 4px solid ${enabled ? 'var(--success)' : 'var(--text-muted)'};">
+          <div class="list-item-content">
+            <div class="list-item-title" style="display:flex; align-items:center; gap:8px;">
+              <span>Жарыя: ${scheduleLbl}</span>
+              <span class="badge" style="background: ${enabled ? 'var(--success)' : 'rgba(255,255,255,0.1)'}; font-size:10px;">
+                ${enabled ? 'Активдүү' : 'Өчүрүлгөн'}
+              </span>
+            </div>
+            <div class="list-item-subtitle" style="margin-top: 4px; font-weight: bold; color: var(--text-color);">${text}</div>
+            <div class="list-item-subtitle" style="margin-top: 2px; font-size:11px; color: var(--text-muted);">
+              Тайпалар: ${chatsStr}
+            </div>
+          </div>
+          <div style="display:flex; gap:6px; align-items: center;">
+            <button class="btn btn-sm ${enabled ? 'btn-secondary' : 'btn-primary'}" onclick="toggleAnnouncementEnabled('${id}')">${enabled ? 'Өчүрүү' : 'Күйгүзүү'}</button>
+            <button class="btn btn-sm" onclick="editAnnouncement('${id}')">Оңдоо</button>
+            <button class="btn btn-sm btn-danger" onclick="deleteListItem('announcements', '${id}')">Өчүрүү</button>
+          </div>
+        </div>`;
+      }).join('');
+      document.getElementById('ann_list').innerHTML = annHtml || "<p style='font-size:12px;color:var(--text-muted)'>Азырынча эч кандай жарыя кошула элек.</p>";
+    }
+
+    function renderAnnChats() {
+      const container = document.getElementById('ann_chats_container');
+      if (!container) return;
+      const chats = statsData.myChats || [];
+      container.innerHTML = chats.map(c => `
+        <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; cursor: pointer; color: var(--text-color); margin-bottom: 4px;">
+          <input type="checkbox" name="ann_chat_checkbox" value="${c.id}" style="accent-color: var(--accent);">
+          <span>${c.title}</span>
+        </label>
+      `).join('');
+    }
+
+    let editingAnnouncementId = null;
+
+    function toggleAnnIntervalFields() {
+      const type = document.getElementById('ann_interval_type').value;
+      if (type === 'interval') {
+        document.getElementById('ann_interval_value_group').style.display = 'block';
+        document.getElementById('ann_daily_time_group').style.display = 'none';
+      } else {
+        document.getElementById('ann_interval_value_group').style.display = 'none';
+        document.getElementById('ann_daily_time_group').style.display = 'block';
+      }
+    }
+
+    function saveAnnouncement() {
+      const text = document.getElementById('ann_text').value.trim();
+      const photo = document.getElementById('ann_photo').value.trim();
+      const btnTextVal = document.getElementById('ann_buttons').value.trim();
+      const intervalType = document.getElementById('ann_interval_type').value;
+      const intervalValue = parseInt(document.getElementById('ann_interval_value').value, 10) || 60;
+      const dailyTime = document.getElementById('ann_daily_time').value;
+
+      // Get selected chats
+      const checkedBoxes = document.querySelectorAll('input[name="ann_chat_checkbox"]:checked');
+      const chats = Array.from(checkedBoxes).map(cb => parseInt(cb.value, 10));
+
+      if (!text) {
+        showToast("Жарыянын тексти бош болбошу керек!", 'error');
+        return;
+      }
+      if (chats.length === 0) {
+        showToast("Жок дегенде бир тайпаны тандашыңыз керек!", 'error');
+        return;
+      }
+
+      // Parse buttons
+      const buttons = [];
+      if (btnTextVal) {
+        const btnLines = btnTextVal.split('\n');
+        for (const line of btnLines) {
+          if (line.includes('|')) {
+            const parts = line.split('|');
+            const bText = parts[0].trim();
+            const bUrl = parts.slice(1).join('|').trim();
+            if (bText && bUrl) {
+              buttons.push({ text: bText, url: bUrl });
+            }
+          }
+        }
+      }
+
+      const id = editingAnnouncementId || 'ann_' + Date.now();
+      const currentAnnouncement = appData.announcements[id] ? JSON.parse(appData.announcements[id]) : {};
+      
+      const payload = {
+        id,
+        text,
+        photo,
+        buttons,
+        chats,
+        intervalType,
+        intervalValue,
+        dailyTime,
+        enabled: currentAnnouncement.enabled !== false,
+        lastSent: currentAnnouncement.lastSent || 0
+      };
+
+      appData.announcements[id] = JSON.stringify(payload);
+      
+      // Clear fields
+      document.getElementById('ann_text').value = '';
+      document.getElementById('ann_photo').value = '';
+      document.getElementById('ann_buttons').value = '';
+      editingAnnouncementId = null;
+      
+      // Uncheck all chats
+      document.querySelectorAll('input[name="ann_chat_checkbox"]').forEach(cb => cb.checked = false);
+
+      renderLists();
+      showToast("Жарыя тизмеге кошулду. Сактоо баскычын басыңыз.");
+    }
+
+    function editAnnouncement(id) {
+      const val = appData.announcements[id];
+      if (!val) return;
+      
+      try {
+        const parsed = JSON.parse(val);
+        editingAnnouncementId = id;
+        document.getElementById('ann_text').value = parsed.text || '';
+        document.getElementById('ann_photo').value = parsed.photo || '';
+        if (Array.isArray(parsed.buttons)) {
+          const btnText = parsed.buttons.map(b => `${b.text} | ${b.url}`).join('\n');
+          document.getElementById('ann_buttons').value = btnText;
+        } else {
+          document.getElementById('ann_buttons').value = '';
+        }
+        
+        document.getElementById('ann_interval_type').value = parsed.intervalType || 'interval';
+        document.getElementById('ann_interval_value').value = parsed.intervalValue || 60;
+        document.getElementById('ann_daily_time').value = parsed.dailyTime || '12:00';
+        toggleAnnIntervalFields();
+
+        // Check selected chats
+        const targetChats = parsed.chats || [];
+        document.querySelectorAll('input[name="ann_chat_checkbox"]').forEach(cb => {
+          cb.checked = targetChats.includes(parseInt(cb.value, 10));
+        });
+
+        document.getElementById('ann_text').focus();
+        showToast("Жарыя оңдоо үчүн толтурулду.");
+      } catch (e) {
+        showToast("Жарыяны жүктөөдө ката кетти", 'error');
+      }
+    }
+
+    function toggleAnnouncementEnabled(id) {
+      const val = appData.announcements[id];
+      if (!val) return;
+      try {
+        const parsed = JSON.parse(val);
+        parsed.enabled = !parsed.enabled;
+        appData.announcements[id] = JSON.stringify(parsed);
+        renderLists();
+        showToast(parsed.enabled ? "Жарыя активдештирилди. Сактоо баскычын басыңыз." : "Жарыя өчүрүлдү. Сактоо баскычын басыңыз.");
+      } catch (e) {}
     }
 
     function editBlacklist(word) {
@@ -2746,6 +2998,7 @@
         if (val.startsWith('{') && val.endsWith('}')) {
           const parsed = JSON.parse(val);
           document.getElementById('fl_reply').value = parsed.text || '';
+          document.getElementById('fl_photo').value = parsed.photo || '';
           if (Array.isArray(parsed.buttons)) {
             const btnText = parsed.buttons.map(b => `${b.text} | ${b.url}`).join('\n');
             document.getElementById('fl_buttons').value = btnText;
@@ -2757,10 +3010,12 @@
         } else {
           document.getElementById('fl_reply').value = val;
           document.getElementById('fl_buttons').value = '';
+          document.getElementById('fl_photo').value = '';
         }
       } catch (e) {
         document.getElementById('fl_reply').value = val;
         document.getElementById('fl_buttons').value = '';
+        document.getElementById('fl_photo').value = '';
       }
       document.getElementById('fl_word').focus();
       showToast("Оңдоо үчүн маалыматтар толтурулду.");
@@ -2773,6 +3028,7 @@
         if (val.startsWith('{') && val.endsWith('}')) {
           const parsed = JSON.parse(val);
           document.getElementById('nt_text').value = parsed.text || '';
+          document.getElementById('nt_photo').value = parsed.photo || '';
           if (Array.isArray(parsed.buttons)) {
             const btnText = parsed.buttons.map(b => `${b.text} | ${b.url}`).join('\n');
             document.getElementById('nt_buttons').value = btnText;
@@ -2784,10 +3040,12 @@
         } else {
           document.getElementById('nt_text').value = val;
           document.getElementById('nt_buttons').value = '';
+          document.getElementById('nt_photo').value = '';
         }
       } catch (e) {
         document.getElementById('nt_text').value = val;
         document.getElementById('nt_buttons').value = '';
+        document.getElementById('nt_photo').value = '';
       }
       document.getElementById('nt_name').focus();
       showToast("Оңдоо үчүн маалыматтар толтурулду.");

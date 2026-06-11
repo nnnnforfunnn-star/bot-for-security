@@ -186,10 +186,124 @@ async function resolveTargetUser(ctx: Context, text: string, triggerUsed: string
   return null;
 }
 
+async function checkAndSendAnnouncements(ctx: Context) {
+  try {
+    // Получаем все чаты, в которых состоит бот
+    const allChatsRaw = await db.smembers("bot:chats") || [];
+    for (const chatKeyId of allChatsRaw) {
+      const parentChatId = parseInt(chatKeyId, 10);
+      if (isNaN(parentChatId)) continue;
+
+      // Получаем список объявлений для этого чата
+      const announcementsMap = await db.hgetall(`chat:${parentChatId}:announcements`);
+      if (!announcementsMap) continue;
+
+      for (const [annId, annValRaw] of Object.entries(announcementsMap)) {
+        if (typeof annValRaw !== "string") continue;
+        try {
+          const ann = JSON.parse(annValRaw);
+          if (ann.enabled === false) continue;
+
+          // Проверяем, нужно ли отправлять
+          let shouldSend = false;
+          const now = Date.now();
+          const lastSent = ann.lastSent || 0;
+
+          if (ann.intervalType === "interval") {
+            const intervalMs = (ann.intervalValue || 60) * 60 * 1000;
+            if (now - lastSent >= intervalMs) {
+              shouldSend = true;
+            }
+          } else if (ann.intervalType === "daily") {
+            // Конвертируем текущее системное время в часовой пояс Бишкека (UTC+6)
+            const bishkekTime = new Date(now + 6 * 3600 * 1000);
+            const todayStr = bishkekTime.toISOString().split("T")[0];
+            const lastSentDateStr = lastSent ? new Date(lastSent + 6 * 3600 * 1000).toISOString().split("T")[0] : "";
+            
+            if (todayStr !== lastSentDateStr) {
+              const [targetHours, targetMinutes] = (ann.dailyTime || "12:00").split(":").map(Number);
+              const currentHours = bishkekTime.getUTCHours();
+              const currentMinutes = bishkekTime.getUTCMinutes();
+              if (currentHours > targetHours || (currentHours === targetHours && currentMinutes >= targetMinutes)) {
+                shouldSend = true;
+              }
+            }
+          }
+
+          if (shouldSend) {
+            // Отправляем во все целевые группы
+            const targetChats = ann.chats || [];
+            for (const targetChatId of targetChats) {
+              try {
+                // Создаем клавиатуру
+                let replyMarkup = undefined;
+                if (Array.isArray(ann.buttons) && ann.buttons.length > 0) {
+                  replyMarkup = new InlineKeyboard();
+                  for (const btn of ann.buttons) {
+                    if (btn.text && btn.url) {
+                      replyMarkup.url(btn.text, btn.url).row();
+                    }
+                  }
+                }
+
+                if (ann.photo) {
+                  await ctx.api.sendPhoto(targetChatId, ann.photo, {
+                    caption: ann.text,
+                    reply_markup: replyMarkup,
+                    parse_mode: "Markdown"
+                  }).catch(async () => {
+                    // Fallback без Markdown
+                    return await ctx.api.sendPhoto(targetChatId, ann.photo, {
+                      caption: ann.text,
+                      reply_markup: replyMarkup
+                    });
+                  });
+                } else {
+                  await ctx.api.sendMessage(targetChatId, ann.text, {
+                    reply_markup: replyMarkup,
+                    parse_mode: "Markdown"
+                  }).catch(async () => {
+                    // Fallback без Markdown
+                    return await ctx.api.sendMessage(targetChatId, ann.text, {
+                      reply_markup: replyMarkup
+                    });
+                  });
+                }
+              } catch (chatErr) {
+                logger.error(`Error sending announcement ${annId} to chat ${targetChatId}:`, chatErr);
+              }
+            }
+
+            // Обновляем lastSent и сохраняем
+            ann.lastSent = now;
+            await db.hset(`chat:${parentChatId}:announcements`, annId, JSON.stringify(ann));
+          }
+        } catch (e) {
+          logger.error(`Error processing announcement ${annId}:`, e);
+        }
+      }
+    }
+  } catch (err) {
+    logger.error("Error in checkAndSendAnnouncements:", err);
+  }
+}
+
 export async function messageHandler(ctx: Context, next: NextFunction): Promise<void> {
   const msg = ctx.message || ctx.editedMessage;
   if (!msg || !ctx.chat || ctx.chat.type === "private") {
     return next();
+  }
+
+  // Проверяем лок планировщика объявлений раз в 30 секунд
+  const lockKey = "announcements:scheduler:lock";
+  try {
+    const hasLock = await db.get(lockKey);
+    if (!hasLock) {
+      await db.set(lockKey, "locked", 30);
+      await checkAndSendAnnouncements(ctx).catch(err => logger.error("Error in announcements check:", err));
+    }
+  } catch (lockErr) {
+    logger.error("Error checking/setting scheduler lock:", lockErr);
   }
 
   const chatId = ctx.chat.id;

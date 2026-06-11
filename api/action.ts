@@ -331,6 +331,11 @@ export default async function handler(req: any, res: any) {
           for (const [k, v] of Object.entries(previousState)) {
             await db.hset(`chat:${chatId}:notes`, k, String(v));
           }
+        } else if (actionType === "announcements") {
+          await db.del(`chat:${chatId}:announcements`);
+          for (const [k, v] of Object.entries(previousState)) {
+            await db.hset(`chat:${chatId}:announcements`, k, String(v));
+          }
         } else if (actionType === "swearwords") {
           await db.del(`chat:${chatId}:swearwords`);
           if (Array.isArray(previousState)) {

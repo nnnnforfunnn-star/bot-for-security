@@ -5,7 +5,7 @@ export interface AuditEntry {
   userId: number;
   userName: string;
   timestamp: number;
-  actionType: "config" | "blacklist" | "filters" | "notes" | "swearwords" | "moderation";
+  actionType: "config" | "blacklist" | "filters" | "notes" | "swearwords" | "moderation" | "announcements";
   description: string;
   previousState: any;
   undone?: boolean;

@@ -62,11 +62,12 @@ export default async function handler(req: any, res: any) {
       const filters = (await db.hgetall(`chat:${chatId}:filters`)) || {};
       const notes = (await db.hgetall(`chat:${chatId}:notes`)) || {};
       const swearwords = await db.smembers(`chat:${chatId}:swearwords`) || [];
-      return res.status(200).json({ config, blacklist, filters, notes, swearwords });
+      const announcements = (await db.hgetall(`chat:${chatId}:announcements`)) || {};
+      return res.status(200).json({ config, blacklist, filters, notes, swearwords, announcements });
     } 
     
     if (req.method === "POST") {
-      const { config, blacklist, filters, notes, swearwords } = req.body;
+      const { config, blacklist, filters, notes, swearwords, announcements } = req.body;
       const adminName = user.first_name || "Администратор";
 
       // Получаем старые состояния для логирования и отката
@@ -75,6 +76,7 @@ export default async function handler(req: any, res: any) {
       const oldFilters = (await db.hgetall(`chat:${chatId}:filters`)) || {};
       const oldNotes = (await db.hgetall(`chat:${chatId}:notes`)) || {};
       const oldSwearwords = (await db.smembers(`chat:${chatId}:swearwords`)) || [];
+      const oldAnnouncements = (await db.hgetall(`chat:${chatId}:announcements`)) || {};
       
       let updatedConfig = {};
       if (config) {
@@ -139,6 +141,17 @@ export default async function handler(req: any, res: any) {
           await logAuditAction(chatId, user.id, adminName, "notes", "Кыска командалар өзгөртүлдү", oldNotes);
         }
         await syncHash(`chat:${chatId}:notes`, notes);
+      }
+
+      if (announcements) {
+        const oldKeys = Object.keys(oldAnnouncements).sort();
+        const newKeys = Object.keys(announcements).sort();
+        const hasAnnouncementsChanged = JSON.stringify(oldKeys) !== JSON.stringify(newKeys) || 
+          newKeys.some(k => oldAnnouncements[k] !== announcements[k]);
+        if (hasAnnouncementsChanged) {
+          await logAuditAction(chatId, user.id, adminName, "announcements", "Жарыялар өзгөртүлдү", oldAnnouncements);
+        }
+        await syncHash(`chat:${chatId}:announcements`, announcements);
       }
 
       // Sync swear words (Set, not Hash)
