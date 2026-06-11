@@ -187,7 +187,7 @@ export default async function handler(req: any, res: any) {
 
             if (sentMsg && deleteAfterMinutes && deleteAfterMinutes > 0) {
               const deleteAt = Date.now() + deleteAfterMinutes * 60 * 1000;
-              await db.rpush(`chat:${cid}:broadcast_deletions`, JSON.stringify({ messageId: sentMsg.message_id, deleteAt }));
+              await db.rpush("global:broadcast_deletions", JSON.stringify({ chatId: cid, messageId: sentMsg.message_id, deleteAt }));
             }
             successCount++;
           } catch (e) {

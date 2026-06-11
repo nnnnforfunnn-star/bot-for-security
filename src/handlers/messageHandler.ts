@@ -371,9 +371,9 @@ async function checkAndRunActivityGenerator(ctx: Context, chatId: number) {
   }
 }
 
-async function checkAndDeleteBroadcasts(ctx: Context, chatId: number) {
+async function checkAndDeleteBroadcasts(ctx: Context) {
   try {
-    const listKey = `chat:${chatId}:broadcast_deletions`;
+    const listKey = "global:broadcast_deletions";
     const items = await db.lrange(listKey, 0, -1);
     if (!items || items.length === 0) return;
 
@@ -384,7 +384,7 @@ async function checkAndDeleteBroadcasts(ctx: Context, chatId: number) {
       try {
         const item = typeof itemRaw === "string" ? JSON.parse(itemRaw) : itemRaw;
         if (now >= item.deleteAt) {
-          await ctx.api.deleteMessage(chatId, item.messageId).catch(() => {});
+          await ctx.api.deleteMessage(item.chatId, item.messageId).catch(() => {});
         } else {
           remaining.push(JSON.stringify(item));
         }
@@ -419,7 +419,7 @@ export async function messageHandler(ctx: Context, next: NextFunction): Promise<
       await db.set(lockKey, "locked", 30);
       await checkAndSendAnnouncements(ctx, chatId).catch(err => logger.error("Error in announcements check:", err));
       await checkAndRunActivityGenerator(ctx, chatId).catch(err => logger.error("Error in activity generator:", err));
-      await checkAndDeleteBroadcasts(ctx, chatId).catch(err => logger.error("Error in checkAndDeleteBroadcasts:", err));
+      await checkAndDeleteBroadcasts(ctx).catch(err => logger.error("Error in checkAndDeleteBroadcasts:", err));
     }
   } catch (lockErr) {
     logger.error("Error checking/setting scheduler lock:", lockErr);
