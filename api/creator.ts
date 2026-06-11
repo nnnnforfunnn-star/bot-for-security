@@ -37,7 +37,7 @@ export default async function handler(req: any, res: any) {
 
     // Проверяем, является ли пользователь создателем бота
     const creatorId = process.env.CREATOR_ID;
-    const isCreator = creatorId ? user.id.toString() === creatorId : true;
+    const isCreator = creatorId ? user.id.toString() === creatorId : false;
 
     if (!isCreator) {
       return res.status(403).json({ error: "Forbidden: Only the Bot Creator can access this panel" });
