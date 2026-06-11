@@ -1146,6 +1146,7 @@
             <div class="profile-info">
               <div class="profile-user" id="sidebar_username">@user</div>
               <div class="profile-group" id="sidebar_group_title">Жүктөлүүдө...</div>
+              <div id="sidebar_user_id" style="font-size: 10px; color: var(--text-muted); margin-top: 2px;">ID: ...</div>
             </div>
             <div class="profile-arrow" id="profile_arrow"><i class="fa-solid fa-chevron-down" style="font-size: 10px; transition: transform 0.2s;"></i></div>
           </div>
@@ -2914,6 +2915,8 @@
         if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
           document.getElementById('sidebar_username').innerText = '@' + (tg.initDataUnsafe.user.username || tg.initDataUnsafe.user.first_name);
           document.getElementById('sidebar_avatar').innerText = (tg.initDataUnsafe.user.first_name || 'U').substring(0, 1).toUpperCase();
+          const sid = document.getElementById('sidebar_user_id');
+          if (sid) sid.innerText = 'ID: ' + tg.initDataUnsafe.user.id;
         }
         document.getElementById('sidebar_group_title').innerText = statsData.groupTitle || "Тайпа";
 
