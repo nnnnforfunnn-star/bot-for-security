@@ -27,6 +27,7 @@ export interface GroupConfig {
   activityGeneratorEnabled?: boolean;
   activityGeneratorTimeoutHours?: number;
   activityGeneratorKarmaReward?: number;
+  mainTopicId?: number;
   
   // Advanced Granular Actions
   lockdownAction?: "delete" | "mute" | "warn" | "kick" | "ban";
@@ -138,6 +139,7 @@ export const DEFAULT_CONFIG: GroupConfig = {
   activityGeneratorEnabled: false,
   activityGeneratorTimeoutHours: 2,
   activityGeneratorKarmaReward: 1,
+  mainTopicId: undefined,
   
   lockdownAction: "delete",
   swearAction: "warn",

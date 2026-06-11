@@ -1645,6 +1645,13 @@
                   </div>
                 </div>
 
+                <!-- Topic ID for forum groups -->
+                <div class="form-group" style="margin-top: 14px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 14px;">
+                  <label class="form-label">Негизги тема ID (Topic/Thread ID)</label>
+                  <input type="number" class="form-input" id="mainTopicId" placeholder="Мисалы: 123 (башкы чат үчүн бош калтырыңыз)">
+                  <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">Эгер тайпаңызда темалар (Topics) кошулган болсо, боттун бардык билдирүүлөрү (жарыялар, саламдашуулар) ушул теманын ичине жөнөтүлөт. Ошондой эле каалаган темада ботко <code>/settopic</code> командасын жазсаңыз болот.</div>
+                </div>
+
                 <!-- 2. Auto Pin Welcome -->
                 <div class="setting-row" style="margin-top: 14px;">
                   <div class="setting-info">
@@ -2978,6 +2985,7 @@
       document.getElementById('activityGeneratorEnabled').checked = cfg.activityGeneratorEnabled || false;
       document.getElementById('activityGeneratorTimeoutHours').value = cfg.activityGeneratorTimeoutHours !== undefined ? cfg.activityGeneratorTimeoutHours : 2;
       document.getElementById('activityGeneratorKarmaReward').value = cfg.activityGeneratorKarmaReward !== undefined ? cfg.activityGeneratorKarmaReward : 1;
+      document.getElementById('mainTopicId').value = cfg.mainTopicId !== undefined && cfg.mainTopicId !== null ? cfg.mainTopicId : '';
     }
 
     function renderLists() {
@@ -4846,6 +4854,9 @@
       appData.config.activityGeneratorEnabled = document.getElementById('activityGeneratorEnabled').checked;
       appData.config.activityGeneratorTimeoutHours = parseFloat(document.getElementById('activityGeneratorTimeoutHours').value) || 2;
       appData.config.activityGeneratorKarmaReward = parseInt(document.getElementById('activityGeneratorKarmaReward').value) || 1;
+      
+      const mainTopicIdVal = document.getElementById('mainTopicId').value.trim();
+      appData.config.mainTopicId = mainTopicIdVal ? parseInt(mainTopicIdVal) : null;
 
       try {
         await fetch(apiUrl, {

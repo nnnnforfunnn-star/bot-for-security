@@ -43,7 +43,7 @@ export async function joinHandler(ctx: Context, next: NextFunction): Promise<voi
       try {
         await ctx.api.banChatMember(chatId, member.id);
         await ctx.api.unbanChatMember(chatId, member.id);
-        await ctx.reply(`❌ [${member.first_name}](tg://user?id=${member.id}) тайпага кире алган жок (Никнейми/Username жок).`, { parse_mode: "Markdown" });
+        await ctx.reply(`❌ [${member.first_name}](tg://user?id=${member.id}) тайпага кире алган жок (Никнейми/Username жок).`, { parse_mode: "Markdown", message_thread_id: config.mainTopicId });
         await logAction(ctx.api, chatId, member.id, member.first_name, "Kick", "Кирүү чыпкасы: Никнейми жок аккаунт");
       } catch (e) {
         logger.error(`Error filtering username join for ${member.id}`, e);
@@ -57,7 +57,7 @@ export async function joinHandler(ctx: Context, next: NextFunction): Promise<voi
         if (!photos || photos.total_count === 0) {
           await ctx.api.banChatMember(chatId, member.id);
           await ctx.api.unbanChatMember(chatId, member.id);
-          await ctx.reply(`❌ [${member.first_name}](tg://user?id=${member.id}) тайпага кире алган жок (Профиль сүрөтү жок).`, { parse_mode: "Markdown" });
+          await ctx.reply(`❌ [${member.first_name}](tg://user?id=${member.id}) тайпага кире алган жок (Профиль сүрөтү жок).`, { parse_mode: "Markdown", message_thread_id: config.mainTopicId });
           await logAction(ctx.api, chatId, member.id, member.first_name, "Kick", "Кирүү чыпкасы: Профиль сүрөтү жок аккаунт");
           continue;
         }
@@ -96,12 +96,12 @@ export async function joinHandler(ctx: Context, next: NextFunction): Promise<voi
           const spamAction = config.joinFilterSpamAction || "ban";
           if (spamAction === "ban") {
             await ctx.api.banChatMember(chatId, member.id);
-            await ctx.reply(`🚫 [${member.first_name}](tg://user?id=${member.id}) спам сөздөрү/био камтылгандыктан тайпадан биротоло блоктолду (Сөз: "${matchedKeyword}").`, { parse_mode: "Markdown" });
+            await ctx.reply(`🚫 [${member.first_name}](tg://user?id=${member.id}) спам сөздөрү/био камтылгандыктан тайпадан биротоло блоктолду (Сөз: "${matchedKeyword}").`, { parse_mode: "Markdown", message_thread_id: config.mainTopicId });
             await logAction(ctx.api, chatId, member.id, member.first_name, "Ban", `Скам/Спам Сканер: Ник/Био сөзү: "${matchedKeyword}"`);
           } else {
             await ctx.api.banChatMember(chatId, member.id);
             await ctx.api.unbanChatMember(chatId, member.id);
-            await ctx.reply(`👢 [${member.first_name}](tg://user?id=${member.id}) шектүү био/ник камтылгандыктан тайпадан чыгарылды (Сөз: "${matchedKeyword}").`, { parse_mode: "Markdown" });
+            await ctx.reply(`👢 [${member.first_name}](tg://user?id=${member.id}) шектүү био/ник камтылгандыктан тайпадан чыгарылды (Сөз: "${matchedKeyword}").`, { parse_mode: "Markdown", message_thread_id: config.mainTopicId });
             await logAction(ctx.api, chatId, member.id, member.first_name, "Kick", `Скам/Спам Сканер: Ник/Био сөзү: "${matchedKeyword}"`);
           }
           continue;
@@ -220,7 +220,7 @@ export async function joinHandler(ctx: Context, next: NextFunction): Promise<voi
             `**${answer.split("").join(" ")}**`;
         }
 
-        const captchaMsg = await ctx.reply(captchaText, { reply_markup: keyboard, parse_mode: "Markdown" });
+        const captchaMsg = await ctx.reply(captchaText, { reply_markup: keyboard, parse_mode: "Markdown", message_thread_id: config.mainTopicId });
 
         // Сохраняем состояние капчи в Redis
         const pendingKey = `chat:${chatId}:user:${member.id}:captchaPending`;
@@ -238,7 +238,7 @@ export async function joinHandler(ctx: Context, next: NextFunction): Promise<voi
               if (config.captchaKick) {
                 await ctx.api.banChatMember(chatId, member.id).catch(() => {});
                 await ctx.api.unbanChatMember(chatId, member.id).catch(() => {});
-                await ctx.reply(`👢 [${member.first_name}](tg://user?id=${member.id}) капчаны өз убагында чечпегендиктен тайпадан чыгарылды.`, { parse_mode: "Markdown" });
+                await ctx.reply(`👢 [${member.first_name}](tg://user?id=${member.id}) капчаны өз убагында чечпегендиктен тайпадан чыгарылды.`, { parse_mode: "Markdown", message_thread_id: config.mainTopicId });
                 await logAction(ctx.api, chatId, member.id, member.first_name, "Kick", "Капча убактысы бүттү");
               } else {
                 await logAction(ctx.api, chatId, member.id, member.first_name, "Restrict", "Капча убактысы бүттү (чектелген бойдон калды)");
@@ -334,7 +334,8 @@ async function sendWelcomeFlow(ctx: Context, member: { id: number; first_name: s
 
       const welcomeMsg = await ctx.reply(text, {
         reply_markup: needsRules ? keyboard : undefined,
-        parse_mode: "Markdown"
+        parse_mode: "Markdown",
+        message_thread_id: config.mainTopicId
       });
 
       // Сохраняем ID последнего приветственного сообщения
@@ -541,7 +542,7 @@ export async function goodbyeHandler(ctx: Context, next: NextFunction): Promise<
   if (config.goodbye.enabled) {
     try {
       const text = formatMessage(config.goodbye.text, member, chatTitle);
-      const goodbyeMsg = await ctx.reply(text, { parse_mode: "Markdown" });
+      const goodbyeMsg = await ctx.reply(text, { parse_mode: "Markdown", message_thread_id: config.mainTopicId });
 
       // Авто-удаление коштошуу билдирүүсү через N секунд
       if (config.goodbyeAutoDelete && config.goodbyeAutoDelete > 0) {

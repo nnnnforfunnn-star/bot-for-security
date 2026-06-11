@@ -238,24 +238,31 @@ async function resolveTargetUser(ctx: Context, text: string, triggerUsed: string
                 }
               }
 
+              const targetConfig = await getGroupConfig(targetChatId);
+              const threadId = targetConfig.mainTopicId;
+
               if (ann.photo) {
                 await ctx.api.sendPhoto(targetChatId, ann.photo, {
                   caption: ann.text,
                   reply_markup: replyMarkup,
-                  parse_mode: "Markdown"
+                  parse_mode: "Markdown",
+                  message_thread_id: threadId
                 }).catch(async () => {
                   return await ctx.api.sendPhoto(targetChatId, ann.photo, {
                     caption: ann.text,
-                    reply_markup: replyMarkup
+                    reply_markup: replyMarkup,
+                    message_thread_id: threadId
                   });
                 });
               } else {
                 await ctx.api.sendMessage(targetChatId, ann.text, {
                   reply_markup: replyMarkup,
-                  parse_mode: "Markdown"
+                  parse_mode: "Markdown",
+                  message_thread_id: threadId
                 }).catch(async () => {
                   return await ctx.api.sendMessage(targetChatId, ann.text, {
-                    reply_markup: replyMarkup
+                    reply_markup: replyMarkup,
+                    message_thread_id: threadId
                   });
                 });
               }
@@ -339,8 +346,14 @@ async function checkAndRunActivityGenerator(ctx: Context, chatId: number) {
       if (!chosenItem) return;
 
       try {
-        await ctx.api.sendMessage(chatId, chosenItem.text, { parse_mode: "Markdown" }).catch(async () => {
-          return await ctx.api.sendMessage(chatId, chosenItem.text);
+        const threadId = config.mainTopicId;
+        await ctx.api.sendMessage(chatId, chosenItem.text, {
+          parse_mode: "Markdown",
+          message_thread_id: threadId
+        }).catch(async () => {
+          return await ctx.api.sendMessage(chatId, chosenItem.text, {
+            message_thread_id: threadId
+          });
         });
       } catch (e) {
         logger.error(`Error sending icebreaker to chat ${chatId}:`, e);

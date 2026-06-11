@@ -2,7 +2,7 @@ import { Context } from "grammy";
 import { isUserAdmin, banUser, unbanUser } from "../utils/telegram.js";
 import { db } from "../utils/db.js";
 import { logger } from "../utils/logger.js";
-import { getGroupConfig } from "../utils/configManager.js";
+import { getGroupConfig, updateGroupConfig } from "../utils/configManager.js";
 import { logAction } from "../utils/actionLogger.js";
 
 // Helper function to extract user target from reply
@@ -267,3 +267,28 @@ export async function zombiesCommand(ctx: Context) {
     await ctx.reply("❌ Издөө учурунда ката кетти.");
   }
 }
+
+/**
+ * /settopic — Установить текущую тему (Topic) в качестве основной для бота
+ */
+export async function setTopicCommand(ctx: Context) {
+  if (!ctx.chat || ctx.chat.type === "private" || !(await isUserAdmin(ctx))) return;
+
+  const text = ctx.message?.text?.split(" ") || [];
+  const clearMode = text[1] === "clear" || text[1] === "reset" || text[1] === "тазалоо";
+
+  if (clearMode) {
+    await updateGroupConfig(ctx.chat.id, { mainTopicId: undefined });
+    await ctx.reply("📌 **Ийгиликтүү!** Боттун билдирүүлөрү башкы (General) чатка кайтарылды.");
+    return;
+  }
+
+  const threadId = ctx.message?.message_thread_id;
+  if (threadId) {
+    await updateGroupConfig(ctx.chat.id, { mainTopicId: threadId });
+    await ctx.reply(`📌 **Ийгиликтүү!** Бул тема боттун билдирүүлөрү (саламдашуулар, эскертүүлөр ж.б.) үчүн негизги тема катары белгиленди (Тема ID: \`${threadId}\`).\n\nБашкы чатка кайтаруу үчүн \`/settopic clear\` жазыңыз.`, { parse_mode: "Markdown" });
+  } else {
+    await ctx.reply("💡 **Маалымат:** Бул буйрукту бот жаза турган конкреттүү теманын (Topic) ичинде жазыңыз.\n\nЭгер бул башкы (General) чат болсо, бот баары бир ушул жерге жазат.");
+  }
+}
+

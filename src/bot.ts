@@ -9,7 +9,7 @@ import { messageHandler } from "./handlers/messageHandler.js";
 import { adminPanelCommand, adminPanelCallback, sendAdminPanel } from "./handlers/adminPanel.js";
 import { filterCommand, stopFilterCommand, filtersListCommand } from "./handlers/filterHandler.js";
 import { helpCommand, helpCallback } from "./handlers/helpHandler.js";
-import { kickCommand, pinCommand, unpinCommand, warnCommand, unwarnCommand, warnsCommand, idCommand, kickmeCommand, muteallCommand, unmuteallCommand, zombiesCommand } from "./handlers/modCommands.js";
+import { kickCommand, pinCommand, unpinCommand, warnCommand, unwarnCommand, warnsCommand, idCommand, kickmeCommand, muteallCommand, unmuteallCommand, zombiesCommand, setTopicCommand } from "./handlers/modCommands.js";
 import { lockCommand, unlockCommand, locksListCommand } from "./handlers/locksHandler.js";
 import { 
   delCommand, purgeCommand, setRulesCommand, rulesCommand, 
@@ -118,6 +118,7 @@ bot.command("kickme", kickmeCommand);
 bot.command("muteall", muteallCommand);
 bot.command("unmuteall", unmuteallCommand);
 bot.command("zombies", zombiesCommand);
+bot.command("settopic", setTopicCommand);
 
 // 1.5 Жаңы тайпа башкаруу команд лары
 bot.command("promote", promoteCommand);
