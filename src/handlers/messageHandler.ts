@@ -1,7 +1,7 @@
 import { Context, NextFunction, InlineKeyboard } from "grammy";
 import { logger } from "../utils/logger.js";
 import { isUserAdmin, muteUser, banUser, unbanUser, formatMessageToHtml, parseDurationAndReason } from "../utils/telegram.js";
-import { getGroupConfig } from "../utils/configManager.js";
+import { getGroupConfig, updateGroupConfig } from "../utils/configManager.js";
 import { db } from "../utils/db.js";
 import { logAction } from "../utils/actionLogger.js";
 
@@ -718,6 +718,60 @@ export async function messageHandler(ctx: Context, next: NextFunction): Promise<
           await logAction(ctx.api, chatId, targetUserId, targetName, "Өчүрүү", reason, ctx.from.first_name);
         }
         replyMsgText = customReply;
+      } else if (action === "warns_top") {
+        const userIds = await db.smembers(`chat:${chatId}:users`);
+        const warnList: string[] = [];
+        for (const uid of userIds) {
+          const w = await db.get<number>(`chat:${chatId}:user:${uid}:warns`) || 0;
+          if (w > 0) {
+            const info = await db.hgetall(`chat:${chatId}:user:${uid}:info`);
+            const name = info?.name || `Колдонуучу (ID: ${uid})`;
+            warnList.push(`• [${name}](tg://user?id=${uid}): ${w}/${config.warnLimit || 3}`);
+          }
+        }
+        const listText = warnList.length > 0 ? warnList.join("\n") : "Тайпада эскертүү алгандар жок. 🎉";
+        replyMsgText = (customReply || `⚠️ **Тайпадагы эскертүүсү бар колдонуучулар:**\n{list}`).replace(/{list}/g, listText);
+      } else if (action === "random_member") {
+        const userIds = await db.smembers(`chat:${chatId}:users`);
+        if (userIds && userIds.length > 0) {
+          const randUid = userIds[Math.floor(Math.random() * userIds.length)];
+          const info = await db.hgetall(`chat:${chatId}:user:${randUid}:info`);
+          const name = info?.name || `Колдонуучу (ID: ${randUid})`;
+          const mention = `[${name}](tg://user?id=${randUid})`;
+          replyMsgText = (customReply || `🎉 Биз тандаган кокус катышуучу: {target}!`).replace(/{target}/g, mention);
+        } else {
+          replyMsgText = "Катышуучулар табылган жок.";
+        }
+      } else if (action === "ro_all") {
+        const handler = commandHandlers["muteall"];
+        if (handler) {
+          await handler(ctx);
+        }
+        replyMsgText = customReply || "🔇 Тайпа окуу режимине гана өткөрүлдү. Жазууга тыюу салынат!";
+      } else if (action === "unro_all") {
+        const handler = commandHandlers["unmuteall"];
+        if (handler) {
+          await handler(ctx);
+        }
+        replyMsgText = customReply || "🔊 Тайпа ачылды. Катышуучулар кайрадан жаза алышат!";
+      } else if (action === "lock_media") {
+        const locks = { ...config.locks, photo: true, video: true, stickers: true, gifs: true, voices: true };
+        await updateGroupConfig(chatId, { locks });
+        replyMsgText = customReply || "🖼 Тайпада сүрөт, видео жана стикерлерди жөнөтүү убактылуу бөгөттөлдү!";
+      } else if (action === "unlock_media") {
+        const locks = { ...config.locks, photo: false, video: false, stickers: false, gifs: false, voices: false };
+        await updateGroupConfig(chatId, { locks });
+        replyMsgText = customReply || "🔓 Тайпада медиа жөнөтүүгө кайрадан уруксат берилди!";
+      } else if (action === "get_admins") {
+        try {
+          const admins = await ctx.api.getChatAdministrators(chatId);
+          const adminMentions = admins
+            .map(a => `[${a.user.first_name}](tg://user?id=${a.user.id})`)
+            .join(", ");
+          replyMsgText = (customReply || `⚠️ **Урматтуу администраторлор, бул жерде тез арада жардам керек!**\n{admins}`).replace(/{admins}/g, adminMentions);
+        } catch (e) {
+          replyMsgText = "Админдерди чакырууда ката кетти.";
+        }
       } else {
         // Вызываем соответствующий обработчик команды из бота
         const handler = commandHandlers[action];

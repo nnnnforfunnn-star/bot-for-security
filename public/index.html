@@ -2104,6 +2104,13 @@
                 </div>
                 <p style="font-size:12px; color:var(--text-muted); margin-bottom:16px;">Буйруктарды өзгөртүү үчүн ар бирин басып жайып алыңыз:</p>
                 <div id="commands_container"></div>
+                 
+                 <!-- Plus Button to add a new command -->
+                 <div style="display:flex; justify-content:center; margin-top:20px; border-top: 1px solid var(--border-color); padding-top: 20px;">
+                   <button type="button" class="btn btn-primary" onclick="showAddCommandModal()" style="padding: 10px 24px; border-radius: 8px; font-weight: 600; font-size: 14px; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 4px 12px var(--accent-glow);">
+                     <i class="fa-solid fa-plus-circle" style="font-size: 16px;"></i>Жаңы команда кошуу
+                   </button>
+                 </div>
               </div>
             </div>
           </div>
@@ -2514,6 +2521,44 @@
       </div>
     </div>
   </div>
+
+  <!-- DYNAMIC COMMAND LIBRARY MODAL -->
+  <div id="commandModal" class="modal-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.85); z-index: 1000; justify-content: center; align-items: center; padding: 16px; backdrop-filter: blur(10px);">
+    <div class="card" style="width: 100%; max-width: 500px; max-height: 85vh; display: flex; flex-direction: column; border: 1px solid var(--border-color); box-shadow: 0 10px 30px rgba(0,0,0,0.6); animation: modalFadeIn 0.3s ease;">
+      <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 12px; margin-bottom: 16px;">
+        <div>
+          <div class="card-title" style="font-size: 18px;"><i class="fa-solid fa-folder-plus" style="color: var(--accent); margin-right: 8px;"></i>Жаңы команда кошуу</div>
+          <div class="card-description">Каталогдон кошумча команда тандаңыз же өзүңүздүкүн түзүңүз.</div>
+        </div>
+        <button type="button" class="btn btn-sm" onclick="closeCommandModal()" style="padding: 6px 10px; background: rgba(255,255,255,0.05); border: none; color: var(--text-main); cursor: pointer;"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      
+      <div class="card-body" style="overflow-y: auto; flex: 1; padding: 0 4px;">
+        <!-- Custom manual command creation -->
+        <div style="background: rgba(255, 255, 255, 0.02); border: 1px dashed var(--border-color); padding: 12px; border-radius: 8px; margin-bottom: 20px;">
+          <h4 style="font-size: 13px; font-weight: 600; margin-bottom: 8px; color: var(--text-main);"><i class="fa-solid fa-keyboard" style="margin-right: 6px; color: var(--accent);"></i>Өз алдынча жаңы команда түзүү</h4>
+          <div style="display: flex; gap: 8px;">
+            <input type="text" class="form-input" id="custom_cmd_name" placeholder="Мисалы: саламдашуу" style="font-size: 13px; padding: 8px 12px; flex: 1;">
+            <button type="button" class="btn btn-primary" onclick="addCustomCommandFromInput()" style="font-size: 13px; padding: 0 16px; white-space: nowrap;">Кошуу</button>
+          </div>
+          <div style="font-size: 10px; color: var(--text-muted); margin-top: 4px;">Кичине латын тамгалары менен, боштуксуз жазыңыз.</div>
+        </div>
+
+        <h4 style="font-size: 13px; font-weight: 600; margin-bottom: 10px; color: var(--text-main);"><i class="fa-solid fa-list-check" style="margin-right: 6px; color: var(--success);"></i>Командалардын даяр каталогу</h4>
+        
+        <div id="modal_library_list" style="display: flex; flex-direction: column; gap: 10px; padding-bottom: 12px;">
+          <!-- Populated dynamically -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    @keyframes modalFadeIn {
+      from { opacity: 0; transform: scale(0.95); }
+      to { opacity: 1; transform: scale(1); }
+    }
+  </style>
 
   <!-- FIXED BOTTOM SAVE BAR -->
   <div class="save-bar">
@@ -4255,7 +4300,17 @@
       const disabledCmds = appData.config.disabledCommands || {};
 
       let html = "";
-      for (const [key, def] of Object.entries(DEFAULT_BOT_COMMANDS)) {
+      const allKeys = Array.from(new Set([...Object.keys(DEFAULT_BOT_COMMANDS), ...Object.keys(customCmds)]));
+
+      for (const key of allKeys) {
+        const isCustom = !DEFAULT_BOT_COMMANDS[key];
+        const def = DEFAULT_BOT_COMMANDS[key] || { 
+          label: "Өз алдынча түзүлгөн команда", 
+          action: "none", 
+          alias: key, 
+          replyText: `👋 /${key} командасы иштеди!`, 
+          autoDelete: false 
+        };
         const saved = customCmds[key] || {};
         const alias = saved.alias !== undefined ? saved.alias : def.alias;
         const replyText = saved.replyText !== undefined ? saved.replyText : def.replyText;
@@ -4267,10 +4322,16 @@
 
         html += `
         <div class="card" style="margin-bottom:12px; border-color: rgba(255,255,255,0.04);">
-          <div class="card-header" style="padding:12px 16px; cursor:pointer;" onclick="if(event.target.tagName !== 'INPUT' && !event.target.classList.contains('slider') && !event.target.classList.contains('switch')) { this.nextElementSibling.classList.toggle('active'); this.nextElementSibling.style.display = this.nextElementSibling.classList.contains('active') ? 'block' : 'none'; }">
+          <div class="card-header" style="padding:12px 16px; cursor:pointer;" onclick="if(event.target.tagName !== 'INPUT' && !event.target.classList.contains('slider') && !event.target.classList.contains('switch') && !event.target.closest('.delete-cmd-btn')) { this.nextElementSibling.classList.toggle('active'); this.nextElementSibling.style.display = this.nextElementSibling.classList.contains('active') ? 'block' : 'none'; }">
             <div style="display:flex; justify-content:space-between; align-items:center; width: 100%;">
-              <div><b>/${key}</b> - <span style="font-size:13px; color:var(--text-muted)">${def.label}</span></div>
+              <div>
+                <b>/${key}</b> - <span style="font-size:13px; color:var(--text-muted)">${def.label}</span>
+                ${isCustom ? `<span class="badge" style="font-size: 10px; padding: 2px 6px; background: rgba(0, 112, 243, 0.15); color: var(--accent); margin-left: 8px; border-radius: 4px; font-weight: 600;">Кастом</span>` : ''}
+              </div>
               <div style="display:flex; align-items:center; gap:12px;" onclick="event.stopPropagation();">
+                ${isCustom ? `
+                  <button type="button" class="btn btn-sm btn-danger delete-cmd-btn" onclick="removeCustomCommand('${key}')" style="padding: 2px 6px; font-size: 11px; background: rgba(239, 68, 68, 0.2); color: var(--danger); border: none; border-radius: 4px; cursor: pointer; display: flex; align-items: center; justify-content: center;"><i class="fa-solid fa-trash"></i></button>
+                ` : ''}
                 <label class="switch" style="transform: scale(0.8); margin: 0;">
                   <input type="checkbox" id="cmd_toggle_${key}" ${isEnabled ? 'checked' : ''}>
                   <span class="slider"></span>
@@ -4304,6 +4365,15 @@
                   <option value="unban" ${action==='unban'?'selected':''}>Бөгөттөн чыгаруу</option>
                   <option value="unmute" ${action==='unmute'?'selected':''}>Мутту алуу</option>
                   <option value="del" ${action==='del'?'selected':''}>СМСти Өчүрүү</option>
+                  
+                  <!-- Special modular catalog actions -->
+                  <option value="warns_top" ${action==='warns_top'?'selected':''}>[Каталог] Эскертүү тизмеси</option>
+                  <option value="random_member" ${action==='random_member'?'selected':''}>[Каталог] Кокус катышуучу</option>
+                  <option value="ro_all" ${action==='ro_all'?'selected':''}>[Каталог] Read-Only режим</option>
+                  <option value="unro_all" ${action==='unro_all'?'selected':''}>[Каталог] Read-Only өчүрүү</option>
+                  <option value="lock_media" ${action==='lock_media'?'selected':''}>[Каталог] Медианы жабуу</option>
+                  <option value="unlock_media" ${action==='unlock_media'?'selected':''}>[Каталог] Медианы ачуу</option>
+                  <option value="get_admins" ${action==='get_admins'?'selected':''}>[Каталог] Админдерди чакыруу</option>
                 </select>
               </div>
               
@@ -4327,6 +4397,118 @@
         </div>`;
       }
       container.innerHTML = html;
+    }
+
+    const LIBRARY_ADDITIONAL_COMMANDS = {
+      warns_top: { label: "Эскертүү тизмеси", action: "warns_top", alias: "варндар, warnlist", replyText: "⚠️ **Тайпадагы эскертүүсү бар колдонуучулар:**\n{list}", autoDelete: false, description: "Тайпадагы бардык эскертүүсү бар колдонуучуларды жана алардын эскертүү санын тизмелеп берет." },
+      random_member: { label: "Кокус катышуучу", action: "random_member", alias: "рандом, танда, random", replyText: "🎉 Биз тандаган кокус катышуучу: {target}!", autoDelete: false, description: "Группанын ичинен кокус бир колдонуучуну тандап, тег (mention) кылып берет." },
+      ro_all: { label: "Read-Only баарына", action: "ro_all", alias: "ро, ро_баарына, read-only", replyText: "🔇 Тайпа окуу режимине гана өткөрүлдү. Жазууга тыюу салынат!", autoDelete: false, description: "Админдерден башка бардык катышуучуларга жазууну толук бөгөттөйт." },
+      unro_all: { label: "Read-Only өчүрүү", action: "unro_all", alias: "анро, unro", replyText: "🔊 Тайпа ачылды. Катышуучулар кайрадан жаза алышат!", autoDelete: false, description: "Окуу режимин алып салып, тайпаны кайрадан ачат." },
+      lock_media: { label: "Медианы жабуу", action: "lock_media", alias: "медиа_жап, lockmedia", replyText: "🖼 Тайпада сүрөт, видео жана стикерлерди жөнөтүү убактылуу бөгөттөлдү!", autoDelete: false, description: "Группага сүрөт, видео, стикер, анимация жана үн билдирүү жөнөтүүнү дароо жабат." },
+      unlock_media: { label: "Медианы ачуу", action: "unlock_media", alias: "медиа_ач, unlockmedia", replyText: "🔓 Тайпада медиа жөнөтүүгө кайрадан уруксат берилди!", autoDelete: false, description: "Медиа файлдарды жөнөтүү укуктарын калыбына келтирет." },
+      get_admins: { label: "Админдерди чакыруу", action: "get_admins", alias: "админ чакыр, calladmins", replyText: "⚠️ **Урматтуу администраторлор, бул жерде тез арада жардам керек!**\n{admins}", autoDelete: false, description: "Тайпадагы бардык админдерди тег кылып, кооптуу абал боюнча кабарлайт." }
+    };
+
+    function showAddCommandModal() {
+      const modal = document.getElementById('commandModal');
+      const listContainer = document.getElementById('modal_library_list');
+      
+      const customCmds = appData.config.customCommands || {};
+      const allActiveKeys = new Set([...Object.keys(DEFAULT_BOT_COMMANDS), ...Object.keys(customCmds)]);
+
+      const html = Object.entries(LIBRARY_ADDITIONAL_COMMANDS).map(([key, def]) => {
+        const isActive = allActiveKeys.has(key);
+        return `
+          <div style="background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; display: flex; justify-content: space-between; align-items: center; gap: 16px;">
+            <div style="flex: 1;">
+              <div style="font-weight: 600; font-size: 14px; color: var(--text-main); display: flex; align-items: center; gap: 8px;">
+                <span>/${key}</span>
+                <span style="font-size: 11px; color: var(--accent); font-weight: normal;">(${def.label})</span>
+              </div>
+              <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px; line-height: 1.4;">${def.description}</div>
+            </div>
+            <div>
+              ${isActive 
+                ? `<button class="btn btn-sm" disabled style="opacity: 0.5; font-size: 11px; white-space: nowrap; padding: 4px 10px;">Кошулган</button>` 
+                : `<button class="btn btn-sm btn-primary" onclick="addLibraryCommand('${key}')" style="font-size: 11px; white-space: nowrap; padding: 4px 10px;"><i class="fa-solid fa-plus" style="margin-right: 4px;"></i>Кошуу</button>`
+              }
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      listContainer.innerHTML = html;
+      modal.style.display = 'flex';
+    }
+
+    function closeCommandModal() {
+      document.getElementById('commandModal').style.display = 'none';
+      document.getElementById('custom_cmd_name').value = '';
+    }
+
+    function addLibraryCommand(key) {
+      const def = LIBRARY_ADDITIONAL_COMMANDS[key];
+      if (!def) return;
+
+      if (!appData.config.customCommands) appData.config.customCommands = {};
+      appData.config.customCommands[key] = {
+        alias: def.alias,
+        replyText: def.replyText,
+        action: def.action,
+        autoDelete: def.autoDelete
+      };
+
+      closeCommandModal();
+      renderCommandsList();
+      showToast(`/${key} командасы тизмеге кошулду! Төмөндөн "Сактоо" баскычын басыңыз.`);
+    }
+
+    function addCustomCommandFromInput() {
+      const nameInput = document.getElementById('custom_cmd_name');
+      const name = nameInput.value.trim().toLowerCase().replace(/[^a-z0-9_]/g, '');
+
+      if (!name) {
+        tg.showAlert("Сураныч, команданын атын туура жазыңыз (тамгалар жана сандар гана, боштуксуз)!");
+        return;
+      }
+
+      const customCmds = appData.config.customCommands || {};
+      const allActiveKeys = new Set([...Object.keys(DEFAULT_BOT_COMMANDS), ...Object.keys(customCmds)]);
+
+      if (allActiveKeys.has(name)) {
+        tg.showAlert(`/${name} командасы тизмеде мурунтан эле бар!`);
+        return;
+      }
+
+      if (!appData.config.customCommands) appData.config.customCommands = {};
+      appData.config.customCommands[name] = {
+        alias: name,
+        replyText: `👋 /${name} командасы иштеди!`,
+        action: "none",
+        autoDelete: false
+      };
+
+      closeCommandModal();
+      renderCommandsList();
+      showToast(`Жаңы /${name} командасы кошулду! Төмөндөн "Сактоо" баскычын басыңыз.`);
+    }
+
+    function removeCustomCommand(key) {
+      tg.showConfirm(
+        `/${key} командасын тизмеден өчүрүүнү каалайсызбы?`,
+        (confirmed) => {
+          if (confirmed) {
+            if (appData.config.customCommands) {
+              delete appData.config.customCommands[key];
+            }
+            if (appData.config.disabledCommands) {
+              delete appData.config.disabledCommands[key];
+            }
+            renderCommandsList();
+            showToast(`/${key} командасы тизмеден өчүрүлдү. Өзгөртүүлөрдү сактаңыз.`);
+          }
+        }
+      );
     }
 
     function toggleSpamScannerFields() {
@@ -4462,12 +4644,32 @@
       appData.config.locksAction = document.getElementById('locksAction').value;
 
       if (!appData.config.disabledCommands) appData.config.disabledCommands = {};
-      for (const key of Object.keys(DEFAULT_BOT_COMMANDS)) {
-        const el = document.getElementById('cmd_toggle_' + key);
-        if (el) {
-          appData.config.disabledCommands[key] = !el.checked;
+      if (!appData.config.customCommands) appData.config.customCommands = {};
+
+      const allSavedKeys = Array.from(new Set([...Object.keys(DEFAULT_BOT_COMMANDS), ...Object.keys(appData.config.customCommands)]));
+
+      const newCustomCommands = {};
+      for (const key of allSavedKeys) {
+        const elToggle = document.getElementById('cmd_toggle_' + key);
+        if (elToggle) {
+          appData.config.disabledCommands[key] = !elToggle.checked;
+        }
+
+        const elAction = document.getElementById('cmd_action_' + key);
+        if (elAction) {
+          const action = elAction.value;
+          const val = parseInt(document.getElementById('cmd_val_' + key).value, 10) || 120;
+          newCustomCommands[key] = {
+            alias: document.getElementById('cmd_alias_' + key).value,
+            replyText: document.getElementById('cmd_reply_' + key).value,
+            action: action,
+            autoDelete: document.getElementById('cmd_del_' + key).checked,
+            muteDuration: action === 'mute' ? val : undefined,
+            warnCount: action === 'warn' ? val : undefined
+          };
         }
       }
+      appData.config.customCommands = newCustomCommands;
 
       if (!appData.config.antiflood) appData.config.antiflood = {};
       appData.config.antiflood.enabled = document.getElementById('antiflood_enabled').checked;
@@ -4507,22 +4709,6 @@
       appData.config.activityGeneratorEnabled = document.getElementById('activityGeneratorEnabled').checked;
       appData.config.activityGeneratorTimeoutHours = parseFloat(document.getElementById('activityGeneratorTimeoutHours').value) || 2;
       appData.config.activityGeneratorKarmaReward = parseInt(document.getElementById('activityGeneratorKarmaReward').value) || 1;
-
-      // Extract customCommands configs
-      if (!appData.config.customCommands) appData.config.customCommands = {};
-      for (const key of Object.keys(DEFAULT_BOT_COMMANDS)) {
-        const action = document.getElementById('cmd_action_' + key).value;
-        const val = parseInt(document.getElementById('cmd_val_' + key).value, 10) || 120;
-        
-        appData.config.customCommands[key] = {
-          alias: document.getElementById('cmd_alias_' + key).value,
-          replyText: document.getElementById('cmd_reply_' + key).value,
-          action: action,
-          autoDelete: document.getElementById('cmd_del_' + key).checked,
-          muteDuration: action === 'mute' ? val : undefined,
-          warnCount: action === 'warn' ? val : undefined
-        };
-      }
 
       try {
         await fetch(apiUrl, {
