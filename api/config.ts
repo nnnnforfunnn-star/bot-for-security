@@ -3,6 +3,7 @@ import { validateWebAppData, getUserFromInitData } from "../src/utils/telegramAu
 import { isUserSeniorAdminInChat } from "../src/utils/telegram.js";
 import { bot } from "../src/bot.js";
 import { db } from "../src/utils/db.js";
+import { logAuditAction } from "../src/utils/audit.js";
 
 let isBotInitialized = false;
 
@@ -66,10 +67,23 @@ export default async function handler(req: any, res: any) {
     
     if (req.method === "POST") {
       const { config, blacklist, filters, notes, swearwords } = req.body;
+      const adminName = user.first_name || "Администратор";
+
+      // Получаем старые состояния для логирования и отката
+      const oldConfig = await getGroupConfig(chatId);
+      const oldBlacklist = (await db.hgetall(`chat:${chatId}:blacklist`)) || {};
+      const oldFilters = (await db.hgetall(`chat:${chatId}:filters`)) || {};
+      const oldNotes = (await db.hgetall(`chat:${chatId}:notes`)) || {};
+      const oldSwearwords = (await db.smembers(`chat:${chatId}:swearwords`)) || [];
       
       let updatedConfig = {};
       if (config) {
-        const oldConfig = await getGroupConfig(chatId);
+        // Сравнение изменений настроек
+        const hasConfigChanged = JSON.stringify(oldConfig) !== JSON.stringify({ ...oldConfig, ...config });
+        if (hasConfigChanged) {
+          await logAuditAction(chatId, user.id, adminName, "config", "Орнотуулар өзгөртүлдү", oldConfig);
+        }
+
         updatedConfig = await updateGroupConfig(chatId, config);
 
         if (config.rulesText && config.rulesText !== oldConfig.rulesText && (updatedConfig as any).autoPinRules) {
@@ -91,12 +105,48 @@ export default async function handler(req: any, res: any) {
         }
       };
 
-      await syncHash(`chat:${chatId}:blacklist`, blacklist);
-      await syncHash(`chat:${chatId}:filters`, filters);
-      await syncHash(`chat:${chatId}:notes`, notes);
+      if (blacklist) {
+        const oldKeys = Object.keys(oldBlacklist).sort();
+        const newKeys = Object.keys(blacklist).sort();
+        const hasBlacklistChanged = JSON.stringify(oldKeys) !== JSON.stringify(newKeys) || 
+          newKeys.some(k => oldBlacklist[k] !== blacklist[k]);
+        if (hasBlacklistChanged) {
+          await logAuditAction(chatId, user.id, adminName, "blacklist", "Кара тизме өзгөртүлдү", oldBlacklist);
+        }
+        await syncHash(`chat:${chatId}:blacklist`, blacklist);
+      }
+
+      if (filters) {
+        const oldKeys = Object.keys(oldFilters).sort();
+        const newKeys = Object.keys(filters).sort();
+        const hasFiltersChanged = JSON.stringify(oldKeys) !== JSON.stringify(newKeys) || 
+          newKeys.some(k => oldFilters[k] !== filters[k]);
+        if (hasFiltersChanged) {
+          await logAuditAction(chatId, user.id, adminName, "filters", "Автожооптор өзгөртүлдү", oldFilters);
+        }
+        await syncHash(`chat:${chatId}:filters`, filters);
+      }
+
+      if (notes) {
+        const oldKeys = Object.keys(oldNotes).sort();
+        const newKeys = Object.keys(notes).sort();
+        const hasNotesChanged = JSON.stringify(oldKeys) !== JSON.stringify(newKeys) || 
+          newKeys.some(k => oldNotes[k] !== notes[k]);
+        if (hasNotesChanged) {
+          await logAuditAction(chatId, user.id, adminName, "notes", "Кыска командалар өзгөртүлдү", oldNotes);
+        }
+        await syncHash(`chat:${chatId}:notes`, notes);
+      }
 
       // Sync swear words (Set, not Hash)
       if (swearwords && Array.isArray(swearwords)) {
+        const oldWords = [...oldSwearwords].sort();
+        const newWords = [...swearwords].map(w => w.trim().toLowerCase()).sort();
+        const hasSwearwordsChanged = JSON.stringify(oldWords) !== JSON.stringify(newWords);
+        if (hasSwearwordsChanged) {
+          await logAuditAction(chatId, user.id, adminName, "swearwords", "Запрещенные сөздөр өзгөртүлдү", oldSwearwords);
+        }
+
         await db.del(`chat:${chatId}:swearwords`);
         for (const word of swearwords) {
           if (word && word.trim()) await db.sadd(`chat:${chatId}:swearwords`, word.trim().toLowerCase());

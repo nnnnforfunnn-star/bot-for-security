@@ -161,11 +161,17 @@ export default async function handler(req: any, res: any) {
           }
 
           let webAccess = false;
-          if (adminRole === "owner" || adminRole === "coowner") {
+          if (adm.status === "creator") {
             webAccess = true;
           } else {
             const hasWebAccess = await db.get<string>(`chat:${chatId}:user:${uid}:web_access`);
-            webAccess = hasWebAccess === "true";
+            if (hasWebAccess === "true") {
+              webAccess = true;
+            } else if (hasWebAccess === "false") {
+              webAccess = false;
+            } else {
+              webAccess = adminRole === "coowner";
+            }
           }
 
           usersInfo.push({
@@ -229,6 +235,22 @@ export default async function handler(req: any, res: any) {
         }
       }
 
+      // Проверяем, является ли пользователь создателем (владельцем)
+      const chatMember = await bot.api.getChatMember(chatId, user.id);
+      const isOwner = chatMember.status === "creator";
+
+      let auditLog: any[] = [];
+      if (isOwner) {
+        const auditRaw = await db.lrange(`chat:${chatId}:audit_log`, 0, 99) || [];
+        auditLog = auditRaw.map(item => {
+          try {
+            return JSON.parse(item);
+          } catch (e) {
+            return null;
+          }
+        }).filter(Boolean);
+      }
+
       return res.status(200).json({ 
         logs, 
         stats: { msgCount, bansCount, mutesCount, warnsCount, msgsToday, history },
@@ -236,7 +258,9 @@ export default async function handler(req: any, res: any) {
         topUsersAll: topUsersAllTimeRaw,
         topUsersToday: topUsersTodayRaw,
         groupTitle,
-        myChats
+        myChats,
+        isOwner,
+        auditLog
       });
     }
 

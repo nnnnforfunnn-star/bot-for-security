@@ -76,16 +76,26 @@ export async function isUserSeniorAdminInChat(api: Api, chatId: string | number,
   try {
     const member = await api.getChatMember(chatId, userId);
     
+    // Владелец всегда имеет доступ и его нельзя заблокировать
     if (member.status === "creator") return true;
 
     if (member.status === "administrator") {
+      // Проверяем явный статус доступа в Redis
+      const webAccessStatus = await db.get<string>(`chat:${chatId}:user:${userId}:web_access`);
+      
+      if (webAccessStatus === "true") {
+        return true;
+      }
+      if (webAccessStatus === "false") {
+        return false; // Явно заблокирован владельцем
+      }
+
+      // По умолчанию доступ есть у старших администраторов (coowners)
       // @ts-ignore
       const isCoowner = member.can_change_info && member.can_restrict_members && member.can_delete_messages;
-      if (isCoowner) return true;
-
-      // Check explicit grant of access
-      const hasAccess = await db.get<string>(`chat:${chatId}:user:${userId}:web_access`);
-      if (hasAccess === "true") return true;
+      if (isCoowner) {
+        return true;
+      }
     }
 
     return false;

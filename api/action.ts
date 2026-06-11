@@ -4,6 +4,7 @@ import { bot } from "../src/bot.js";
 import { banUser, muteUser } from "../src/utils/telegram.js";
 import { logAction } from "../src/utils/actionLogger.js";
 import { db } from "../src/utils/db.js";
+import { logAuditAction } from "../src/utils/audit.js";
 
 let isBotInitialized = false;
 
@@ -76,9 +77,11 @@ export default async function handler(req: any, res: any) {
         const warnAction = config.warnAction || "mute";
         
         const warnKey = `chat:${chatId}:user:${targetUserId}:warns`;
+        const oldWarns = await db.get<number>(warnKey) || 0;
         const warns = await db.incr(warnKey);
         
         await logAction(bot.api, chatId, targetUserId, targetName, "Эскертүү (Warn)", `${reason || "Web Panel аркылуу"} (${warns}/${warnLimit})`, user.first_name || "Админ");
+        await logAuditAction(chatId, user.id, user.first_name || "Админ", "moderation", `Колдонуучу [${targetName}](tg://user?id=${targetUserId}) эскертүү алды (${warns}/${warnLimit})`, { type: "warn", targetUserId, previousWarns: oldWarns });
 
         if (warns < warnLimit) {
           await bot.api.sendMessage(chatId, `⚠️ **${warns}-эскертүү!** Урматтуу [${targetName}](tg://user?id=${targetUserId}), тайпанын эрежелерин бузбаңыз.\nСебеби: ${reason || "Администратор тарабынан"}`, { parse_mode: "Markdown" }).catch(() => {});
@@ -104,11 +107,13 @@ export default async function handler(req: any, res: any) {
       case "ban":
         await banUser(bot.api, chatId, targetUserId);
         await logAction(bot.api, chatId, targetUserId, targetName, "Бан", reason || "Web Panel аркылуу", user.first_name || "Админ");
+        await logAuditAction(chatId, user.id, user.first_name || "Админ", "moderation", `Колдонуучу [${targetName}](tg://user?id=${targetUserId}) банга жөнөтүлдү`, { type: "ban", targetUserId });
         break;
       case "mute":
         const muteSeconds = parseInt(req.body.value, 10) || 24 * 60 * 60;
         await muteUser(bot.api, chatId, targetUserId, muteSeconds);
         await logAction(bot.api, chatId, targetUserId, targetName, "Мут", reason || `Web Panel аркылуу (${Math.round(muteSeconds/60)}м)`, user.first_name || "Админ");
+        await logAuditAction(chatId, user.id, user.first_name || "Админ", "moderation", `Колдонуучу [${targetName}](tg://user?id=${targetUserId}) мутталды (${Math.round(muteSeconds/60)}м)`, { type: "mute", targetUserId });
         break;
       case "unmute":
         await bot.api.restrictChatMember(chatId, targetUserId, {
@@ -118,15 +123,18 @@ export default async function handler(req: any, res: any) {
           can_add_web_page_previews: true,
         });
         await logAction(bot.api, chatId, targetUserId, targetName, "Анмут", reason || "Web Panel аркылуу", user.first_name || "Админ");
+        await logAuditAction(chatId, user.id, user.first_name || "Админ", "moderation", `Колдонуучу [${targetName}](tg://user?id=${targetUserId}) мутунан бошотулду`, { type: "unmute", targetUserId });
         break;
       case "kick":
         await bot.api.banChatMember(chatId, targetUserId).catch(() => {});
         await bot.api.unbanChatMember(chatId, targetUserId).catch(() => {});
         await logAction(bot.api, chatId, targetUserId, targetName, "Кик", reason || "Web Panel аркылуу", user.first_name || "Админ");
+        await logAuditAction(chatId, user.id, user.first_name || "Админ", "moderation", `Колдонуучу [${targetName}](tg://user?id=${targetUserId}) тайпадан чыгарылды`, { type: "kick", targetUserId });
         break;
       case "unban":
         await bot.api.unbanChatMember(chatId, targetUserId, { only_if_banned: true }).catch(() => {});
         await logAction(bot.api, chatId, targetUserId, targetName, "Разбан", reason || "Web Panel аркылуу", user.first_name || "Админ");
+        await logAuditAction(chatId, user.id, user.first_name || "Админ", "moderation", `Колдонуучу [${targetName}](tg://user?id=${targetUserId}) бандан чыгарылды`, { type: "unban", targetUserId });
         break;
       case "promote":
         const roleType = req.body.value || "middle";
@@ -168,8 +176,10 @@ export default async function handler(req: any, res: any) {
         await logAction(bot.api, chatId, targetUserId, targetName, "Demote", "Web Panel аркылуу укугу алынды", user.first_name || "Админ");
         break;
       case "resetwarns":
+        const oldWarnsReset = await db.get<number>(`chat:${chatId}:user:${targetUserId}:warns`) || 0;
         await db.del(`chat:${chatId}:user:${targetUserId}:warns`);
         await logAction(bot.api, chatId, targetUserId, targetName, "Тазалоо", "Web Panel: Эскертүүлөр тазаланды", user.first_name || "Админ");
+        await logAuditAction(chatId, user.id, user.first_name || "Админ", "moderation", `Колдонуучунун [${targetName}](tg://user?id=${targetUserId}) эскертүүлөрү тазаланды`, { type: "resetwarns", targetUserId, previousWarns: oldWarnsReset });
         break;
       case "slowmode":
         const seconds = parseInt(req.body.value) || 0;
@@ -189,15 +199,19 @@ export default async function handler(req: any, res: any) {
       case "setkarma":
         const karmaVal = parseInt(req.body.value, 10);
         if (!isNaN(karmaVal)) {
+          const oldKarma = await db.get<number>(`chat:${chatId}:user:${targetUserId}:urmat`) || 0;
           await db.set(`chat:${chatId}:user:${targetUserId}:urmat`, karmaVal);
           await db.zadd(`chat:${chatId}:urmat_leaderboard`, karmaVal, String(targetUserId));
           await logAction(bot.api, chatId, targetUserId, targetName, "Карма", `Сый-Урмат деңгээли өзгөртүлдү: ${karmaVal}`, user.first_name || "Админ");
+          await logAuditAction(chatId, user.id, user.first_name || "Админ", "moderation", `Колдонуучунун [${targetName}](tg://user?id=${targetUserId}) рейтинги өзгөртүлдү (${karmaVal})`, { type: "karma", targetUserId, previousKarma: oldKarma });
         }
         break;
       case "setusertitle":
         const titleText = req.body.text || "";
+        const oldTitle = await db.get<string>(`chat:${chatId}:user:${targetUserId}:title`) || "";
         await db.set(`chat:${chatId}:user:${targetUserId}:title`, titleText);
         await logAction(bot.api, chatId, targetUserId, targetName, "Наам", `Жаңы наам берилди: ${titleText || "өчүрүлдү"}`, user.first_name || "Админ");
+        await logAuditAction(chatId, user.id, user.first_name || "Админ", "moderation", `Колдонуучуга [${targetName}](tg://user?id=${targetUserId}) наам берилди: ${titleText || "өчүрүлдү"}`, { type: "title", targetUserId, previousTitle: oldTitle });
         break;
       case "grant_web_access": {
         const requester = await bot.api.getChatMember(chatId, user.id);
@@ -245,12 +259,113 @@ export default async function handler(req: any, res: any) {
           return res.status(403).json({ error: "Кечиресиз, бул аракетти аткарууга сизде укук жок! Ал чаттын ээсине же совладелецине гана жеткиликтүү." });
         }
 
-        await db.del(`chat:${chatId}:user:${targetUserId}:web_access`);
+        await db.set(`chat:${chatId}:user:${targetUserId}:web_access`, "false");
         await logAction(bot.api, chatId, targetUserId, targetName, "Веб-панель", "Веб-панелге кирүү уруксаты алып салынды", user.first_name || "Админ");
         
         await bot.api.sendMessage(chatId, `🔕 Урматтуу [${targetName}](tg://user?id=${targetUserId}), сиздин веб-панелге кирүү уруксатыңыз алып салынды.`, {
           parse_mode: "Markdown"
         }).catch(() => {});
+        break;
+      }
+      case "undo_audit": {
+        // Проверяем, является ли пользователь создателем (владельцем)
+        const requester = await bot.api.getChatMember(chatId, user.id);
+        const isOwner = requester.status === "creator";
+        if (!isOwner) {
+          return res.status(403).json({ error: "Кечиресиз, бул аракетти аткарууга укугуңуз жок! Ал чаттын ээсине гана жеткиликтүү." });
+        }
+
+        const { auditId } = req.body;
+        if (!auditId) {
+          return res.status(400).json({ error: "Missing auditId" });
+        }
+
+        // Получаем последние 100 записей аудита
+        const auditRaw = await db.lrange(`chat:${chatId}:audit_log`, 0, 99) || [];
+        let foundIndex = -1;
+        let entry: any = null;
+
+        for (let i = 0; i < auditRaw.length; i++) {
+          const item = JSON.parse(auditRaw[i]);
+          if (item.id === auditId) {
+            foundIndex = i;
+            entry = item;
+            break;
+          }
+        }
+
+        if (!entry) {
+          return res.status(404).json({ error: "Аракет табылбай калды" });
+        }
+
+        if (entry.undone) {
+          return res.status(400).json({ error: "Бул аракет мурунтан эле жокко чыгарылган" });
+        }
+
+        const { actionType, previousState } = entry;
+
+        // Откатываем изменения в зависимости от типа действия
+        if (actionType === "config") {
+          const { updateGroupConfig } = await import("../src/utils/configManager.js");
+          await updateGroupConfig(chatId, previousState);
+        } else if (actionType === "blacklist") {
+          await db.del(`chat:${chatId}:blacklist`);
+          for (const [k, v] of Object.entries(previousState)) {
+            await db.hset(`chat:${chatId}:blacklist`, k, String(v));
+          }
+        } else if (actionType === "filters") {
+          await db.del(`chat:${chatId}:filters`);
+          for (const [k, v] of Object.entries(previousState)) {
+            await db.hset(`chat:${chatId}:filters`, k, String(v));
+          }
+        } else if (actionType === "notes") {
+          await db.del(`chat:${chatId}:notes`);
+          for (const [k, v] of Object.entries(previousState)) {
+            await db.hset(`chat:${chatId}:notes`, k, String(v));
+          }
+        } else if (actionType === "swearwords") {
+          await db.del(`chat:${chatId}:swearwords`);
+          if (Array.isArray(previousState)) {
+            for (const word of previousState) {
+              await db.sadd(`chat:${chatId}:swearwords`, word);
+            }
+          }
+        } else if (actionType === "moderation") {
+          const { type, targetUserId } = previousState;
+          if (type === "ban" || type === "kick") {
+            await bot.api.unbanChatMember(chatId, targetUserId).catch(() => {});
+          } else if (type === "mute") {
+            await bot.api.restrictChatMember(chatId, targetUserId, {
+              can_send_messages: true, can_send_audios: true, can_send_documents: true,
+              can_send_photos: true, can_send_videos: true, can_send_video_notes: true,
+              can_send_voice_notes: true, can_send_polls: true, can_send_other_messages: true,
+              can_add_web_page_previews: true,
+            }).catch(() => {});
+          } else if (type === "warn") {
+            const { previousWarns } = previousState;
+            await db.set(`chat:${chatId}:user:${targetUserId}:warns`, previousWarns);
+          } else if (type === "resetwarns") {
+            const { previousWarns } = previousState;
+            await db.set(`chat:${chatId}:user:${targetUserId}:warns`, previousWarns);
+          } else if (type === "karma") {
+            const { previousKarma } = previousState;
+            await db.set(`chat:${chatId}:user:${targetUserId}:urmat`, previousKarma);
+            await db.zadd(`chat:${chatId}:urmat_leaderboard`, previousKarma, String(targetUserId));
+          } else if (type === "title") {
+            const { previousTitle } = previousState;
+            await db.set(`chat:${chatId}:user:${targetUserId}:title`, previousTitle);
+          }
+        }
+
+        // Помечаем как отмененное и обновляем список в Redis
+        entry.undone = true;
+        auditRaw[foundIndex] = JSON.stringify(entry);
+        
+        await db.del(`chat:${chatId}:audit_log`);
+        for (let i = auditRaw.length - 1; i >= 0; i--) {
+          await db.lpush(`chat:${chatId}:audit_log`, auditRaw[i]);
+        }
+
         break;
       }
       default:
