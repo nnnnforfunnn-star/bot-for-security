@@ -2656,6 +2656,15 @@
     let statsData = { logs: [], stats: {}, users: [], topUsersAll: [], topUsersToday: [], groupTitle: "Тайпа" };
     let usersMap = {}; // userId -> info
 
+    // Optimization pagination state
+    let usersRenderLimit = 25;
+    let logsRenderLimit = 25;
+    let auditLogRenderLimit = 25;
+    let bansRenderLimit = 20;
+    let mutesRenderLimit = 20;
+    let warnsRenderLimit = 20;
+    let creatorChatsRenderLimit = 20;
+
     const DEFAULT_BOT_COMMANDS = {
       ban: { label: "Бандоо", action: "ban", alias: "бан, ban", replyText: "", autoDelete: false },
       unban: { label: "Бөгөттөн чыгаруу", action: "unban", alias: "разбан, unban", replyText: "", autoDelete: false },
@@ -2889,8 +2898,17 @@
         const resStats = await fetch(statsUrl, { headers: { 'Authorization': 'tma ' + initData }});
         if (resStats.ok) {
           statsData = await resStats.json();
-          statsData.users.forEach(u => usersMap[u.id] = u);
-        }
+           statsData.users.forEach(u => usersMap[u.id] = u);
+           
+           // Reset limits
+           usersRenderLimit = 25;
+           logsRenderLimit = 25;
+           auditLogRenderLimit = 25;
+           bansRenderLimit = 20;
+           mutesRenderLimit = 20;
+           warnsRenderLimit = 20;
+           creatorChatsRenderLimit = 20;
+         }
 
         // Set up brand header details
         if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
@@ -3821,7 +3839,8 @@
 
       // 3. Audit Logs
       const logsBody = document.getElementById('stats_logs_body');
-      const logsHtml = statsData.logs.map(log => {
+      const slicedLogs = statsData.logs.slice(0, logsRenderLimit);
+      let logsHtml = slicedLogs.map(log => {
         let actClass = "";
         if (log.action.includes("Бан") || log.action.includes("Кик")) actClass = "style='border-left: 3px solid var(--danger);'";
         if (log.action.includes("Мут") || log.action.includes("Эскертүү") || log.action.includes("Warn")) actClass = "style='border-left: 3px solid var(--warn);'";
@@ -3836,21 +3855,43 @@
           <div class="log-msg">👤 <b>${log.name}</b> (${log.userId}) -> <i>${log.reason}</i></div>
         </div>`;
       }).join('');
+
+      if (statsData.logs.length > logsRenderLimit) {
+        logsHtml += `
+          <div style="text-align: center; padding: 12px; width: 100%;">
+            <button type="button" class="btn btn-secondary btn-sm" onclick="logsRenderLimit += 25; renderStatsAndLogs();" style="font-size: 11px; padding: 6px 12px; width: 100%; max-width: 180px; margin: 0 auto; display: block;">
+              <i class="fa-solid fa-angles-down" style="margin-right: 6px;"></i>Дагы жүктөө (${statsData.logs.length - logsRenderLimit})
+            </button>
+          </div>
+        `;
+      }
       logsBody.innerHTML = logsHtml || "<p style='padding:20px; text-align:center; color:var(--text-muted);'>Таза.</p>";
 
       // 4. Bans List (Revokable)
       const bansBody = document.getElementById('stats_bans_body');
       const banLogs = statsData.logs.filter(l => l.action.includes("Бан"));
       if (banLogs.length > 0) {
-        bansBody.innerHTML = `<div class="table-container"><table class="data-table">
+        const slicedBans = banLogs.slice(0, bansRenderLimit);
+        let bansHtml = `<div class="table-container"><table class="data-table">
           <thead><tr><th>Колдонуучу</th><th>Себеби</th><th>Аракет</th></tr></thead>
-          <tbody>` + banLogs.map(l => `
+          <tbody>` + slicedBans.map(l => `
             <tr>
               <td><b>${l.name}</b><br><span style="font-size:11px;color:var(--text-muted)">ID: ${l.userId}</span></td>
               <td>${l.reason}</td>
               <td><button class="btn btn-sm" onclick="doAction('unban', ${l.userId})">Бөгөттөн чыгаруу</button></td>
             </tr>
           `).join('') + `</tbody></table></div>`;
+
+        if (banLogs.length > bansRenderLimit) {
+          bansHtml += `
+            <div style="text-align: center; margin-top: 10px; width: 100%;">
+              <button type="button" class="btn btn-secondary btn-sm" onclick="bansRenderLimit += 20; renderStatsAndLogs();" style="font-size: 11px; padding: 6px 12px;">
+                Дагы жүктөө (${banLogs.length - bansRenderLimit})
+              </button>
+            </div>
+          `;
+        }
+        bansBody.innerHTML = bansHtml;
       } else {
         bansBody.innerHTML = "<p style='color:var(--text-muted); font-size:13px;'>Учурда банда эч ким жок.</p>";
       }
@@ -3859,15 +3900,27 @@
       const mutesBody = document.getElementById('stats_mutes_body');
       const muteLogs = statsData.logs.filter(l => l.action.includes("Мут"));
       if (muteLogs.length > 0) {
-        mutesBody.innerHTML = `<div class="table-container"><table class="data-table">
+        const slicedMutes = muteLogs.slice(0, mutesRenderLimit);
+        let mutesHtml = `<div class="table-container"><table class="data-table">
           <thead><tr><th>Колдонуучу</th><th>Админ & Себеп</th><th>Аракет</th></tr></thead>
-          <tbody>` + muteLogs.map(l => `
+          <tbody>` + slicedMutes.map(l => `
             <tr>
               <td><b>${l.name}</b><br><span style="font-size:11px;color:var(--text-muted)">ID: ${l.userId}</span></td>
               <td><b>${l.adminName}</b>: ${l.reason}</td>
               <td><button class="btn btn-sm" onclick="doAction('unmute', ${l.userId})">Мутту алуу</button></td>
             </tr>
           `).join('') + `</tbody></table></div>`;
+
+        if (muteLogs.length > mutesRenderLimit) {
+          mutesHtml += `
+            <div style="text-align: center; margin-top: 10px; width: 100%;">
+              <button type="button" class="btn btn-secondary btn-sm" onclick="mutesRenderLimit += 20; renderStatsAndLogs();" style="font-size: 11px; padding: 6px 12px;">
+                Дагы жүктөө (${muteLogs.length - mutesRenderLimit})
+              </button>
+            </div>
+          `;
+        }
+        mutesBody.innerHTML = mutesHtml;
       } else {
         mutesBody.innerHTML = "<p style='color:var(--text-muted); font-size:13px;'>Учурда мутта эч ким жок.</p>";
       }
@@ -3876,15 +3929,27 @@
       const warnsBody = document.getElementById('stats_warns_body');
       const warnedUsers = statsData.users.filter(u => u.warns > 0);
       if (warnedUsers.length > 0) {
-        warnsBody.innerHTML = `<div class="table-container"><table class="data-table">
+        const slicedWarns = warnedUsers.slice(0, warnsRenderLimit);
+        let warnsHtml = `<div class="table-container"><table class="data-table">
           <thead><tr><th>Колдонуучу</th><th>Варн саны</th><th>Аракет</th></tr></thead>
-          <tbody>` + warnedUsers.map(u => `
+          <tbody>` + slicedWarns.map(u => `
             <tr>
               <td><b>${u.name}</b> ${u.username ? '(@'+u.username+')' : ''}<br><span style="font-size:11px;color:var(--text-muted)">ID: ${u.id}</span></td>
               <td><span style="color:var(--warn); font-weight:bold; font-size:16px;">${u.warns}</span> / ${appData.config.warnLimit || 3}</td>
               <td><button class="btn btn-sm btn-danger" onclick="doAction('resetwarns', ${u.id})">Тазалоо</button></td>
             </tr>
           `).join('') + `</tbody></table></div>`;
+
+        if (warnedUsers.length > warnsRenderLimit) {
+          warnsHtml += `
+            <div style="text-align: center; margin-top: 10px; width: 100%;">
+              <button type="button" class="btn btn-secondary btn-sm" onclick="warnsRenderLimit += 20; renderStatsAndLogs();" style="font-size: 11px; padding: 6px 12px;">
+                Дагы жүктөө (${warnedUsers.length - warnsRenderLimit})
+              </button>
+            </div>
+          `;
+        }
+        warnsBody.innerHTML = warnsHtml;
       } else {
         warnsBody.innerHTML = "<p style='color:var(--text-muted); font-size:13px;'>Страйк алган катышуучулар жок.</p>";
       }
@@ -3898,7 +3963,8 @@
         if (auditBody) {
           const auditLog = statsData.auditLog || [];
           if (auditLog.length > 0) {
-            auditBody.innerHTML = auditLog.map(entry => {
+            const slicedAudit = auditLog.slice(0, auditLogRenderLimit);
+            let auditHtml = slicedAudit.map(entry => {
               const date = new Date(entry.timestamp).toLocaleString("ru-RU", {day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'});
               let actionDetail = entry.description;
               if (entry.undone) {
@@ -3918,6 +3984,19 @@
               </tr>
               `;
             }).join('');
+
+            if (auditLog.length > auditLogRenderLimit) {
+              auditHtml += `
+                <tr>
+                  <td colspan="4" style="text-align: center; padding: 12px;">
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="auditLogRenderLimit += 25; renderStatsAndLogs();" style="font-size: 11px; padding: 6px 12px; display: inline-flex; align-items: center; justify-content: center; gap: 6px;">
+                      <i class="fa-solid fa-angles-down"></i>Дагы жүктөө (${auditLog.length - auditLogRenderLimit} калды)
+                    </button>
+                  </td>
+                </tr>
+              `;
+            }
+            auditBody.innerHTML = auditHtml;
           } else {
             auditBody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:var(--text-muted); padding: 20px;">Аракеттер журналы бош.</td></tr>`;
           }
@@ -4247,9 +4326,19 @@
         filtered.sort((a, b) => (a.name || "").localeCompare(b.name || ""));
       }
 
-      const html = filtered.map(u => {
-        // Filter logs related to this user
-        const userLogs = statsData.logs.filter(l => String(l.userId) === String(u.id));
+      // Index logs by user id for O(1) fast lookup
+      const logsByUserId = {};
+      (statsData.logs || []).forEach(l => {
+        const uidStr = String(l.userId);
+        if (!logsByUserId[uidStr]) logsByUserId[uidStr] = [];
+        logsByUserId[uidStr].push(l);
+      });
+
+      const slicedUsers = filtered.slice(0, usersRenderLimit);
+
+      let html = slicedUsers.map(u => {
+        // Filter logs related to this user via O(1) map
+        const userLogs = logsByUserId[String(u.id)] || [];
         let logsListHtml = "";
         if (userLogs.length > 0) {
           logsListHtml = userLogs.map(l => {
@@ -4363,6 +4452,16 @@
         </div>
         `;
       }).join('');
+
+      if (filtered.length > usersRenderLimit) {
+        html += `
+          <div style="text-align: center; margin-top: 16px; padding-bottom: 20px; width: 100%;">
+            <button type="button" class="btn btn-secondary btn-sm" onclick="usersRenderLimit += 25; renderUsersList();" style="font-size: 12px; padding: 8px 16px; width: 100%; max-width: 200px; margin: 0 auto; display: inline-flex; align-items: center; justify-content: center; gap: 8px;">
+              <i class="fa-solid fa-angles-down"></i>Дагы жүктөө (${filtered.length - usersRenderLimit} калды)
+            </button>
+          </div>
+        `;
+      }
 
       container.innerHTML = html || "<p style='color:var(--text-muted); padding:20px; text-align:center;'>Эч кандай катышуучу табылган жок.</p>";
     }
@@ -5070,7 +5169,9 @@
         return;
       }
 
-      container.innerHTML = filtered.map(c => {
+      const sliced = filtered.slice(0, creatorChatsRenderLimit);
+
+      let html = sliced.map(c => {
         const telegramLink = c.username 
           ? `<a href="https://t.me/${c.username}" target="_blank" style="color: var(--accent); text-decoration: none; font-size: 11px; display: inline-flex; align-items: center; gap: 4px;"><i class="fa-brands fa-telegram"></i>@${c.username}</a>` 
           : `<span style="font-size: 11px; color: var(--text-muted); display: inline-flex; align-items: center; gap: 4px;"><i class="fa-solid fa-lock"></i>Жабык чат</span>`;
@@ -5109,6 +5210,17 @@
           </div>
         `;
       }).join('');
+
+      if (filtered.length > creatorChatsRenderLimit) {
+        html += `
+          <div style="text-align: center; margin-top: 12px; width: 100%;">
+            <button type="button" class="btn btn-secondary btn-sm" onclick="creatorChatsRenderLimit += 20; renderCreatorChats();" style="font-size: 11px; padding: 6px 12px; width: 100%; max-width: 180px; margin: 0 auto; display: block;">
+              <i class="fa-solid fa-angles-down" style="margin-right: 6px;"></i>Дагы жүктөө (${filtered.length - creatorChatsRenderLimit} калды)
+            </button>
+          </div>
+        `;
+      }
+      container.innerHTML = html;
     }
 
     function promptSendMessage(chatId, title) {
