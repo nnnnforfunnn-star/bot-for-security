@@ -59,6 +59,13 @@ bot.use(async (ctx, next) => {
 
       try {
         const config = await getGroupConfig(ctx.chat.id);
+        
+        // Разрешаем только settings и start, если команды в группе отключены
+        const isAlwaysAllowed = ["settings", "start"].includes(cmdName);
+        if (!isAlwaysAllowed && config.commandsEnabled !== true) {
+          return;
+        }
+
         if (config.disabledCommands && config.disabledCommands[cmdName] === true) {
           // Команда отключена администратором чата через веб-панель
           return; 

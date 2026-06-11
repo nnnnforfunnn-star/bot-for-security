@@ -1955,6 +1955,16 @@
                 <div class="card-description">Боттун негизги админ буйруктарын жана кыска сөздөрүн өзгөртүү. Ар бир буйрукка автожооп жана авто-өчүрүү жөндөөсүн кошсо болот.</div>
               </div>
               <div class="card-body">
+                <div class="setting-row" style="margin-bottom: 20px; border-bottom: 1px solid var(--border-color); padding-bottom: 16px;">
+                  <div class="setting-info">
+                    <div class="setting-name">Тайпалык буйруктарды активдештирүү</div>
+                    <div class="setting-desc">Бул ползунок өчүрүлсө, боттун бардык буйруктары (settings жана start'тан башка) тайпада иштебейт.</div>
+                  </div>
+                  <label class="switch">
+                    <input type="checkbox" id="commandsEnabled">
+                    <span class="slider"></span>
+                  </label>
+                </div>
                 <p style="font-size:12px; color:var(--text-muted); margin-bottom:16px;">Буйруктарды өзгөртүү үчүн ар бирин басып жайып алыңыз:</p>
                 <div id="commands_container"></div>
               </div>
@@ -2618,6 +2628,7 @@
       document.getElementById('mediaRateLimitCount').value = cfg.mediaRateLimitCount || 5;
       document.getElementById('mediaRateLimitPeriod').value = cfg.mediaRateLimitPeriod || 60;
       document.getElementById('mediaRateLimitAction').value = cfg.mediaRateLimitAction || 'delete';
+      document.getElementById('commandsEnabled').checked = cfg.commandsEnabled || false;
     }
 
     function renderLists() {
@@ -4048,6 +4059,7 @@
       appData.config.mediaRateLimitCount = parseInt(document.getElementById('mediaRateLimitCount').value) || 5;
       appData.config.mediaRateLimitPeriod = parseInt(document.getElementById('mediaRateLimitPeriod').value) || 60;
       appData.config.mediaRateLimitAction = document.getElementById('mediaRateLimitAction').value;
+      appData.config.commandsEnabled = document.getElementById('commandsEnabled').checked;
 
       // Extract customCommands configs
       if (!appData.config.customCommands) appData.config.customCommands = {};

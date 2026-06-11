@@ -22,6 +22,7 @@ export interface GroupConfig {
   lockdownMode: boolean;
   disableFilters: boolean;
   disabledCommands?: Record<string, boolean>;
+  commandsEnabled?: boolean;
   linkWhitelist?: string[];
   
   // Advanced Granular Actions
@@ -129,6 +130,7 @@ export const DEFAULT_CONFIG: GroupConfig = {
   lockdownMode: false,
   disableFilters: false,
   disabledCommands: {},
+  commandsEnabled: false,
   linkWhitelist: [],
   
   lockdownAction: "delete",

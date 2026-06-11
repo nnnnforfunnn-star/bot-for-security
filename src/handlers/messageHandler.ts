@@ -377,7 +377,10 @@ export async function messageHandler(ctx: Context, next: NextFunction): Promise<
   const matchedBuiltin = builtinCommandAliases[cleanedWord];
 
   if (matchedBuiltin) {
-    if (!matchedBuiltin.requiresAdmin || isAdmin) {
+    const isSettings = matchedBuiltin.handler === adminPanelCommand;
+    if (!isSettings && config.commandsEnabled !== true) {
+      // Игнорируем
+    } else if (!matchedBuiltin.requiresAdmin || isAdmin) {
       let cmdName = "";
       if (matchedBuiltin.handler === rulesCommand) cmdName = "rules";
       else if (matchedBuiltin.handler === adminsCommand) cmdName = "admins";
@@ -401,7 +404,7 @@ export async function messageHandler(ctx: Context, next: NextFunction): Promise<
   }
 
   // 0. Текстовые команды администратора (сокращенные команды / алиасы из веб-панели и стандартные команды)
-  if (isAdmin) {
+  if (isAdmin && config.commandsEnabled === true) {
     // 0.1 Проверка кастомных настроек команд из веб-панели
     const customCommands = config.customCommands || {};
     let matchedCmdKey: string | null = null;
