@@ -117,11 +117,17 @@ export default async function handler(req: any, res: any) {
             }
             adminCustomTitle = adm.custom_title || "";
           }
-          if (adminRole === "owner" || adminRole === "coowner") {
+          if (adminRole === "owner") {
             webAccess = true;
           } else {
             const hasWebAccess = await db.get<string>(`chat:${chatId}:user:${uid}:web_access`);
-            webAccess = hasWebAccess === "true";
+            if (hasWebAccess === "true") {
+              webAccess = true;
+            } else if (hasWebAccess === "false") {
+              webAccess = false;
+            } else {
+              webAccess = adminRole === "coowner";
+            }
           }
         }
         

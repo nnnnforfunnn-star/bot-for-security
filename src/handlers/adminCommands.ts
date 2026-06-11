@@ -59,7 +59,10 @@ export async function setRulesCommand(ctx: Context) {
 export async function rulesCommand(ctx: Context) {
   if (!ctx.chat || ctx.chat.type === "private") return;
   const config = await getGroupConfig(ctx.chat.id);
-  await ctx.reply(`📜 **Тайпанын эрежелери:**\n\n${config.rulesText}`, { parse_mode: "Markdown" });
+  const rules = config.rulesText || "Тайпанын эрежелери азырынча орнотула элек.";
+  await ctx.reply(`📜 **Тайпанын эрежелери:**\n\n${rules}`, { parse_mode: "Markdown" }).catch(async () => {
+    await ctx.reply(`📜 Тайпанын эрежелери:\n\n${rules}`);
+  });
 }
 
 export async function titleCommand(ctx: Context) {

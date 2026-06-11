@@ -137,7 +137,7 @@ export async function handleUnmuteCommand(ctx: Context): Promise<void> {
       can_send_other_messages: true,
       can_add_web_page_previews: true,
     });
-    await logAction(ctx.api, ctx.chat!.id, check.targetUserId, check.targetName, "Анмут", "Мут жазасы алынды", ctx.from?.first_name || "Админ");
+    await logAction(ctx.api, ctx.chat!.id, check.targetUserId, check.targetName, "Мутту алуу", "Мут жазасы алынды", ctx.from?.first_name || "Админ");
     await replyMaybeSilent(ctx, `🔊 Колдонуучу <b>${check.targetName}</b> жазуу укугу кайтарылды.`);
   } catch (error) {
     logger.error("Ошибка при разглушении пользователя", error);
@@ -222,7 +222,7 @@ export async function handleUnbanCommand(ctx: Context): Promise<void> {
 
   const success = await unbanUser(ctx.api, ctx.chat.id, targetUserId);
   if (success) {
-    await logAction(ctx.api, ctx.chat.id, targetUserId, `Колдонуучу ${targetUserId}`, "Разбан", "Бан жазасы алынды", ctx.from?.first_name || "Админ");
+    await logAction(ctx.api, ctx.chat.id, targetUserId, `Колдонуучу ${targetUserId}`, "Бөгөттөн чыгаруу", "Бан жазасы алынды", ctx.from?.first_name || "Админ");
     await replyMaybeSilent(ctx, `✅ Колдонуучу бөгөттөн чыгарылды. ID номери: <code>${targetUserId}</code>.`);
   } else {
     await ctx.reply("❌ Колдонуучуну бөгөттөн чыгаруу мүмкүн болбоду. ID номери туура экенин жана ботто администратор укуктары бар экенин текшериңиз.");

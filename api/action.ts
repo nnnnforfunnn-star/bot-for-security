@@ -1,5 +1,5 @@
 import { validateWebAppData, getUserFromInitData } from "../src/utils/telegramAuth.js";
-import { isUserSeniorAdminInChat } from "../src/utils/telegram.js";
+import { isUserSeniorAdminInChat, isUserAdminInChat } from "../src/utils/telegram.js";
 import { bot } from "../src/bot.js";
 import { banUser, muteUser } from "../src/utils/telegram.js";
 import { logAction } from "../src/utils/actionLogger.js";
@@ -58,6 +58,14 @@ export default async function handler(req: any, res: any) {
     const requiresTarget = ["ban", "mute", "unmute", "kick", "unban", "promote", "demote", "resetwarns", "warn", "setkarma", "setusertitle", "grant_web_access", "revoke_web_access"];
     if (!action || (requiresTarget.includes(action) && !targetUserId)) {
       return res.status(400).json({ error: "Bad Request: missing action or targetUserId" });
+    }
+
+    // Защита: нельзя применять административные ограничения к другим администраторам чата
+    if (targetUserId && ["ban", "mute", "kick", "warn", "demote"].includes(action)) {
+      const isTargetAdmin = await isUserAdminInChat(bot.api, chatId, targetUserId);
+      if (isTargetAdmin) {
+        return res.status(400).json({ error: "Кечиресиз, администраторлорго карата чектөөлөрдү колдонууга болбойт!" });
+      }
     }
 
     let targetName = "Колдонуучу";
@@ -122,7 +130,7 @@ export default async function handler(req: any, res: any) {
           can_send_voice_notes: true, can_send_polls: true, can_send_other_messages: true,
           can_add_web_page_previews: true,
         });
-        await logAction(bot.api, chatId, targetUserId, targetName, "Анмут", reason || "Web Panel аркылуу", user.first_name || "Админ");
+        await logAction(bot.api, chatId, targetUserId, targetName, "Мутту алуу", reason || "Web Panel аркылуу", user.first_name || "Админ");
         await logAuditAction(chatId, user.id, user.first_name || "Админ", "moderation", `Колдонуучу [${targetName}](tg://user?id=${targetUserId}) мутунан бошотулду`, { type: "unmute", targetUserId });
         break;
       case "kick":
@@ -133,7 +141,7 @@ export default async function handler(req: any, res: any) {
         break;
       case "unban":
         await bot.api.unbanChatMember(chatId, targetUserId, { only_if_banned: true }).catch(() => {});
-        await logAction(bot.api, chatId, targetUserId, targetName, "Разбан", reason || "Web Panel аркылуу", user.first_name || "Админ");
+        await logAction(bot.api, chatId, targetUserId, targetName, "Бөгөттөн чыгаруу", reason || "Web Panel аркылуу", user.first_name || "Админ");
         await logAuditAction(chatId, user.id, user.first_name || "Админ", "moderation", `Колдонуучу [${targetName}](tg://user?id=${targetUserId}) бандан чыгарылды`, { type: "unban", targetUserId });
         break;
       case "promote":

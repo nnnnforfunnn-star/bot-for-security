@@ -91,6 +91,10 @@ export async function warnCommand(ctx: Context) {
   const warnKey = `chat:${ctx.chat.id}:user:${target.id}:warns`;
   const warns = await db.incr(warnKey);
 
+  if (config.warnExpireDays && config.warnExpireDays > 0) {
+    await db.expire(warnKey, config.warnExpireDays * 86400).catch(() => {});
+  }
+
   if (warns >= config.warnLimit) {
     await db.del(warnKey); // reset warns
     const actionName = config.warnAction || "mute";

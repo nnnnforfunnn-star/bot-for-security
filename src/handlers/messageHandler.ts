@@ -152,7 +152,7 @@ async function findUserIdByUsername(chatId: number, username: string): Promise<{
 }
 
 async function resolveTargetUser(ctx: Context, text: string, triggerUsed: string): Promise<{ id: number; name: string } | null> {
-  const targetMsg = ctx.message?.reply_to_message;
+  const targetMsg = ctx.message?.reply_to_message || ctx.editedMessage?.reply_to_message;
   if (targetMsg && targetMsg.from) {
     return {
       id: targetMsg.from.id,
@@ -187,7 +187,8 @@ async function resolveTargetUser(ctx: Context, text: string, triggerUsed: string
 }
 
 export async function messageHandler(ctx: Context, next: NextFunction): Promise<void> {
-  if (!ctx.message || !ctx.chat || ctx.chat.type === "private") {
+  const msg = ctx.message || ctx.editedMessage;
+  if (!msg || !ctx.chat || ctx.chat.type === "private") {
     return next();
   }
 
@@ -202,7 +203,7 @@ export async function messageHandler(ctx: Context, next: NextFunction): Promise<
 
   const executeViolation = async (action: string, reason: string) => {
     try {
-      await safeDeleteMessage(ctx, chatId, ctx.message!.message_id);
+      await safeDeleteMessage(ctx, chatId, msg.message_id);
       if (action === "warn") {
         await handleWarn(ctx, userId, chatId, name, reason, config.muteDurationMinutes, config.warnLimit, config.warnAction);
       } else if (action === "mute") {
@@ -235,16 +236,19 @@ export async function messageHandler(ctx: Context, next: NextFunction): Promise<
   }
 
   // Analytics Tracking
-  const today = new Date().toISOString().split("T")[0];
-  await db.incr(`chat:${chatId}:stats:messages_count`);
-  await db.incr(`chat:${chatId}:stats:messages_by_date:${today}`);
-  await db.sadd(`chat:${chatId}:users`, userId);
-  await db.hset(`chat:${chatId}:user:${userId}:info`, "name", name);
-  if (ctx.from.username) await db.hset(`chat:${chatId}:user:${userId}:info`, "username", ctx.from.username);
-  await db.zincrby(`chat:${chatId}:stats:top_users`, 1, userId);
-  await db.zincrby(`chat:${chatId}:stats:top_users:${today}`, 1, userId);
+  const isEdited = !!ctx.editedMessage;
+  if (!isEdited) {
+    const today = new Date().toISOString().split("T")[0];
+    await db.incr(`chat:${chatId}:stats:messages_count`);
+    await db.incr(`chat:${chatId}:stats:messages_by_date:${today}`);
+    await db.sadd(`chat:${chatId}:users`, userId);
+    await db.hset(`chat:${chatId}:user:${userId}:info`, "name", name);
+    if (ctx.from.username) await db.hset(`chat:${chatId}:user:${userId}:info`, "username", ctx.from.username);
+    await db.zincrby(`chat:${chatId}:stats:top_users`, 1, userId);
+    await db.zincrby(`chat:${chatId}:stats:top_users:${today}`, 1, userId);
+  }
 
-  const text = ctx.message.text || ctx.message.caption || "";
+  const text = msg.text || msg.caption || "";
   const lowerText = text.toLowerCase().trim();
 
   // 0. Автожооптор (Filters) - Текшерүү баарына тиешелүү, эгер өчүрүлбөсө
@@ -450,7 +454,7 @@ export async function messageHandler(ctx: Context, next: NextFunction): Promise<
 
       // Если мы нашли targetUser по аргументу в тексте, уберем его имя/ID из причины
       let reason = parsedReason;
-      const targetMsg = ctx.message.reply_to_message;
+      const targetMsg = msg.reply_to_message;
       if (targetUser && !targetMsg) {
         const args = parsedReason.split(/\s+/);
         if (args.length > 0 && (args[0] === targetUser.id.toString() || args[0].toLowerCase().startsWith("@"))) {
@@ -482,7 +486,7 @@ export async function messageHandler(ctx: Context, next: NextFunction): Promise<
         replyMsgText = customReply;
       } else if (action === "unban" && targetUserId) {
         await unbanUser(ctx.api, chatId, targetUserId);
-        await logAction(ctx.api, chatId, targetUserId, targetName, "Разбан", reason, ctx.from.first_name);
+        await logAction(ctx.api, chatId, targetUserId, targetName, "Бөгөттөн чыгаруу", reason, ctx.from.first_name);
         replyMsgText = customReply || `✅ [${targetName}](tg://user?id=${targetUserId}) бөгөттөн чыгарылды.`;
       } else if (action === "unmute" && targetUserId) {
         await ctx.api.restrictChatMember(chatId, targetUserId, {
@@ -491,15 +495,15 @@ export async function messageHandler(ctx: Context, next: NextFunction): Promise<
           can_send_voice_notes: true, can_send_polls: true, can_send_other_messages: true,
           can_add_web_page_previews: true,
         });
-        await logAction(ctx.api, chatId, targetUserId, targetName, "Анмут", reason, ctx.from.first_name);
+        await logAction(ctx.api, chatId, targetUserId, targetName, "Мутту алуу", reason, ctx.from.first_name);
         replyMsgText = customReply || `🔊 [${targetName}](tg://user?id=${targetUserId}) жазуу укугу кайтарылды.`;
       } else if (action === "del") {
         if (targetMsg) {
           await safeDeleteMessage(ctx, chatId, targetMsg.message_id);
         }
-        await safeDeleteMessage(ctx, chatId, ctx.message!.message_id, true);
+        await safeDeleteMessage(ctx, chatId, msg.message_id, true);
         if (targetUserId) {
-          await logAction(ctx.api, chatId, targetUserId, targetName, "Удаление", reason, ctx.from.first_name);
+          await logAction(ctx.api, chatId, targetUserId, targetName, "Өчүрүү", reason, ctx.from.first_name);
         }
         replyMsgText = customReply;
       } else {
@@ -522,7 +526,7 @@ export async function messageHandler(ctx: Context, next: NextFunction): Promise<
         
         if (autoDelete) {
           setTimeout(async () => {
-            await safeDeleteMessage(ctx, chatId, ctx.message!.message_id, true);
+            await safeDeleteMessage(ctx, chatId, msg.message_id, true);
             if (sentReply) {
               await safeDeleteMessage(ctx, chatId, sentReply.message_id, true);
             }
@@ -550,7 +554,7 @@ export async function messageHandler(ctx: Context, next: NextFunction): Promise<
       const { durationSeconds, reason: parsedReason } = parseDurationAndReason(text, firstWordRawStats);
       
       let reason = parsedReason;
-      const targetMsg = ctx.message.reply_to_message;
+      const targetMsg = msg.reply_to_message;
       if (targetUser && !targetMsg) {
         const args = parsedReason.split(/\s+/);
         if (args.length > 0 && (args[0] === targetUser.id.toString() || args[0].toLowerCase().startsWith("@"))) {
@@ -582,7 +586,7 @@ export async function messageHandler(ctx: Context, next: NextFunction): Promise<
       } else if ((triggerUsed === "разбан" || triggerUsed === "unban") && !(config.disabledCommands?.unban)) {
         const customReason = reason || "Администратордун буйругу";
         await unbanUser(ctx.api, chatId, targetUserId);
-        await logAction(ctx.api, chatId, targetUserId, targetName, "Разбан", customReason, ctx.from.first_name);
+        await logAction(ctx.api, chatId, targetUserId, targetName, "Бөгөттөн чыгаруу", customReason, ctx.from.first_name);
         await ctx.reply(`✅ [${targetName}](tg://user?id=${targetUserId}) бөгөттөн чыгарылды.\nСебеби: ${customReason}`, { parse_mode: "Markdown" });
         return;
       } else if ((triggerUsed === "анмут" || triggerUsed === "unmute") && !(config.disabledCommands?.unmute)) {
@@ -593,7 +597,7 @@ export async function messageHandler(ctx: Context, next: NextFunction): Promise<
           can_send_voice_notes: true, can_send_polls: true, can_send_other_messages: true,
           can_add_web_page_previews: true,
         });
-        await logAction(ctx.api, chatId, targetUserId, targetName, "Анмут", customReason, ctx.from.first_name);
+        await logAction(ctx.api, chatId, targetUserId, targetName, "Мутту алуу", customReason, ctx.from.first_name);
         await ctx.reply(`🔊 [${targetName}](tg://user?id=${targetUserId}) жазуу укугу кайтарылды.\nСебеби: ${customReason}`, { parse_mode: "Markdown" });
         return;
       } else if ((triggerUsed === "эскертүү" || triggerUsed === "warn") && !(config.disabledCommands?.warn)) {
@@ -605,8 +609,8 @@ export async function messageHandler(ctx: Context, next: NextFunction): Promise<
         if (targetMsg) {
           await safeDeleteMessage(ctx, chatId, targetMsg.message_id);
         }
-        await safeDeleteMessage(ctx, chatId, ctx.message!.message_id, true);
-        await logAction(ctx.api, chatId, targetUserId, targetName, "Удаление", customReason, ctx.from.first_name);
+        await safeDeleteMessage(ctx, chatId, msg.message_id, true);
+        await logAction(ctx.api, chatId, targetUserId, targetName, "Өчүрүү", customReason, ctx.from.first_name);
         return;
       }
     }
@@ -615,12 +619,12 @@ export async function messageHandler(ctx: Context, next: NextFunction): Promise<
   if (isAdmin) return next();
   
   // --- Anti-Channel (Запрет писать от имени канала) ---
-  if (config.antiChannel && ctx.message?.sender_chat?.type === "channel") {
-    if (!ctx.message.is_automatic_forward) {
+  if (config.antiChannel && msg?.sender_chat?.type === "channel") {
+    if (!msg.is_automatic_forward) {
       const act = config.channelAction || "ban";
-      await safeDeleteMessage(ctx, chatId, ctx.message.message_id);
+      await safeDeleteMessage(ctx, chatId, msg.message_id);
       if (act === "ban") {
-        await ctx.api.banChatSenderChat(chatId, ctx.message.sender_chat.id).catch(() => {});
+        await ctx.api.banChatSenderChat(chatId, msg.sender_chat.id).catch(() => {});
       }
       return;
     }
@@ -637,7 +641,7 @@ export async function messageHandler(ctx: Context, next: NextFunction): Promise<
       await db.expire(floodKey, config.antiflood.seconds);
     }
     if (msgCount > config.antiflood.messages) {
-      await safeDeleteMessage(ctx, chatId, ctx.message!.message_id);
+      await safeDeleteMessage(ctx, chatId, msg.message_id);
       const action = config.antiflood.action;
       if (action === "mute") {
         const floodMute = config.floodMuteDuration || 120;
@@ -660,37 +664,37 @@ export async function messageHandler(ctx: Context, next: NextFunction): Promise<
     let lockViolated = false;
     let lockReason = "";
 
-    if (config.locks.links && ctx.message.entities?.some(e => e.type === "url" || e.type === "text_link")) {
+    if (config.locks.links && msg.entities?.some(e => e.type === "url" || e.type === "text_link")) {
       const whitelist = config.linkWhitelist || [];
-      const allWhitelisted = isLinkWhitelisted(text, ctx.message.entities, whitelist);
+      const allWhitelisted = isLinkWhitelisted(text, msg.entities, whitelist);
       if (!allWhitelisted) {
         lockViolated = true; lockReason = "Шилтемелер (Links) бөгөттөлгөн.";
       }
-    } else if (config.locks.forwards && ctx.message.forward_origin) {
+    } else if (config.locks.forwards && msg.forward_origin) {
       lockViolated = true; lockReason = "Башка каналдан репост кылуу бөгөттөлгөн.";
-    } else if (config.locks.media && (ctx.message.photo || ctx.message.video || ctx.message.document)) {
+    } else if (config.locks.media && (msg.photo || msg.video || msg.document)) {
       lockViolated = true; lockReason = "Медиа жөнөтүү бөгөттөлгөн.";
-    } else if (config.locks.photo && ctx.message.photo) {
+    } else if (config.locks.photo && msg.photo) {
       lockViolated = true; lockReason = "Сүрөт жөнөтүү бөгөттөлгөн.";
-    } else if (config.locks.video && ctx.message.video) {
+    } else if (config.locks.video && msg.video) {
       lockViolated = true; lockReason = "Видео жөнөтүү бөгөттөлгөн.";
-    } else if (config.locks.audio && ctx.message.audio) {
+    } else if (config.locks.audio && msg.audio) {
       lockViolated = true; lockReason = "Аудио жөнөтүү бөгөттөлгөн.";
-    } else if (config.locks.document && ctx.message.document) {
+    } else if (config.locks.document && msg.document) {
       lockViolated = true; lockReason = "Файл/Документ жөнөтүү бөгөттөлгөн.";
-    } else if (config.locks.stickers && ctx.message.sticker) {
+    } else if (config.locks.stickers && msg.sticker) {
       lockViolated = true; lockReason = "Стикерлер бөгөттөлгөн.";
-    } else if (config.locks.gifs && ctx.message.animation) {
+    } else if (config.locks.gifs && msg.animation) {
       lockViolated = true; lockReason = "GIF анимациялар бөгөттөлгөн.";
-    } else if (config.locks.voices && ctx.message.voice) {
+    } else if (config.locks.voices && msg.voice) {
       lockViolated = true; lockReason = "Үн билдирүүлөр бөгөттөлгөн.";
-    } else if (config.locks.videonote && ctx.message.video_note) {
+    } else if (config.locks.videonote && msg.video_note) {
       lockViolated = true; lockReason = "Кружоктор бөгөттөлгөн.";
-    } else if (config.locks.games && ctx.message.game) {
+    } else if (config.locks.games && msg.game) {
       lockViolated = true; lockReason = "Оюндар бөгөттөлгөн.";
     } else if (config.locks.commands && text?.startsWith("/")) {
       lockViolated = true; lockReason = "Буйруктар бөгөттөлгөн.";
-    } else if (config.locks.text && text && !ctx.message.photo && !ctx.message.video && !ctx.message.document && !ctx.message.voice && !ctx.message.video_note && !ctx.message.animation) {
+    } else if (config.locks.text && text && !msg.photo && !msg.video && !msg.document && !msg.voice && !msg.video_note && !msg.animation) {
       lockViolated = true; lockReason = "Жөнөкөй текст жазуу бөгөттөлгөн.";
     } else if (config.locks.arabic && text && /[\u0600-\u06FF]/.test(text)) {
       lockViolated = true; lockReason = "Араб ариби бөгөттөлгөн.";
@@ -705,10 +709,10 @@ export async function messageHandler(ctx: Context, next: NextFunction): Promise<
 
   // 2.5 Media & Link Rate Limiter
   if (config.mediaRateLimitEnabled) {
-    const hasMedia = ctx.message?.photo || ctx.message?.video || ctx.message?.document || 
-                      ctx.message?.audio || ctx.message?.voice || ctx.message?.video_note || 
-                      ctx.message?.sticker || ctx.message?.animation;
-    const hasLink = ctx.message?.entities?.some(e => e.type === "url" || e.type === "text_link");
+    const hasMedia = msg?.photo || msg?.video || msg?.document || 
+                      msg?.audio || msg?.voice || msg?.video_note || 
+                      msg?.sticker || msg?.animation;
+    const hasLink = msg?.entities?.some(e => e.type === "url" || e.type === "text_link");
 
     if (hasMedia || hasLink) {
       try {
@@ -720,11 +724,11 @@ export async function messageHandler(ctx: Context, next: NextFunction): Promise<
         const currentCount = await db.get<number>(rateLimitKey) || 0;
         
         if (currentCount >= rateLimitCount) {
-          await safeDeleteMessage(ctx, chatId, ctx.message!.message_id);
+          await safeDeleteMessage(ctx, chatId, msg.message_id);
           const limitReason = `Медиа жана шилтеме лимити ашты (чек: ${rateLimitCount} билдирүү / ${rateLimitPeriod}с)`;
           
           if (rateLimitAction === "delete") {
-            await logAction(ctx.api, chatId, userId, name, "Удаление", limitReason, "Система");
+            await logAction(ctx.api, chatId, userId, name, "Өчүрүү", limitReason, "Система");
           } else if (rateLimitAction === "mute") {
             await muteUser(ctx.api, chatId, userId, 2 * 60 * 60);
             await logAction(ctx.api, chatId, userId, name, "Мут", `${limitReason}, мөөнөтү: 120 мүнөт`, "Система");
@@ -758,7 +762,7 @@ export async function messageHandler(ctx: Context, next: NextFunction): Promise<
       if (blacklist) {
         for (const word of Object.keys(blacklist)) {
           if (lowerText.includes(word)) {
-            await safeDeleteMessage(ctx, chatId, ctx.message!.message_id);
+            await safeDeleteMessage(ctx, chatId, msg.message_id);
             const rawAction = blacklist[word] || "warn";
             let action = "warn";
             let duration = 60 * 60; // 1h default
@@ -781,7 +785,7 @@ export async function messageHandler(ctx: Context, next: NextFunction): Promise<
             }
 
             if (action === "delete") {
-              await logAction(ctx.api, chatId, userId, name, "Удаление", customReason, "Система");
+              await logAction(ctx.api, chatId, userId, name, "Өчүрүү", customReason, "Система");
             } else if (action === "mute") {
               await muteUser(ctx.api, chatId, userId, duration);
               await logAction(ctx.api, chatId, userId, name, "Мут", `${customReason}, мөөнөтү: ${Math.round(duration/60)} мүнөт`, "Система");
@@ -821,7 +825,7 @@ export async function messageHandler(ctx: Context, next: NextFunction): Promise<
   if (config.nightModeEnabled) {
     const utcHour = new Date().getUTCHours();
     const bishkekHour = (utcHour + 6) % 24;
-    const hasMediaOrLink = ctx.message.photo || ctx.message.video || ctx.message.document || ctx.message.entities?.some(e => e.type === "url" || e.type === "text_link" || e.type === "mention");
+    const hasMediaOrLink = msg.photo || msg.video || msg.document || msg.entities?.some(e => e.type === "url" || e.type === "text_link" || e.type === "mention");
     
     const start = config.nightModeStart;
     const end = config.nightModeEnd;
@@ -842,7 +846,7 @@ export async function messageHandler(ctx: Context, next: NextFunction): Promise<
 
   // 6. Quarantine (Карантин)
   if (config.quarantineEnabled) {
-    const hasLinkOrForward = ctx.message.forward_origin || ctx.message.entities?.some(e => e.type === "url" || e.type === "text_link");
+    const hasLinkOrForward = msg.forward_origin || msg.entities?.some(e => e.type === "url" || e.type === "text_link");
     if (hasLinkOrForward) {
       const joinDate = await db.get<number>(`chat:${chatId}:user:${userId}:joinDate`);
       if (joinDate) {

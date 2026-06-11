@@ -436,9 +436,10 @@ export async function captchaCallbackHandler(ctx: Context, next: NextFunction): 
         text: "❌ Сиз өтө тез бастыңыз! Сураныч, 5 секунд күтө туруңуз.",
         show_alert: true
       });
-    } else {
-      await ctx.answerCallbackQuery("❌ Жооп туура эмес!");
+      return;
     }
+
+    await ctx.answerCallbackQuery("❌ Жооп туура эмес!");
     try {
       await db.del(pendingKey);
       if (query.message) {
@@ -449,7 +450,7 @@ export async function captchaCallbackHandler(ctx: Context, next: NextFunction): 
       if (config.captchaKick) {
         await ctx.api.banChatMember(chatId, targetUserId).catch(() => {});
         await ctx.api.unbanChatMember(chatId, targetUserId).catch(() => {});
-        await logAction(ctx.api, chatId, targetUserId, query.from.first_name, "Kick", isTimerFail ? "Капча: Ыкчам басуу (Бот)" : "Капчадан өтпөдү");
+        await logAction(ctx.api, chatId, targetUserId, query.from.first_name, "Kick", "Капчадан өтпөдү");
       }
     } catch (e) {
       logger.error("Error kicking user on incorrect captcha", e);

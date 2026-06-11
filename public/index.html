@@ -3270,7 +3270,7 @@
             <tr>
               <td><b>${l.name}</b><br><span style="font-size:11px;color:var(--text-muted)">ID: ${l.userId}</span></td>
               <td>${l.reason}</td>
-              <td><button class="btn btn-sm" onclick="doAction('unban', ${l.userId})">Разбан</button></td>
+              <td><button class="btn btn-sm" onclick="doAction('unban', ${l.userId})">Бөгөттөн чыгаруу</button></td>
             </tr>
           `).join('') + `</tbody></table></div>`;
       } else {
@@ -3287,7 +3287,7 @@
             <tr>
               <td><b>${l.name}</b><br><span style="font-size:11px;color:var(--text-muted)">ID: ${l.userId}</span></td>
               <td><b>${l.adminName}</b>: ${l.reason}</td>
-              <td><button class="btn btn-sm" onclick="doAction('unmute', ${l.userId})">Анмут</button></td>
+              <td><button class="btn btn-sm" onclick="doAction('unmute', ${l.userId})">Мутту алуу</button></td>
             </tr>
           `).join('') + `</tbody></table></div>`;
       } else {
@@ -3740,8 +3740,8 @@
 
                 <div style="display:flex; gap: 8px; flex-wrap: wrap; margin-top: 4px;">
                   <button class="btn btn-sm btn-danger" onclick="doAction('kick', ${u.id})"><i class="fa-solid fa-user-minus" style="margin-right: 4px;"></i> Кик (Чыгаруу)</button>
-                  <button class="btn btn-sm" onclick="doAction('unmute', ${u.id})"><i class="fa-solid fa-volume-high" style="margin-right: 4px;"></i> Анмут</button>
-                  <button class="btn btn-sm" onclick="doAction('unban', ${u.id})"><i class="fa-solid fa-lock-open" style="margin-right: 4px;"></i> Разбан</button>
+                  <button class="btn btn-sm" onclick="doAction('unmute', ${u.id})"><i class="fa-solid fa-volume-high" style="margin-right: 4px;"></i> Мутту алуу</button>
+                  <button class="btn btn-sm" onclick="doAction('unban', ${u.id})"><i class="fa-solid fa-lock-open" style="margin-right: 4px;"></i> Бөгөттөн чыгаруу</button>
                   <button class="btn btn-sm" onclick="doAction('resetwarns', ${u.id})"><i class="fa-solid fa-rotate-left" style="margin-right: 4px;"></i> Варндарды тазалоо</button>
                 </div>
 
@@ -3845,8 +3845,8 @@
                   <option value="mute" ${action==='mute'?'selected':''}>Мут кылуу</option>
                   <option value="kick" ${action==='kick'?'selected':''}>Кик кылуу</option>
                   <option value="warn" ${action==='warn'?'selected':''}>Варн берүү</option>
-                  <option value="unban" ${action==='unban'?'selected':''}>Разбан</option>
-                  <option value="unmute" ${action==='unmute'?'selected':''}>Анмут</option>
+                  <option value="unban" ${action==='unban'?'selected':''}>Бөгөттөн чыгаруу</option>
+                  <option value="unmute" ${action==='unmute'?'selected':''}>Мутту алуу</option>
                   <option value="del" ${action==='del'?'selected':''}>СМСти Өчүрүү</option>
                 </select>
               </div>
