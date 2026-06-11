@@ -62,31 +62,29 @@ export default async function handler(req: any, res: any) {
 
     // Извлекаем чистый base64
     const base64Data = file.includes(";base64,") ? file.split(";base64,").pop() : file;
-    const buffer = Buffer.from(base64Data, "base64");
     
-    // Используем встроенные в Node.js 18+ класс Blob и FormData для нативной совместимости с fetch
-    const blob = new globalThis.Blob([buffer], { type: mimeType || "image/jpeg" });
-    const formData = new globalThis.FormData();
-    formData.append("reqtype", "fileupload");
-    formData.append("fileToUpload", blob, name || "image.jpg");
+    // Формируем URL-encoded параметры для API freeimage.host
+    const params = new URLSearchParams();
+    params.append("key", "6d207e02198a847aa98d0a2a901485a5");
+    params.append("action", "upload");
+    params.append("source", base64Data);
+    params.append("format", "json");
 
-    const response = await fetch("https://catbox.moe/user/api.php", {
+    const response = await fetch("https://freeimage.host/api/1/upload", {
       method: "POST",
-      body: formData,
-      headers: {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-      }
+      body: params
     });
 
     if (!response.ok) {
-      throw new Error(`Catbox responded with status ${response.status}`);
+      throw new Error(`freeimage.host responded with status ${response.status}`);
     }
 
-    const fileUrl = await response.text();
-    if (!fileUrl || !fileUrl.startsWith("http")) {
-      throw new Error(`Invalid Catbox response: ${fileUrl}`);
+    const json = await response.json() as any;
+    if (!json || json.status_code !== 200 || !json.image || !json.image.url) {
+      throw new Error(`Invalid freeimage.host response: ${JSON.stringify(json)}`);
     }
 
+    const fileUrl = json.image.url;
     return res.status(200).json({ success: true, url: fileUrl.trim() });
   } catch (error: any) {
     console.error("Upload API Error:", error);
