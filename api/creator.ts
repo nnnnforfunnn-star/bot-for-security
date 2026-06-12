@@ -68,7 +68,8 @@ export default async function handler(req: any, res: any) {
         platform: process.platform
       };
 
-      return res.status(200).json({ items, stats, chatsList });
+      const globalConfig = await db.get("global:config") || {};
+      return res.status(200).json({ items, stats, chatsList, globalConfig });
     }
 
     if (req.method === "POST") {
@@ -196,6 +197,15 @@ export default async function handler(req: any, res: any) {
         }
 
         return res.status(200).json({ success: true, successCount, failCount });
+      }
+
+      // Save Global Config Action
+      if (action === "save_global_config") {
+        if (!configData) {
+          return res.status(400).json({ error: "configData is required" });
+        }
+        await db.set("global:config", configData);
+        return res.status(200).json({ success: true });
       }
 
       // Default Create/Update Item

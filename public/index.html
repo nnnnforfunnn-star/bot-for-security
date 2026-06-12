@@ -2458,6 +2458,214 @@
               </div>
             </div>
 
+            <!-- Global Config & Safety Settings Card -->
+            <div class="card" style="border: 1px solid rgba(239, 68, 68, 0.2); margin-top: 20px;">
+              <div class="card-header" style="border-bottom: 1px solid rgba(239, 68, 68, 0.1);">
+                <div class="card-title" style="color: var(--danger);"><i class="fa-solid fa-shield-halved" style="color: var(--danger); margin-right: 8px;"></i>Глобалдык коопсуздук жана жөндөөлөр</div>
+                <div class="card-description">БАРДЫК тайпалардагы боттун иштешин жана коргонуу деңгээлин бир жерден жөндөө.</div>
+              </div>
+              <div class="card-body" style="padding: 0;">
+                <!-- Accordion 1: Greeting & Welcome -->
+                <div class="accordion-item" style="border-bottom: 1px solid var(--border-color);">
+                  <div class="accordion-header" onclick="toggleAccordion('acc-welcome')" style="padding: 14px 20px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; background: rgba(255,255,255,0.01);">
+                    <div style="display: flex; align-items: center; gap: 10px; font-weight: 600;">
+                      <i class="fa-solid fa-handshake" style="color: #6ee7b7; font-size: 16px;"></i>
+                      <span>1. Саламдашуу жана Салам айтуу (Greeting)</span>
+                    </div>
+                    <i class="fa-solid fa-chevron-down" id="acc-welcome-icon" style="transition: transform 0.2s;"></i>
+                  </div>
+                  <div class="accordion-content" id="acc-welcome" style="display: none; padding: 16px 20px; border-top: 1px solid var(--border-color); background: rgba(0,0,0,0.15);">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px;">
+                      <span class="form-label" style="margin-bottom: 0;">Глобалдык саламдашууну күйгүзүү</span>
+                      <label class="switch">
+                        <input type="checkbox" id="g_welcome_enabled">
+                        <span class="slider round"></span>
+                      </label>
+                    </div>
+                    <div class="form-group" style="margin-top: 10px;">
+                      <label class="form-label">Саламдашуу тексти (Калып: {name}, {username}, {title}, {count} колдонуңуз)</label>
+                      <textarea class="form-textarea" id="g_welcome_template" rows="3" placeholder="👋 Кош келдиңиз, {name}! Бул биздин {title} тайпасы."></textarea>
+                    </div>
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 14px;">
+                      <span class="form-label" style="margin-bottom: 0;">Глобалдык капча текшерүүсүн күйгүзүү</span>
+                      <label class="switch">
+                        <input type="checkbox" id="g_welcome_captcha">
+                        <span class="slider round"></span>
+                      </label>
+                    </div>
+                    <div class="form-group" style="margin-top: 14px;">
+                      <label class="form-label">Саламдашуу билдирүүсүн өчүрүү убактысы (секунд, 0 - өчүрбөө)</label>
+                      <input type="number" class="form-input" id="g_welcome_delete" min="0" placeholder="Мисалы: 60">
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Accordion 2: Swear Filter -->
+                <div class="accordion-item" style="border-bottom: 1px solid var(--border-color);">
+                  <div class="accordion-header" onclick="toggleAccordion('acc-profanity')" style="padding: 14px 20px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; background: rgba(255,255,255,0.01);">
+                    <div style="display: flex; align-items: center; gap: 10px; font-weight: 600;">
+                      <i class="fa-solid fa-face-swear" style="color: #fca5a5; font-size: 16px;"></i>
+                      <span>2. Глобалдык сөгүнгөнгө каршы фильтр (Profanity)</span>
+                    </div>
+                    <i class="fa-solid fa-chevron-down" id="acc-profanity-icon" style="transition: transform 0.2s;"></i>
+                  </div>
+                  <div class="accordion-content" id="acc-profanity" style="display: none; padding: 16px 20px; border-top: 1px solid var(--border-color); background: rgba(0,0,0,0.15);">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px;">
+                      <span class="form-label" style="margin-bottom: 0;">Глобалдык фильтрди иштетүү</span>
+                      <label class="switch">
+                        <input type="checkbox" id="g_profanity_enabled">
+                        <span class="slider round"></span>
+                      </label>
+                    </div>
+                    <div class="form-group">
+                      <label class="form-label">Адепсиз сөз аныкталганда колдонулуучу аракет</label>
+                      <select class="form-select" id="g_profanity_action" style="width: 100%;">
+                        <option value="delete">Өчүрүү гана (Delete Only)</option>
+                        <option value="warn">Эскертүү берүү (Warn)</option>
+                        <option value="mute">Жазууну чектөө (Mute for 2 hours)</option>
+                      </select>
+                    </div>
+                    <div class="form-group" style="margin-top: 10px;">
+                      <label class="form-label">Тыюу салынган сөздөрдүн тизмеси (үтүр же боштук менен бөлүңүз)</label>
+                      <textarea class="form-textarea" id="g_profanity_words" rows="3" placeholder="жамансөз1, жамансөз2, сөгүнүү"></textarea>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Accordion 3: Anti-Flood -->
+                <div class="accordion-item" style="border-bottom: 1px solid var(--border-color);">
+                  <div class="accordion-header" onclick="toggleAccordion('acc-antiflood')" style="padding: 14px 20px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; background: rgba(255,255,255,0.01);">
+                    <div style="display: flex; align-items: center; gap: 10px; font-weight: 600;">
+                      <i class="fa-solid fa-bolt" style="color: #fde047; font-size: 16px;"></i>
+                      <span>3. Спам жана флуддон коргоо (Global Anti-Flood)</span>
+                    </div>
+                    <i class="fa-solid fa-chevron-down" id="acc-antiflood-icon" style="transition: transform 0.2s;"></i>
+                  </div>
+                  <div class="accordion-content" id="acc-antiflood" style="display: none; padding: 16px 20px; border-top: 1px solid var(--border-color); background: rgba(0,0,0,0.15);">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px;">
+                      <span class="form-label" style="margin-bottom: 0;">Глобалдык Анти-флудду иштетүү</span>
+                      <label class="switch">
+                        <input type="checkbox" id="g_antiflood_enabled">
+                        <span class="slider round"></span>
+                      </label>
+                    </div>
+                    <div class="grid-3" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 12px;">
+                      <div class="form-group">
+                        <label class="form-label">Билдирүү саны</label>
+                        <input type="number" class="form-input" id="g_antiflood_max" min="1" placeholder="5">
+                      </div>
+                      <div class="form-group">
+                        <label class="form-label">Убакыт (секунд)</label>
+                        <input type="number" class="form-input" id="g_antiflood_sec" min="1" placeholder="3">
+                      </div>
+                      <div class="form-group">
+                        <label class="form-label">Муттоо (мүнөт)</label>
+                        <input type="number" class="form-input" id="g_antiflood_mute" min="1" placeholder="15">
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Accordion 4: Anti-Link -->
+                <div class="accordion-item" style="border-bottom: 1px solid var(--border-color);">
+                  <div class="accordion-header" onclick="toggleAccordion('acc-antilink')" style="padding: 14px 20px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; background: rgba(255,255,255,0.01);">
+                    <div style="display: flex; align-items: center; gap: 10px; font-weight: 600;">
+                      <i class="fa-solid fa-link-slash" style="color: #60a5fa; font-size: 16px;"></i>
+                      <span>4. Шилтемелерди автоматтык өчүрүү (Anti-Link)</span>
+                    </div>
+                    <i class="fa-solid fa-chevron-down" id="acc-antilink-icon" style="transition: transform 0.2s;"></i>
+                  </div>
+                  <div class="accordion-content" id="acc-antilink" style="display: none; padding: 16px 20px; border-top: 1px solid var(--border-color); background: rgba(0,0,0,0.15);">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px;">
+                      <span class="form-label" style="margin-bottom: 0;">Глобалдык Анти-ссылканы иштетүү</span>
+                      <label class="switch">
+                        <input type="checkbox" id="g_antilink_enabled">
+                        <span class="slider round"></span>
+                      </label>
+                    </div>
+                    <div class="form-group">
+                      <label class="form-label">Шилтеме жөнөткөндөгү жазалоо</label>
+                      <select class="form-select" id="g_antilink_action" style="width: 100%;">
+                        <option value="delete">Өчүрүү гана (Delete Only)</option>
+                        <option value="warn">Эскертүү берүү (Warn)</option>
+                        <option value="mute">Жазууну чектөө (Mute for 2 hours)</option>
+                      </select>
+                    </div>
+                    <div class="form-group" style="margin-top: 10px;">
+                      <label class="form-label">Ак тизмеге домендер/каналдар (үтүр менен бөлүңүз)</label>
+                      <textarea class="form-textarea" id="g_antilink_whitelist" rows="2" placeholder="google.com, t.me/mychannel"></textarea>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Accordion 5: Night Mode -->
+                <div class="accordion-item" style="border-bottom: 1px solid var(--border-color);">
+                  <div class="accordion-header" onclick="toggleAccordion('acc-nightmode')" style="padding: 14px 20px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; background: rgba(255,255,255,0.01);">
+                    <div style="display: flex; align-items: center; gap: 10px; font-weight: 600;">
+                      <i class="fa-solid fa-moon" style="color: #c084fc; font-size: 16px;"></i>
+                      <span>5. Түнкү тынчтык режими (Global Night Mode)</span>
+                    </div>
+                    <i class="fa-solid fa-chevron-down" id="acc-nightmode-icon" style="transition: transform 0.2s;"></i>
+                  </div>
+                  <div class="accordion-content" id="acc-nightmode" style="display: none; padding: 16px 20px; border-top: 1px solid var(--border-color); background: rgba(0,0,0,0.15);">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px;">
+                      <span class="form-label" style="margin-bottom: 0;">Түнкү режимди күйгүзүү</span>
+                      <label class="switch">
+                        <input type="checkbox" id="g_nightmode_enabled">
+                        <span class="slider round"></span>
+                      </label>
+                    </div>
+                    <div class="grid-2" style="display: flex; gap: 12px; margin-bottom: 10px;">
+                      <div class="form-group" style="flex: 1;">
+                        <label class="form-label">Башталуу убактысы (саат, 0-23)</label>
+                        <input type="number" class="form-input" id="g_nightmode_start" min="0" max="23" placeholder="23">
+                      </div>
+                      <div class="form-group" style="flex: 1;">
+                        <label class="form-label">Аяктоо убактысы (саат, 0-23)</label>
+                        <input type="number" class="form-input" id="g_nightmode_end" min="0" max="23" placeholder="7">
+                      </div>
+                    </div>
+                    <div class="form-group">
+                      <label class="form-label">Түнкү режимдеги аракет</label>
+                      <select class="form-select" id="g_nightmode_action" style="width: 100%;">
+                        <option value="delete">Билдирүүнү өчүрүү гана</option>
+                        <option value="restrict">Билдирүүнү өчүрүү жана эскертүү берүү</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Accordion 6: Global Blacklist -->
+                <div class="accordion-item" style="border-bottom: none;">
+                  <div class="accordion-header" onclick="toggleAccordion('acc-blacklist')" style="padding: 14px 20px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; background: rgba(255,255,255,0.01);">
+                    <div style="display: flex; align-items: center; gap: 10px; font-weight: 600;">
+                      <i class="fa-solid fa-user-slash" style="color: #ef4444; font-size: 16px;"></i>
+                      <span>6. Глобалдык Кара Тизме (Global Blacklist)</span>
+                    </div>
+                    <i class="fa-solid fa-chevron-down" id="acc-blacklist-icon" style="transition: transform 0.2s;"></i>
+                  </div>
+                  <div class="accordion-content" id="acc-blacklist" style="display: none; padding: 16px 20px; border-top: 1px solid var(--border-color); background: rgba(0,0,0,0.15);">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px;">
+                      <span class="form-label" style="margin-bottom: 0;">Глобалдык кара тизмени күйгүзүү</span>
+                      <label class="switch">
+                        <input type="checkbox" id="g_blacklist_enabled">
+                        <span class="slider round"></span>
+                      </label>
+                    </div>
+                    <div class="form-group">
+                      <label class="form-label">Бөгөттөлгөн колдонуучулардын ID тизмеси (ар бир сапта же үтүр менен бирден ID)</label>
+                      <textarea class="form-textarea" id="g_blacklist_users" rows="4" placeholder="Мисалы:&#10;123456789&#10;987654321"></textarea>
+                      <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">Бул тизмедеги колдонуучулар бот кошулган ар бир группага киргенде же жазганда дароо бөгөттөлөт (бан).</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="card-footer" style="padding: 16px 20px; border-top: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.01);">
+                <span id="global_save_status" style="font-size: 12px; color: var(--text-muted); transition: opacity 0.3s; opacity: 0;"><i class="fa-solid fa-check" style="color: var(--success); margin-right: 6px;"></i>Орнотуулар ийгиликтүү сакталды</span>
+                <button type="button" class="btn btn-primary" onclick="submitGlobalConfig()" style="min-width: 160px;"><i class="fa-solid fa-floppy-disk" style="margin-right: 8px;"></i>Глобалдык сактоо</button>
+              </div>
+            </div>
+
             <!-- Global Icebreaker Manager Card -->
             <div class="card">
               <div class="card-header">
@@ -4928,6 +5136,35 @@
           globalChatsList = data.chatsList || [];
           renderCreatorChats();
 
+          if (data.globalConfig) {
+            const gc = data.globalConfig;
+            document.getElementById('g_welcome_enabled').checked = !!gc.welcomeEnabled;
+            document.getElementById('g_welcome_template').value = gc.welcomeTemplate || '';
+            document.getElementById('g_welcome_captcha').checked = !!gc.welcomeCaptchaEnabled;
+            document.getElementById('g_welcome_delete').value = gc.welcomeDeleteAfterSeconds || '';
+            
+            document.getElementById('g_profanity_enabled').checked = !!gc.profanityFilterEnabled;
+            document.getElementById('g_profanity_action').value = gc.profanityAction || 'delete';
+            document.getElementById('g_profanity_words').value = gc.profanityCustomWords || '';
+            
+            document.getElementById('g_antiflood_enabled').checked = !!gc.antiFloodEnabled;
+            document.getElementById('g_antiflood_max').value = gc.antiFloodMaxMessages || '';
+            document.getElementById('g_antiflood_sec').value = gc.antiFloodSeconds || '';
+            document.getElementById('g_antiflood_mute').value = gc.antiFloodMuteMinutes || '';
+            
+            document.getElementById('g_antilink_enabled').checked = !!gc.antiLinkEnabled;
+            document.getElementById('g_antilink_action').value = gc.antiLinkAction || 'delete';
+            document.getElementById('g_antilink_whitelist').value = gc.antiLinkWhitelist || '';
+            
+            document.getElementById('g_nightmode_enabled').checked = !!gc.nightModeEnabled;
+            document.getElementById('g_nightmode_start').value = gc.nightModeStartHour !== undefined ? gc.nightModeStartHour : '';
+            document.getElementById('g_nightmode_end').value = gc.nightModeEndHour !== undefined ? gc.nightModeEndHour : '';
+            document.getElementById('g_nightmode_action').value = gc.nightModeAction || 'delete';
+            
+            document.getElementById('g_blacklist_enabled').checked = !!gc.globalBlacklistEnabled;
+            document.getElementById('g_blacklist_users').value = gc.globalBlacklistUsers || '';
+          }
+
           if (data.stats) {
             document.getElementById('creator_stat_groups').innerText = data.stats.activeGroups;
             document.getElementById('creator_stat_icebreakers').innerText = data.stats.totalIcebreakers;
@@ -5107,6 +5344,78 @@
         }
       } catch (e) {
         showToast("Таратууда ката кетти", "error");
+      }
+    }
+
+    function toggleAccordion(id) {
+      const content = document.getElementById(id);
+      const icon = document.getElementById(id + '-icon');
+      if (content.style.display === 'block') {
+        content.style.display = 'none';
+        if (icon) icon.style.transform = 'rotate(0deg)';
+      } else {
+        content.style.display = 'block';
+        if (icon) icon.style.transform = 'rotate(180deg)';
+      }
+    }
+
+    async function submitGlobalConfig() {
+      const startVal = parseInt(document.getElementById('g_nightmode_start').value);
+      const endVal = parseInt(document.getElementById('g_nightmode_end').value);
+      
+      const configData = {
+        welcomeEnabled: document.getElementById('g_welcome_enabled').checked,
+        welcomeTemplate: document.getElementById('g_welcome_template').value.trim(),
+        welcomeCaptchaEnabled: document.getElementById('g_welcome_captcha').checked,
+        welcomeDeleteAfterSeconds: parseInt(document.getElementById('g_welcome_delete').value) || 0,
+        
+        profanityFilterEnabled: document.getElementById('g_profanity_enabled').checked,
+        profanityAction: document.getElementById('g_profanity_action').value,
+        profanityCustomWords: document.getElementById('g_profanity_words').value.trim(),
+        
+        antiFloodEnabled: document.getElementById('g_antiflood_enabled').checked,
+        antiFloodMaxMessages: parseInt(document.getElementById('g_antiflood_max').value) || 0,
+        antiFloodSeconds: parseInt(document.getElementById('g_antiflood_sec').value) || 0,
+        antiFloodMuteMinutes: parseInt(document.getElementById('g_antiflood_mute').value) || 0,
+        
+        antiLinkEnabled: document.getElementById('g_antilink_enabled').checked,
+        antiLinkAction: document.getElementById('g_antilink_action').value,
+        antiLinkWhitelist: document.getElementById('g_antilink_whitelist').value.trim(),
+        
+        nightModeEnabled: document.getElementById('g_nightmode_enabled').checked,
+        nightModeStartHour: isNaN(startVal) ? 23 : startVal,
+        nightModeEndHour: isNaN(endVal) ? 7 : endVal,
+        nightModeAction: document.getElementById('g_nightmode_action').value,
+        
+        globalBlacklistEnabled: document.getElementById('g_blacklist_enabled').checked,
+        globalBlacklistUsers: document.getElementById('g_blacklist_users').value.trim()
+      };
+
+      try {
+        const res = await fetch('/api/creator', {
+          method: 'POST',
+          headers: {
+            'Authorization': 'tma ' + initData,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            action: 'save_global_config',
+            configData
+          })
+        });
+
+        if (res.ok) {
+          const statusElem = document.getElementById('global_save_status');
+          statusElem.style.opacity = '1';
+          setTimeout(() => {
+            statusElem.style.opacity = '0';
+          }, 3000);
+          showToast("Глобалдык орнотуулар сакталды!");
+        } else {
+          showToast("Орнотууларды сактоодо ката кетти", 'error');
+        }
+      } catch (e) {
+        showToast("Орнотууларды сактоодо ката кетти", 'error');
       }
     }
 

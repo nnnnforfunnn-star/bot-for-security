@@ -4,6 +4,27 @@ import { getGroupConfig } from "../utils/configManager.js";
 import { db } from "../utils/db.js";
 import { logAction } from "../utils/actionLogger.js";
 
+async function getOverriddenConfig(chatId: number): Promise<any> {
+  const { getGlobalConfig } = await import("../utils/configManager.js");
+  const config = await getGroupConfig(chatId);
+  const globalConfig = await getGlobalConfig();
+  
+  if (globalConfig.welcomeCaptchaEnabled !== undefined) {
+    config.captchaEnabled = globalConfig.welcomeCaptchaEnabled;
+  }
+  if (globalConfig.welcomeEnabled) {
+    config.welcome = config.welcome || {};
+    config.welcome.enabled = true;
+    if (globalConfig.welcomeTemplate) {
+      config.welcome.text = globalConfig.welcomeTemplate;
+    }
+    if (globalConfig.welcomeDeleteAfterSeconds !== undefined && globalConfig.welcomeDeleteAfterSeconds > 0) {
+      config.welcomeAutoDelete = globalConfig.welcomeDeleteAfterSeconds;
+    }
+  }
+  return config;
+}
+
 // Helper to format templates
 function formatMessage(
   template: string,
@@ -26,14 +47,45 @@ function formatMessage(
  * Обработчик входа новых пользователей.
  */
 export async function joinHandler(ctx: Context, next: NextFunction): Promise<void> {
-  const newMembers = ctx.message?.new_chat_members;
+  let newMembers = ctx.message?.new_chat_members;
   if (!newMembers || !ctx.chat) {
     return next();
   }
 
   const chatId = ctx.chat.id;
   const chatTitle = ctx.chat.title || "Тайпа";
-  const config = await getGroupConfig(chatId);
+
+  // Global Blacklist Check
+  try {
+    const { getGlobalConfig } = await import("../utils/configManager.js");
+    const globalConfig = await getGlobalConfig();
+    if (globalConfig.globalBlacklistEnabled && globalConfig.globalBlacklistUsers) {
+      const blacklistIds = globalConfig.globalBlacklistUsers.split(/[\s,;\n]+/).map(id => id.trim()).filter(Boolean);
+      const remaining: typeof newMembers = [];
+      for (const member of newMembers) {
+        if (blacklistIds.includes(String(member.id))) {
+          try {
+            await ctx.api.banChatMember(chatId, member.id);
+            await ctx.reply(`🚫 [${member.first_name}](tg://user?id=${member.id}) глобалдык кара тизмеде (Global Blacklist) болгондуктан тайпадан бөгөттөлдү.`, { parse_mode: "Markdown" });
+            await logAction(ctx.api, chatId, member.id, member.first_name, "Ban", "Глобалдык кара тизме");
+          } catch (e) {
+            logger.error(`Error banning global blacklisted user ${member.id}`, e);
+          }
+        } else {
+          remaining.push(member);
+        }
+      }
+      newMembers = remaining;
+    }
+  } catch (e) {
+    logger.error("Error in Global Blacklist Join check", e);
+  }
+
+  if (newMembers.length === 0) {
+    return next();
+  }
+
+  const config = await getOverriddenConfig(chatId);
 
   for (const member of newMembers) {
     if (member.is_bot) continue;
@@ -424,7 +476,7 @@ export async function captchaCallbackHandler(ctx: Context, next: NextFunction): 
       }).catch(() => {});
 
       // Запускаем Welcome Flow
-      const config = await getGroupConfig(chatId);
+      const config = await getOverriddenConfig(chatId);
       await sendWelcomeFlow(ctx, query.from, config);
 
     } catch (e) {
@@ -447,7 +499,7 @@ export async function captchaCallbackHandler(ctx: Context, next: NextFunction): 
         await ctx.api.deleteMessage(chatId, query.message.message_id).catch(() => {});
       }
 
-      const config = await getGroupConfig(chatId);
+      const config = await getOverriddenConfig(chatId);
       if (config.captchaKick) {
         await ctx.api.banChatMember(chatId, targetUserId).catch(() => {});
         await ctx.api.unbanChatMember(chatId, targetUserId).catch(() => {});
@@ -477,7 +529,7 @@ export async function rulesAgreementCallbackHandler(ctx: Context, next: NextFunc
   }
 
   const chatId = query.message!.chat.id;
-  const config = await getGroupConfig(chatId);
+  const config = await getOverriddenConfig(chatId);
 
   try {
     // Снимаем ограничение на отправку сообщений
@@ -537,7 +589,7 @@ export async function goodbyeHandler(ctx: Context, next: NextFunction): Promise<
 
   const chatId = ctx.chat.id;
   const chatTitle = ctx.chat.title || "Тайпа";
-  const config = await getGroupConfig(chatId);
+  const config = await getOverriddenConfig(chatId);
 
   if (config.goodbye.enabled) {
     try {

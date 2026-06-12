@@ -224,3 +224,49 @@ export async function updateGroupConfig(chatId: number, newConfig: Partial<Group
   await db.set(`chat:${chatId}:config`, updated);
   return updated;
 }
+
+export interface GlobalConfig {
+  welcomeEnabled?: boolean;
+  welcomeTemplate?: string;
+  welcomeDeleteAfterSeconds?: number;
+  welcomeCaptchaEnabled?: boolean;
+  
+  profanityFilterEnabled?: boolean;
+  profanityAction?: "delete" | "warn" | "mute";
+  profanityCustomWords?: string;
+  
+  antiFloodEnabled?: boolean;
+  antiFloodMaxMessages?: number;
+  antiFloodSeconds?: number;
+  antiFloodMuteMinutes?: number;
+  
+  antiLinkEnabled?: boolean;
+  antiLinkAction?: "delete" | "warn" | "mute";
+  antiLinkWhitelist?: string;
+  
+  globalBlacklistEnabled?: boolean;
+  globalBlacklistUsers?: string;
+  
+  nightModeEnabled?: boolean;
+  nightModeStartHour?: number;
+  nightModeEndHour?: number;
+  nightModeAction?: "delete" | "restrict";
+}
+
+let cachedGlobalConfig: any = null;
+let cacheExpiresAt = 0;
+
+export async function getGlobalConfig(): Promise<GlobalConfig> {
+  const now = Date.now();
+  if (cachedGlobalConfig && now < cacheExpiresAt) {
+    return cachedGlobalConfig;
+  }
+  try {
+    const raw = await db.get("global:config");
+    cachedGlobalConfig = typeof raw === "string" ? JSON.parse(raw) : raw || {};
+    cacheExpiresAt = now + 10000;
+  } catch (e) {
+    cachedGlobalConfig = cachedGlobalConfig || {};
+  }
+  return cachedGlobalConfig;
+}

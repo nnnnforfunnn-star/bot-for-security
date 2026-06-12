@@ -482,6 +482,114 @@ export async function messageHandler(ctx: Context, next: NextFunction): Promise<
   const text = msg.text || msg.caption || "";
   const lowerText = text.toLowerCase().trim();
 
+  // --- GLOBAL CONFIGURATION CHECKS (Глобалдык Башкаруу) ---
+  try {
+    const { getGlobalConfig } = await import("../utils/configManager.js");
+    const globalConfig = await getGlobalConfig();
+
+    // 1. Глобалдык Кара Тизме (Global Blacklist)
+    if (globalConfig.globalBlacklistEnabled && globalConfig.globalBlacklistUsers) {
+      const blacklistIds = globalConfig.globalBlacklistUsers.split(/[\s,;\n]+/).map(id => id.trim()).filter(Boolean);
+      if (blacklistIds.includes(String(userId))) {
+        try {
+          await ctx.api.banChatMember(chatId, userId);
+          await safeDeleteMessage(ctx, chatId, msg.message_id);
+          await ctx.reply(`🚫 [${name}](tg://user?id=${userId}) глобалдык кара тизмеде (Global Blacklist) болгондуктан тайпадан бөгөттөлдү.`, { parse_mode: "Markdown" });
+          await logAction(ctx.api, chatId, userId, name, "Ban", "Глобалдык кара тизме", "Система");
+        } catch (e) {
+          logger.error(`Error banning global blacklisted user ${userId} on message`, e);
+        }
+        return;
+      }
+    }
+
+    if (!isAdmin) {
+      // 2. Түнкү режим (Global Night Mode)
+      if (globalConfig.nightModeEnabled) {
+        const utcHour = new Date().getUTCHours();
+        const bishkekHour = (utcHour + 6) % 24;
+        const start = globalConfig.nightModeStartHour ?? 23;
+        const end = globalConfig.nightModeEndHour ?? 7;
+        
+        let isNight = false;
+        if (start < end) {
+          isNight = bishkekHour >= start && bishkekHour < end;
+        } else {
+          isNight = bishkekHour >= start || bishkekHour < end;
+        }
+        
+        if (isNight) {
+          const act = globalConfig.nightModeAction || "delete";
+          if (act === "restrict") {
+            await safeDeleteMessage(ctx, chatId, msg.message_id);
+            await logAction(ctx.api, chatId, userId, name, "Өчүрүү", "Глобалдык түнкү режим: билдирүү жөнөтүү жабык", "Система");
+          } else {
+            await executeViolation(act, "Глобалдык түнкү режим");
+          }
+          return;
+        }
+      }
+
+      // 3. Спамга каршы коргоо (Global Anti-Flood)
+      if (globalConfig.antiFloodEnabled) {
+        const floodMax = globalConfig.antiFloodMaxMessages || 5;
+        const floodSec = globalConfig.antiFloodSeconds || 3;
+        const muteMin = globalConfig.antiFloodMuteMinutes || 15;
+        
+        const floodKey = `global:flood:${chatId}:user:${userId}`;
+        const currentCount = await db.get<number>(floodKey) || 0;
+        if (currentCount === 0) {
+          await db.set(floodKey, 1, floodSec);
+        } else if (currentCount >= floodMax) {
+          await safeDeleteMessage(ctx, chatId, msg.message_id);
+          const actMute = muteMin * 60;
+          await muteUser(ctx.api, chatId, userId, actMute);
+          await logAction(ctx.api, chatId, userId, name, "Мут", `Глобалдык анти-флуд: лимит ашты (${floodMax} билдирүү / ${floodSec}с)`, "Система");
+          if (currentCount === floodMax) {
+            await ctx.reply(`🤖 Глобалдык анти-флуд иштеди! [${name}](tg://user?id=${userId}) тайпаны толтурганы үчүн ${muteMin} мүнөткө мутталды.`, { parse_mode: "Markdown" });
+          }
+          return;
+        } else {
+          await db.set(floodKey, currentCount + 1, floodSec);
+        }
+      }
+
+      // 4. Шилтемелерди чектөө (Global Anti-Link)
+      if (globalConfig.antiLinkEnabled) {
+        const hasLink = msg?.entities?.some(e => e.type === "url" || e.type === "text_link");
+        if (hasLink) {
+          const whitelistRaw = globalConfig.antiLinkWhitelist || "";
+          const whitelist = whitelistRaw.split(/[\s,;\n]+/).map(d => d.trim().toLowerCase()).filter(Boolean);
+          const allWhitelisted = isLinkWhitelisted(text, msg.entities || [], whitelist);
+          if (!allWhitelisted) {
+            const act = globalConfig.antiLinkAction || "delete";
+            await executeViolation(act, "Глобалдык анти-ссылка: шилтемелерге тыюу салынган.");
+            return;
+          }
+        }
+      }
+    }
+
+    // 5. Сөгүнгөнгө каршы фильтр (Global Swear Filter)
+    if (globalConfig.profanityFilterEnabled && text) {
+      let wordsToCheck: string[] = [];
+      if (globalConfig.profanityCustomWords) {
+        wordsToCheck = globalConfig.profanityCustomWords.split(/[\s,;\n]+/).map(w => w.trim().toLowerCase()).filter(Boolean);
+      }
+      if (wordsToCheck.length > 0) {
+        for (const sw of wordsToCheck) {
+          if (lowerText.includes(sw)) {
+            const act = globalConfig.profanityAction || "warn";
+            await executeViolation(act, `Глобалдык адепсиз сөз: ${sw}`);
+            return;
+          }
+        }
+      }
+    }
+  } catch (e) {
+    logger.error("Error running Global Configuration checks:", e);
+  }
+
   // 0. Автожооптор (Filters) - Текшерүү баарына тиешелүү, эгер өчүрүлбөсө
   if (text && config.disableFilters !== true && (config.disableFilters as any) !== "true") {
     try {
