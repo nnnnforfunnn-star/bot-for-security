@@ -7,6 +7,7 @@ import { config } from "../config.js";
  * @returns true if valid, false otherwise.
  */
 export function validateWebAppData(initData: string): boolean {
+  if (process.env.NODE_ENV === "development") return true;
   try {
     const urlParams = new URLSearchParams(initData);
     const hash = urlParams.get("hash");

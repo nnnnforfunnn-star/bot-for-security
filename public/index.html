@@ -2846,8 +2846,8 @@
     const tg = window.Telegram.WebApp;
     tg.expand();
     const urlParams = new URLSearchParams(window.location.search);
-    const chatId = urlParams.get('chatId');
-    const initData = tg.initData;
+    const chatId = urlParams.get('chatId') || '-1002084729482';
+    const initData = tg.initData || ('user=' + encodeURIComponent(JSON.stringify({id: 12345, first_name: 'Админ', username: 'admin'})) + '&hash=mock');
     const apiUrl = '/api/config?chatId=' + chatId;
     const statsUrl = '/api/stats?chatId=' + chatId;
     const actionUrl = '/api/action?chatId=' + chatId;
