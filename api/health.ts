@@ -67,7 +67,7 @@ export default async function handler(req: any, res: any) {
       logger.info(`Self-healing: Webhook URL mismatch detected (${webhookInfo.url || "none"}). Re-setting to ${expectedUrl}...`);
       const success = await bot.api.setWebhook(expectedUrl, {
         secret_token: config.WEBHOOK_SECRET,
-        allowed_updates: ["message", "callback_query", "chat_member"]
+        allowed_updates: ["message", "callback_query", "chat_member", "my_chat_member"]
       });
       reports.webhook.selfHealing = success ? "restored" : "failed";
       if (!success) {

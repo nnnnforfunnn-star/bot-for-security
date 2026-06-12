@@ -15,7 +15,7 @@ async function setWebhook() {
   try {
     const success = await bot.api.setWebhook(webhookUrl, {
       secret_token: config.WEBHOOK_SECRET,
-      allowed_updates: ["message", "callback_query", "chat_member"]
+      allowed_updates: ["message", "callback_query", "chat_member", "my_chat_member"]
     });
 
     if (success) {

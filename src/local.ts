@@ -22,7 +22,7 @@ async function startLocalDev() {
     await bot.start({
       // При локальном тестировании мы хотим получать все возможные типы обновлений,
       // включая chat_member (для капчи на вступление) и callback_query
-      allowed_updates: ["message", "callback_query", "chat_member"],
+      allowed_updates: ["message", "callback_query", "chat_member", "my_chat_member"],
     });
   } catch (error) {
     logger.error("Ошибка при локальном запуске бота", error);
