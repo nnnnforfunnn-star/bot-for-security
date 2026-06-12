@@ -5035,7 +5035,8 @@
         const elAction = document.getElementById('cmd_action_' + key);
         if (elAction) {
           const action = elAction.value;
-          const val = parseInt(document.getElementById('cmd_val_' + key).value, 10) || 120;
+          const defaultVal = action === 'warn' ? 1 : 120;
+          const val = parseInt(document.getElementById('cmd_val_' + key).value, 10) || defaultVal;
           newCustomCommands[key] = {
             alias: document.getElementById('cmd_alias_' + key).value,
             replyText: document.getElementById('cmd_reply_' + key).value,

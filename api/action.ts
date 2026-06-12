@@ -107,21 +107,33 @@ export default async function handler(req: any, res: any) {
         await logAuditAction(chatId, user.id, user.first_name || "Админ", "moderation", `Колдонуучу [${targetName}](tg://user?id=${targetUserId}) эскертүү алды (${warns}/${warnLimit})`, { type: "warn", targetUserId, previousWarns: oldWarns });
 
         if (warns < warnLimit) {
-          await bot.api.sendMessage(chatId, `⚠️ **${warns}-эскертүү!** Урматтуу [${targetName}](tg://user?id=${targetUserId}), тайпанын эрежелерин бузбаңыз.\nСебеби: ${reason || "Администратор тарабынан"}`, { parse_mode: "Markdown" }).catch(() => {});
+          const textMsg = `⚠️ **${warns}-эскертүү!** Урматтуу [${targetName}](tg://user?id=${targetUserId}), тайпанын эрежелерин бузбаңыз.\nСебеби: ${reason || "Администратор тарабынан"}`;
+          await bot.api.sendMessage(chatId, textMsg, { parse_mode: "Markdown" }).catch(async () => {
+            await bot.api.sendMessage(chatId, `⚠️ ${warns}-эскертүү! Урматтуу ${targetName}, тайпанын эрежелерин бузбаңыз.\nСебеби: ${reason || "Администратор тарабынан"}`);
+          });
         } else {
           if (warnAction === "ban") {
             await banUser(bot.api, chatId, targetUserId);
             await logAction(bot.api, chatId, targetUserId, targetName, "Бан", "Эскертүүлөрдүн чегине жетти (Warn Limit)", user.first_name || "Админ");
-            await bot.api.sendMessage(chatId, `🚫 **Лимит толду!** [${targetName}](tg://user?id=${targetUserId}) тайпадан биротоло четтетилди (Бан).`, { parse_mode: "Markdown" }).catch(() => {});
+            const textMsg = `🚫 **Лимит толду!** [${targetName}](tg://user?id=${targetUserId}) тайпадан биротоло четтетилди (Бан).`;
+            await bot.api.sendMessage(chatId, textMsg, { parse_mode: "Markdown" }).catch(async () => {
+              await bot.api.sendMessage(chatId, `🚫 Лимит толду! ${targetName} тайпадан биротоло четтетилди (Бан).`);
+            });
           } else if (warnAction === "kick") {
             await bot.api.banChatMember(chatId, targetUserId).catch(() => {});
             await bot.api.unbanChatMember(chatId, targetUserId).catch(() => {});
             await logAction(bot.api, chatId, targetUserId, targetName, "Кик", "Эскертүүлөрдүн чегине жетти", user.first_name || "Админ");
-            await bot.api.sendMessage(chatId, `👢 **Лимит толду!** [${targetName}](tg://user?id=${targetUserId}) тайпадан чыгарылды (Кик).`, { parse_mode: "Markdown" }).catch(() => {});
+            const textMsg = `👢 **Лимит толду!** [${targetName}](tg://user?id=${targetUserId}) тайпадан чыгарылды (Кик).`;
+            await bot.api.sendMessage(chatId, textMsg, { parse_mode: "Markdown" }).catch(async () => {
+              await bot.api.sendMessage(chatId, `👢 Лимит толду! ${targetName} тайпадан чыгарылды (Кик).`);
+            });
           } else {
             await muteUser(bot.api, chatId, targetUserId, muteMinutes * 60);
             await logAction(bot.api, chatId, targetUserId, targetName, "Мут", `Эскертүүлөрдүн чегине жетти (${muteMinutes} мүнөт)`, user.first_name || "Админ");
-            await bot.api.sendMessage(chatId, `🔇 **Лимит толду!** [${targetName}](tg://user?id=${targetUserId}) ${muteMinutes} мүнөткө жазуу укугунан ажыратылды.`, { parse_mode: "Markdown" }).catch(() => {});
+            const textMsg = `🔇 **Лимит толду!** [${targetName}](tg://user?id=${targetUserId}) ${muteMinutes} мүнөткө жазуу укугунан ажыратылды.`;
+            await bot.api.sendMessage(chatId, textMsg, { parse_mode: "Markdown" }).catch(async () => {
+              await bot.api.sendMessage(chatId, `🔇 Лимит толду! ${targetName} ${muteMinutes} мүнөткө жазуу укугунан ажыратылды.`);
+            });
           }
           await db.del(warnKey);
         }
