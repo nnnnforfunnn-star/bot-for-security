@@ -224,7 +224,29 @@ export const db = {
         }
       }
       if (upstashClient) return await upstashClient.zrange(key, start, stop, opts);
-      return [];
+      
+      // Локальная симуляция для memCache
+      const prefix = `${key}:`;
+      const matches: { member: string; score: number }[] = [];
+      for (const [k, v] of memCache.entries()) {
+        if (k.startsWith(prefix)) {
+          const mbr = k.substring(prefix.length);
+          matches.push({ member: mbr, score: Number(v) || 0 });
+        }
+      }
+      
+      if (opts?.rev) {
+        matches.sort((a, b) => b.score - a.score);
+      } else {
+        matches.sort((a, b) => a.score - b.score);
+      }
+      
+      const sliced = matches.slice(start, stop === -1 ? undefined : stop + 1);
+      if (opts?.withScores) {
+        return sliced.flatMap(item => [item.member, item.score]);
+      } else {
+        return sliced.map(item => item.member);
+      }
     } catch (e) { return []; }
   },
 

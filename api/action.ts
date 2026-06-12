@@ -284,7 +284,12 @@ export default async function handler(req: any, res: any) {
         await bot.api.sendMessage(chatId, notificationText, {
           parse_mode: "Markdown",
           reply_markup: keyboard
-        }).catch(() => {});
+        }).catch(async () => {
+          const plainText = `🔔 Урматтуу ${targetName}, сизге веб-панелге кирүүгө уруксат берилди!`;
+          await bot.api.sendMessage(chatId, plainText, {
+            reply_markup: keyboard
+          }).catch(() => {});
+        });
         break;
       }
       case "revoke_web_access": {
@@ -299,9 +304,13 @@ export default async function handler(req: any, res: any) {
         await db.set(`chat:${chatId}:user:${targetUserId}:web_access`, "false");
         await logAction(bot.api, chatId, targetUserId, targetName, "Веб-панель", "Веб-панелге кирүү уруксаты алып салынды", user.first_name || "Админ");
         
-        await bot.api.sendMessage(chatId, `🔕 Урматтуу [${targetName}](tg://user?id=${targetUserId}), сиздин веб-панелге кирүү уруксатыңыз алып салынды.`, {
+        const revokeText = `🔕 Урматтуу [${targetName}](tg://user?id=${targetUserId}), сиздин веб-панелге кирүү уруксатыңыз алып салынды.`;
+        await bot.api.sendMessage(chatId, revokeText, {
           parse_mode: "Markdown"
-        }).catch(() => {});
+        }).catch(async () => {
+          const plainText = `🔕 Урматтуу ${targetName}, сиздин веб-панелге кирүү уруксатыңыз алып салынды.`;
+          await bot.api.sendMessage(chatId, plainText).catch(() => {});
+        });
         break;
       }
       case "undo_audit": {
@@ -396,6 +405,18 @@ export default async function handler(req: any, res: any) {
           } else if (type === "title") {
             const { previousTitle } = previousState;
             await db.set(`chat:${chatId}:user:${targetUserId}:title`, previousTitle);
+          } else if (type === "promote") {
+            await bot.api.promoteChatMember(chatId, targetUserId, {
+              can_delete_messages: false, can_restrict_members: false,
+              can_pin_messages: false, can_invite_users: false,
+              can_change_info: false, can_manage_chat: false,
+            }).catch(() => {});
+          } else if (type === "demote") {
+            await bot.api.promoteChatMember(chatId, targetUserId, {
+              can_delete_messages: true, can_restrict_members: true,
+              can_pin_messages: true, can_invite_users: true,
+              can_change_info: false, can_manage_chat: false,
+            }).catch(() => {});
           }
         }
 

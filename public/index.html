@@ -722,7 +722,7 @@
     /* Stats Grid & Sub-Tabs */
     .stats-header-grid {
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
       gap: 16px;
       margin-bottom: 24px;
     }
@@ -2139,6 +2139,18 @@
               <div class="stat-mini-card" id="card-stats-mutes" onclick="openStatsSubTab('mutes')">
                 <div class="stat-mini-val" style="color:var(--warn);" id="stat_mutes">0</div>
                 <div class="stat-mini-lbl">Муттар</div>
+              </div>
+              <div class="stat-mini-card" id="card-stats-warns" onclick="openStatsSubTab('warns')">
+                <div class="stat-mini-val" style="color:var(--warn);" id="stat_warns_mini">0</div>
+                <div class="stat-mini-lbl">Варндар</div>
+              </div>
+              <div class="stat-mini-card" id="card-stats-logs" onclick="openStatsSubTab('logs')">
+                <div class="stat-mini-val" style="color:var(--accent); font-size:22px;"><i class="fa-solid fa-clock-rotate-left"></i></div>
+                <div class="stat-mini-lbl">Журнал</div>
+              </div>
+              <div class="stat-mini-card" id="card-stats-admins" onclick="openStatsSubTab('admins')">
+                <div class="stat-mini-val" style="color:var(--success);" id="stat_admins_mini">0</div>
+                <div class="stat-mini-lbl">Админдер</div>
               </div>
             </div>
 
@@ -3852,7 +3864,8 @@
       const chartHeight = height - paddingTop - paddingBottom;
 
       const points = history.map((h, i) => {
-        const x = paddingLeft + (i / (history.length - 1)) * chartWidth;
+        const denominator = history.length > 1 ? history.length - 1 : 1;
+        const x = paddingLeft + (i / denominator) * chartWidth;
         const y = paddingTop + chartHeight - (h.count / maxCount) * chartHeight;
         return { x, y, count: h.count, date: h.date };
       });
@@ -3924,6 +3937,8 @@
       document.getElementById('stat_today').innerText = statsData.stats.msgsToday || 0;
       document.getElementById('stat_bans').innerText = statsData.stats.bansCount || 0;
       document.getElementById('stat_mutes').innerText = statsData.stats.mutesCount || 0;
+      document.getElementById('stat_warns_mini').innerText = statsData.stats.warnsCount || 0;
+      document.getElementById('stat_admins_mini').innerText = (statsData.users || []).filter(u => u.isAdmin).length;
 
       // Overview Tab KPI updates
       const msgCount = statsData.stats.msgCount || 0;
