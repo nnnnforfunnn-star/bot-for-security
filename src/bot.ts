@@ -5,6 +5,7 @@ import { globalErrorHandler } from "./middlewares/errorHandler.js";
 import { rateLimiter } from "./middlewares/rateLimiter.js";
 import { db } from "./utils/db.js";
 import { joinHandler, captchaCallbackHandler, rulesAgreementCallbackHandler, goodbyeHandler } from "./handlers/joinHandler.js";
+import { chatMemberUpdateHandler } from "./handlers/chatMemberHandler.js";
 import { messageHandler } from "./handlers/messageHandler.js";
 import { adminPanelCommand, adminPanelCallback, sendAdminPanel } from "./handlers/adminPanel.js";
 import { filterCommand, stopFilterCommand, filtersListCommand } from "./handlers/filterHandler.js";
@@ -334,6 +335,7 @@ bot.on("callback_query:data", async (ctx, next) => {
 bot.on("message:new_chat_members", joinHandler);
 bot.on("message:left_chat_member", goodbyeHandler);
 bot.on("chat_member", joinHandler);
+bot.on("chat_member", chatMemberUpdateHandler);
 bot.on("callback_query:data", adminPanelCallback);
 bot.on("callback_query:data", captchaCallbackHandler);
 bot.on("callback_query:data", rulesAgreementCallbackHandler);
