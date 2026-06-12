@@ -525,6 +525,124 @@ export async function messageHandler(ctx: Context, next: NextFunction): Promise<
         }
       }
     }
+
+    // --- GLOBAL SUPER FEATURES ---
+    
+    // 1. Глобалдык Паника Режими (Global Panic Mode)
+    if (globalConfig.globalPanicEnabled && !isAdmin) {
+      await executeViolation("delete", "Глобалдык Паника Режими активдүү");
+      return;
+    }
+
+    // 2. ЖИ Токсиктүүлүк көзөмөлү (AI Toxicity & Sentiment Engine)
+    if (globalConfig.toxicityFilterEnabled && text && !isAdmin) {
+      let isToxic = false;
+      let reason = "";
+      
+      const letters = text.replace(/[^a-zA-Zа-яА-ЯёЁүҮөӨңҢ]/g, "");
+      if (letters.length >= 8) {
+        const caps = letters.replace(/[^A-ZА-ЯЁҮӨҢ]/g, "");
+        if (caps.length / letters.length > 0.85) {
+          isToxic = true;
+          reason = "Ашыкча CAPSLOCK колдонуу";
+        }
+      }
+      
+      if (!isToxic) {
+        const consonantMatch = text.match(/[цкнгшщзхфвпрлджчмтббвгджзйклмнпрстфхцчшщъыьэюяүөң]{8,}/i);
+        if (consonantMatch) {
+          isToxic = true;
+          reason = "Түшүнүксүз спам (Keyboard smash)";
+        }
+      }
+      
+      if (!isToxic) {
+        const repeatingChar = /(.)\1{6,}/;
+        if (repeatingChar.test(text)) {
+          isToxic = true;
+          reason = "Символдорду ашыкча кайталоо";
+        }
+      }
+
+      if (!isToxic) {
+        const toxicKeywords = ["сука", "нахуй", "бля", "пидр", "пидор", "гандон", "далбаеб", "далбайоб", "малсың", "эшек", "сөкпө", "өлтүрөм", "сабап", "урам", "кот", "котун", "амсың"];
+        for (const word of toxicKeywords) {
+          if (lowerText.includes(word)) {
+            isToxic = true;
+            reason = `Агрессивдүү сөз аныкталды: ${word}`;
+            break;
+          }
+        }
+      }
+      
+      if (isToxic) {
+        const act = globalConfig.toxicityAction || "delete";
+        await executeViolation(act, `ЖИ Токсиктүүлүк чыпкасы: ${reason}`);
+        return;
+      }
+    }
+
+    // 3. Глобалдык Карма Аурасын Тазалоо (Global Karma Aura Purge)
+    if (globalConfig.karmaPurgeEnabled && !isAdmin) {
+      const threshold = globalConfig.karmaMinThreshold ?? -10;
+      const karmaKey = `chat:${chatId}:user:${userId}:urmat`;
+      const userKarma = await db.get<number>(karmaKey) || 0;
+      if (userKarma < threshold) {
+        const act = globalConfig.karmaPurgeAction || "mute";
+        await executeViolation(act, `Глобалдык карма аурасы тазалоо (Карма: ${userKarma} < ${threshold})`);
+        return;
+      }
+    }
+
+    // 4. Санариптик Колтамга & Кайталануу чыпкасы (Digital Fingerprint Shield)
+    if (globalConfig.fingerprintEnabled && text.length > 10 && !isAdmin) {
+      const cleanMsg = lowerText.replace(/\s+/g, "");
+      let hashVal = 0;
+      for (let i = 0; i < cleanMsg.length; i++) {
+        hashVal = ((hashVal << 5) - hashVal) + cleanMsg.charCodeAt(i);
+        hashVal |= 0;
+      }
+      const fingerprintKey = `global:fingerprint:${hashVal}`;
+      const existingSender = await db.get<string>(fingerprintKey);
+      if (existingSender) {
+        const [prevUser, prevChat] = existingSender.split(":");
+        if (prevUser !== String(userId)) {
+          const act = globalConfig.fingerprintAction || "ban";
+          await executeViolation(act, "Санариптик колтамга чыпкасы: спам кайталанды.");
+          return;
+        }
+      } else {
+        await db.set(fingerprintKey, `${userId}:${chatId}`, 60);
+      }
+    }
+
+    // 5. Чатты ойготуучу (AI Conversation Starter / Wake-Up Chat)
+    if (globalConfig.wakeupEnabled) {
+      const timeoutHours = globalConfig.wakeupTimeoutHours || 3;
+      const lastActKey = `chat:${chatId}:last_activity`;
+      const lastAct = await db.get<number>(lastActKey);
+      const now = Date.now();
+      if (lastAct && (now - lastAct > timeoutHours * 3600 * 1000)) {
+        const hashKey = "global:icebreakers";
+        const allIb = await db.hgetall(hashKey) || {};
+        const ibList = Object.values(allIb);
+        if (ibList.length > 0) {
+          const randomIbRaw: any = ibList[Math.floor(Math.random() * ibList.length)];
+          let randomIb = randomIbRaw;
+          if (typeof randomIb === "string") {
+            try { randomIb = JSON.parse(randomIbRaw); } catch(e) {}
+          }
+          if (randomIb && randomIb.text) {
+            setTimeout(async () => {
+              await ctx.reply(`💬 **Тайпада бир аз тынчтык болуп калыптыр. Келиңиздер, маек курабыз!**\n\n${randomIb.text}`).catch(() => {});
+            }, 1500);
+          }
+        }
+      }
+      await db.set(lastActKey, now);
+    } else {
+      await db.set(`chat:${chatId}:last_activity`, Date.now());
+    }
   } catch (e) {
     logger.error("Error running Global Configuration checks:", e);
   }

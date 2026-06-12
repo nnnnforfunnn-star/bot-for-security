@@ -251,6 +251,27 @@ export interface GlobalConfig {
   nightModeStartHour?: number;
   nightModeEndHour?: number;
   nightModeAction?: "delete" | "restrict";
+
+  // 6 Super Features
+  globalPanicEnabled?: boolean;
+  
+  intelRaidEnabled?: boolean;
+  intelRaidAction?: "delete" | "warn" | "mute" | "kick" | "ban";
+  intelRaidNoPhoto?: boolean;
+  intelRaidNoUsername?: boolean;
+  
+  toxicityFilterEnabled?: boolean;
+  toxicityAction?: "delete" | "warn" | "mute";
+  
+  karmaPurgeEnabled?: boolean;
+  karmaMinThreshold?: number;
+  karmaPurgeAction?: "mute" | "ban" | "warn";
+  
+  fingerprintEnabled?: boolean;
+  fingerprintAction?: "delete" | "warn" | "mute" | "ban";
+  
+  wakeupEnabled?: boolean;
+  wakeupTimeoutHours?: number;
 }
 
 let cachedGlobalConfig: any = null;

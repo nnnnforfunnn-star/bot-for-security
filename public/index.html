@@ -2678,6 +2678,212 @@
               </div>
             </div>
 
+            <!-- Global Super Features Card -->
+            <div class="card" style="border: 1px solid rgba(251, 191, 36, 0.3); background: rgba(251, 191, 36, 0.01); margin-top: 20px;">
+              <div class="card-header" style="border-bottom: 1px solid rgba(251, 191, 36, 0.15);">
+                <div class="card-title" style="color: #fbbf24;"><i class="fa-solid fa-wand-magic-sparkles" style="color: #fbbf24; margin-right: 8px;"></i>Глобалдык Супер-Функциялар (Super Features)</div>
+                <div class="card-description" style="color: #fde68a; opacity: 0.8;">Башка эч бир ботто кездешпеген өтө кубаттуу жана интеллектуалдык глобалдык куралдар.</div>
+              </div>
+              <div class="card-body" style="padding: 0;">
+                
+                <!-- Accordion Super 1: Panic Button -->
+                <div class="accordion-item" style="border-bottom: 1px solid var(--border-color);">
+                  <div class="accordion-header" onclick="toggleAccordion('acc-super-panic')" style="padding: 14px 20px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; background: rgba(255,255,255,0.01);">
+                    <div style="display: flex; align-items: center; gap: 10px; font-weight: 600;">
+                      <i class="fa-solid fa-triangle-exclamation" style="color: #ef4444; font-size: 16px;"></i>
+                      <span>1. Өзгөчө кырдаал ("Паника" баскычы / Global Panic Mode)</span>
+                    </div>
+                    <i class="fa-solid fa-chevron-down" id="acc-super-panic-icon" style="transition: transform 0.2s;"></i>
+                  </div>
+                  <div class="accordion-content" id="acc-super-panic" style="display: none; padding: 16px 20px; border-top: 1px solid var(--border-color); background: rgba(0,0,0,0.15);">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0;">
+                      <div>
+                        <span class="form-label" style="margin-bottom: 2px;">Глобалдык Паника режимин иштетүү</span>
+                        <div style="font-size: 11px; color: var(--text-muted);">Күйгүзүлгөндө, бот бардык тайпалардагы катардагы колдонуучулардын билдирүүлөрүн автоматтык түрдө өчүрөт!</div>
+                      </div>
+                      <label class="switch">
+                        <input type="checkbox" id="g_panic_enabled">
+                        <span class="slider round"></span>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Accordion Super 2: Threat Intel -->
+                <div class="accordion-item" style="border-bottom: 1px solid var(--border-color);">
+                  <div class="accordion-header" onclick="toggleAccordion('acc-super-intel')" style="padding: 14px 20px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; background: rgba(255,255,255,0.01);">
+                    <div style="display: flex; align-items: center; gap: 10px; font-weight: 600;">
+                      <i class="fa-solid fa-shield-cat" style="color: #60a5fa; font-size: 16px;"></i>
+                      <span>2. Акылдуу чалгындоо жана рейддик коргоо (Threat Intel & Raid Shield)</span>
+                    </div>
+                    <i class="fa-solid fa-chevron-down" id="acc-super-intel-icon" style="transition: transform 0.2s;"></i>
+                  </div>
+                  <div class="accordion-content" id="acc-super-intel" style="display: none; padding: 16px 20px; border-top: 1px solid var(--border-color); background: rgba(0,0,0,0.15);">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px;">
+                      <span class="form-label" style="margin-bottom: 0;">Рейддик коргоону иштетүү</span>
+                      <label class="switch">
+                        <input type="checkbox" id="g_intel_enabled">
+                        <span class="slider round"></span>
+                      </label>
+                    </div>
+                    <div class="form-group">
+                      <label class="form-label">Жаңы колдонуучу рейддик шектүү деп табылса эмне кылуу керек?</label>
+                      <select class="form-select" id="g_intel_action" style="width: 100%;">
+                        <option value="delete">Билдирүүлөрүн гана өчүрүү</option>
+                        <option value="warn">Эскертүү берүү</option>
+                        <option value="mute">Үнүн убактылуу чектөө (Mute)</option>
+                        <option value="kick">Тайпадан чыгаруу (Kick)</option>
+                        <option value="ban">Биротоло бөгөттөө (Ban)</option>
+                      </select>
+                    </div>
+                    <div style="display: flex; gap: 20px; margin-top: 12px;">
+                      <label class="checkbox-container">
+                        <input type="checkbox" id="g_intel_nophoto">
+                        <span class="checkmark"></span>
+                        Сүрөтү (аватары) жокторду текшерүү
+                      </label>
+                      <label class="checkbox-container">
+                        <input type="checkbox" id="g_intel_nousername">
+                        <span class="checkmark"></span>
+                        Никнейми (username) жокторду текшерүү
+                      </label>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Accordion Super 3: Toxicity Sentiment -->
+                <div class="accordion-item" style="border-bottom: 1px solid var(--border-color);">
+                  <div class="accordion-header" onclick="toggleAccordion('acc-super-toxicity')" style="padding: 14px 20px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; background: rgba(255,255,255,0.01);">
+                    <div style="display: flex; align-items: center; gap: 10px; font-weight: 600;">
+                      <i class="fa-solid fa-face-angry" style="color: #f87171; font-size: 16px;"></i>
+                      <span>3. ЖИ Токсиктүүлүк көзөмөлү (AI Toxicity & Sentiment Engine)</span>
+                    </div>
+                    <i class="fa-solid fa-chevron-down" id="acc-super-toxicity-icon" style="transition: transform 0.2s;"></i>
+                  </div>
+                  <div class="accordion-content" id="acc-super-toxicity" style="display: none; padding: 16px 20px; border-top: 1px solid var(--border-color); background: rgba(0,0,0,0.15);">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px;">
+                      <div>
+                        <span class="form-label" style="margin-bottom: 2px;">Агрессия жана токсиктүүлүктү аныктоочу чыпканы иштетүү</span>
+                        <div style="font-size: 11px; color: var(--text-muted);">Капслок менен кыйкыруу, ашыкча белгилер жана агрессивдүү сөз айкаштарын көзөмөлдөө.</div>
+                      </div>
+                      <label class="switch">
+                        <input type="checkbox" id="g_toxicity_enabled">
+                        <span class="slider round"></span>
+                      </label>
+                    </div>
+                    <div class="form-group">
+                      <label class="form-label">Агрессия аныкталганда колдонулуучу аракет</label>
+                      <select class="form-select" id="g_toxicity_action" style="width: 100%;">
+                        <option value="delete">Билдирүүнү өчүрүү гана</option>
+                        <option value="warn">Эскертүү берүү (Warn)</option>
+                        <option value="mute">Жазуусун чектөө (Mute)</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Accordion Super 4: Karma Purge -->
+                <div class="accordion-item" style="border-bottom: 1px solid var(--border-color);">
+                  <div class="accordion-header" onclick="toggleAccordion('acc-super-karma')" style="padding: 14px 20px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; background: rgba(255,255,255,0.01);">
+                    <div style="display: flex; align-items: center; gap: 10px; font-weight: 600;">
+                      <i class="fa-solid fa-yin-yang" style="color: #fbbf24; font-size: 16px;"></i>
+                      <span>4. Глобалдык Карма Аурасын Тазалоо (Global Karma Aura Purge)</span>
+                    </div>
+                    <i class="fa-solid fa-chevron-down" id="acc-super-karma-icon" style="transition: transform 0.2s;"></i>
+                  </div>
+                  <div class="accordion-content" id="acc-super-karma" style="display: none; padding: 16px 20px; border-top: 1px solid var(--border-color); background: rgba(0,0,0,0.15);">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px;">
+                      <div>
+                        <span class="form-label" style="margin-bottom: 2px;">Өтө төмөн кармалуу колдонуучуларды чектөө</span>
+                        <div style="font-size: 11px; color: var(--text-muted);">Эгерде колдонуучунун глобалдык кармасы белгиленген чектен төмөн түшүп кетсе, бот автоматтык түрдө жазалайт.</div>
+                      </div>
+                      <label class="switch">
+                        <input type="checkbox" id="g_karmapurge_enabled">
+                        <span class="slider round"></span>
+                      </label>
+                    </div>
+                    <div class="grid-2" style="display: flex; gap: 12px;">
+                      <div class="form-group" style="flex: 1;">
+                        <label class="form-label">Карма чеги (мисалы, -10)</label>
+                        <input type="number" class="form-input" id="g_karmapurge_threshold" placeholder="-10">
+                      </div>
+                      <div class="form-group" style="flex: 1;">
+                        <label class="form-label">Аракет</label>
+                        <select class="form-select" id="g_karmapurge_action" style="width: 100%;">
+                          <option value="mute">Үнүн чектөө (Mute)</option>
+                          <option value="ban">Тайпадан бөгөттөө (Ban)</option>
+                          <option value="warn">Эскертүү берүү (Warn)</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Accordion Super 5: Digital Fingerprint -->
+                <div class="accordion-item" style="border-bottom: 1px solid var(--border-color);">
+                  <div class="accordion-header" onclick="toggleAccordion('acc-super-fingerprint')" style="padding: 14px 20px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; background: rgba(255,255,255,0.01);">
+                    <div style="display: flex; align-items: center; gap: 10px; font-weight: 600;">
+                      <i class="fa-solid fa-fingerprint" style="color: #a78bfa; font-size: 16px;"></i>
+                      <span>5. Санариптик Колтамга & Кайталануу чыпкасы (Digital Fingerprint Shield)</span>
+                    </div>
+                    <i class="fa-solid fa-chevron-down" id="acc-super-fingerprint-icon" style="transition: transform 0.2s;"></i>
+                  </div>
+                  <div class="accordion-content" id="acc-super-fingerprint" style="display: none; padding: 16px 20px; border-top: 1px solid var(--border-color); background: rgba(0,0,0,0.15);">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px;">
+                      <div>
+                        <span class="form-label" style="margin-bottom: 2px;">Кайталанма спамдарды аныктоо</span>
+                        <div style="font-size: 11px; color: var(--text-muted);">Эгерде бирдей спам билдирүү ар башка тайпаларга 60 секунд ичинде жөнөтүлсө, бот колдонуучуну дароо бөгөттөйт.</div>
+                      </div>
+                      <label class="switch">
+                        <input type="checkbox" id="g_fingerprint_enabled">
+                        <span class="slider round"></span>
+                      </label>
+                    </div>
+                    <div class="form-group">
+                      <label class="form-label">Аныкталгандагы аракет</label>
+                      <select class="form-select" id="g_fingerprint_action" style="width: 100%;">
+                        <option value="ban">Глобалдык бөгөттөө (Ban)</option>
+                        <option value="mute">Глобалдык үнүн чектөө (Mute)</option>
+                        <option value="delete">Билдирүүлөрүн өчүрүү гана</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Accordion Super 6: Wakeup Chat -->
+                <div class="accordion-item" style="border-bottom: none;">
+                  <div class="accordion-header" onclick="toggleAccordion('acc-super-wakeup')" style="padding: 14px 20px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; background: rgba(255,255,255,0.01);">
+                    <div style="display: flex; align-items: center; gap: 10px; font-weight: 600;">
+                      <i class="fa-solid fa-mug-hot" style="color: #10b981; font-size: 16px;"></i>
+                      <span>6. Интеллектуалдык Чатты ойготуучу (AI Conversation Starter / Wake-Up Chat)</span>
+                    </div>
+                    <i class="fa-solid fa-chevron-down" id="acc-super-wakeup-icon" style="transition: transform 0.2s;"></i>
+                  </div>
+                  <div class="accordion-content" id="acc-super-wakeup" style="display: none; padding: 16px 20px; border-top: 1px solid var(--border-color); background: rgba(0,0,0,0.15);">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px;">
+                      <div>
+                        <span class="form-label" style="margin-bottom: 2px;">Автоматтык ойготууну күйгүзүү</span>
+                        <div style="font-size: 11px; color: var(--text-muted);">Тайпа узак убакыт бою унчукпай калганда, бот маек куруу үчүн кыргызча кызыктуу макалдын башын же суроо жөнөтөт.</div>
+                      </div>
+                      <label class="switch">
+                        <input type="checkbox" id="g_wakeup_enabled">
+                        <span class="slider round"></span>
+                      </label>
+                    </div>
+                    <div class="form-group">
+                      <label class="form-label">Унчукпоо убактысы (саат)</label>
+                      <input type="number" class="form-input" id="g_wakeup_hours" min="1" placeholder="3">
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+              <div class="card-footer" style="padding: 16px 20px; border-top: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.01);">
+                <span id="global_super_save_status" style="font-size: 12px; color: var(--text-muted); transition: opacity 0.3s; opacity: 0;"><i class="fa-solid fa-check" style="color: var(--success); margin-right: 6px;"></i>Орнотуулар ийгиликтүү сакталды</span>
+                <button type="button" class="btn btn-primary" onclick="submitGlobalSuperConfig()" style="min-width: 160px;"><i class="fa-solid fa-floppy-disk" style="margin-right: 8px;"></i>Сактоо</button>
+              </div>
+            </div>
+
             <!-- Global Icebreaker Manager Card -->
             <div class="card">
               <div class="card-header">
@@ -5180,6 +5386,27 @@
             
             document.getElementById('g_blacklist_enabled').checked = !!gc.globalBlacklistEnabled;
             document.getElementById('g_blacklist_users').value = gc.globalBlacklistUsers || '';
+
+            // 6 Super Features
+            document.getElementById('g_panic_enabled').checked = !!gc.globalPanicEnabled;
+            
+            document.getElementById('g_intel_enabled').checked = !!gc.intelRaidEnabled;
+            document.getElementById('g_intel_action').value = gc.intelRaidAction || 'delete';
+            document.getElementById('g_intel_nophoto').checked = !!gc.intelRaidNoPhoto;
+            document.getElementById('g_intel_nousername').checked = !!gc.intelRaidNoUsername;
+            
+            document.getElementById('g_toxicity_enabled').checked = !!gc.toxicityFilterEnabled;
+            document.getElementById('g_toxicity_action').value = gc.toxicityAction || 'delete';
+            
+            document.getElementById('g_karmapurge_enabled').checked = !!gc.karmaPurgeEnabled;
+            document.getElementById('g_karmapurge_threshold').value = gc.karmaMinThreshold !== undefined ? gc.karmaMinThreshold : '-10';
+            document.getElementById('g_karmapurge_action').value = gc.karmaPurgeAction || 'mute';
+            
+            document.getElementById('g_fingerprint_enabled').checked = !!gc.fingerprintEnabled;
+            document.getElementById('g_fingerprint_action').value = gc.fingerprintAction || 'ban';
+            
+            document.getElementById('g_wakeup_enabled').checked = !!gc.wakeupEnabled;
+            document.getElementById('g_wakeup_hours').value = gc.wakeupTimeoutHours !== undefined ? gc.wakeupTimeoutHours : '3';
           }
 
           if (data.stats) {
@@ -5376,6 +5603,19 @@
       }
     }
 
+    async function fetchExistingGlobalConfig() {
+      try {
+        const res = await fetch('/api/creator', {
+          headers: { 'Authorization': 'tma ' + initData }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          return data.globalConfig || {};
+        }
+      } catch (e) {}
+      return {};
+    }
+
     async function submitGlobalConfig() {
       const startVal = parseInt(document.getElementById('g_nightmode_start').value);
       const endVal = parseInt(document.getElementById('g_nightmode_end').value);
@@ -5409,6 +5649,9 @@
       };
 
       try {
+        const existing = await fetchExistingGlobalConfig();
+        const merged = { ...existing, ...configData };
+
         const res = await fetch('/api/creator', {
           method: 'POST',
           headers: {
@@ -5417,7 +5660,7 @@
           },
           body: JSON.stringify({
             action: 'save_global_config',
-            configData
+            configData: merged
           })
         });
 
@@ -5428,6 +5671,60 @@
             statusElem.style.opacity = '0';
           }, 3000);
           showToast("Глобалдык орнотуулар сакталды!");
+        } else {
+          showToast("Орнотууларды сактоодо ката кетти", 'error');
+        }
+      } catch (e) {
+        showToast("Орнотууларды сактоодо ката кетти", 'error');
+      }
+    }
+
+    async function submitGlobalSuperConfig() {
+      const configData = {
+        globalPanicEnabled: document.getElementById('g_panic_enabled').checked,
+        
+        intelRaidEnabled: document.getElementById('g_intel_enabled').checked,
+        intelRaidAction: document.getElementById('g_intel_action').value,
+        intelRaidNoPhoto: document.getElementById('g_intel_nophoto').checked,
+        intelRaidNoUsername: document.getElementById('g_intel_nousername').checked,
+        
+        toxicityFilterEnabled: document.getElementById('g_toxicity_enabled').checked,
+        toxicityAction: document.getElementById('g_toxicity_action').value,
+        
+        karmaPurgeEnabled: document.getElementById('g_karmapurge_enabled').checked,
+        karmaMinThreshold: parseInt(document.getElementById('g_karmapurge_threshold').value) || -10,
+        karmaPurgeAction: document.getElementById('g_karmapurge_action').value,
+        
+        fingerprintEnabled: document.getElementById('g_fingerprint_enabled').checked,
+        fingerprintAction: document.getElementById('g_fingerprint_action').value,
+        
+        wakeupEnabled: document.getElementById('g_wakeup_enabled').checked,
+        wakeupTimeoutHours: parseInt(document.getElementById('g_wakeup_hours').value) || 3
+      };
+
+      try {
+        const existing = await fetchExistingGlobalConfig();
+        const merged = { ...existing, ...configData };
+
+        const res = await fetch('/api/creator', {
+          method: 'POST',
+          headers: {
+            'Authorization': 'tma ' + initData,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            action: 'save_global_config',
+            configData: merged
+          })
+        });
+
+        if (res.ok) {
+          const statusElem = document.getElementById('global_super_save_status');
+          statusElem.style.opacity = '1';
+          setTimeout(() => {
+            statusElem.style.opacity = '0';
+          }, 3000);
+          showToast("Супер-функциялар сакталды!");
         } else {
           showToast("Орнотууларды сактоодо ката кетти", 'error');
         }

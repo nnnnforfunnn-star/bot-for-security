@@ -90,6 +90,67 @@ export async function joinHandler(ctx: Context, next: NextFunction): Promise<voi
   for (const member of newMembers) {
     if (member.is_bot) continue;
 
+    // --- GLOBAL SUPER FEATURE: THREAT INTEL & RAID SHIELD ---
+    try {
+      const { getGlobalConfig } = await import("../utils/configManager.js");
+      const globalConfig = await getGlobalConfig();
+      if (globalConfig.intelRaidEnabled) {
+        let isSuspicious = false;
+        let reasons: string[] = [];
+
+        if (globalConfig.intelRaidNoPhoto) {
+          try {
+            const photos = await ctx.api.getUserProfilePhotos(member.id, { limit: 1 });
+            if (!photos || photos.total_count === 0) {
+              isSuspicious = true;
+              reasons.push("Сүрөтү жок");
+            }
+          } catch (e) {}
+        }
+
+        if (globalConfig.intelRaidNoUsername && !member.username) {
+          isSuspicious = true;
+          reasons.push("Username жок");
+        }
+
+        if (member.id > 7200000000) {
+          isSuspicious = true;
+          reasons.push("Жаңы аккаунт");
+        }
+
+        if (isSuspicious) {
+          const act = globalConfig.intelRaidAction || "delete";
+          const reasonStr = `Глобалдык чалгындоо: ${reasons.join(", ")}`;
+          
+          if (act === "ban") {
+            await ctx.api.banChatMember(chatId, member.id);
+            await ctx.reply(`🛡️ [${member.first_name}](tg://user?id=${member.id}) рейддик чыпкадан улам бөгөттөлдү: ${reasons.join(", ")}.`, { parse_mode: "Markdown" });
+            await logAction(ctx.api, chatId, member.id, member.first_name, "Ban", reasonStr);
+            continue;
+          } else if (act === "kick") {
+            await ctx.api.banChatMember(chatId, member.id);
+            await ctx.api.unbanChatMember(chatId, member.id);
+            await ctx.reply(`🛡️ [${member.first_name}](tg://user?id=${member.id}) рейддик чыпкадан улам чыгарылды: ${reasons.join(", ")}.`, { parse_mode: "Markdown" });
+            await logAction(ctx.api, chatId, member.id, member.first_name, "Kick", reasonStr);
+            continue;
+          } else if (act === "mute") {
+            await ctx.api.restrictChatMember(chatId, member.id, {
+              can_send_messages: false,
+              can_send_other_messages: false,
+              can_send_polls: false,
+              can_add_web_page_previews: false
+            }, {
+              until_date: Math.floor(Date.now() / 1000) + 7200
+            });
+            await ctx.reply(`🛡️ [${member.first_name}](tg://user?id=${member.id}) күмөндүү аккаунт катары үнү 2 саатка чектелди: ${reasons.join(", ")}.`, { parse_mode: "Markdown" });
+            await logAction(ctx.api, chatId, member.id, member.first_name, "Mute", reasonStr);
+          }
+        }
+      }
+    } catch (e) {
+      logger.error("Error in Global Threat Intel Join check", e);
+    }
+
     // 1. Фильтры на вход (Username / Profile Photo)
     if (config.joinFilterNoUsername && !member.username) {
       try {
