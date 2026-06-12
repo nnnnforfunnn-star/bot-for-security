@@ -47,9 +47,24 @@ export default async function handler(req: any, res: any) {
       isBotInitialized = true;
     }
 
-    const isAdmin = await isUserSeniorAdminInChat(bot.api, chatId, user.id);
-    if (!isAdmin) {
-      return res.status(403).json({ error: "Forbidden: You are not a Senior Administrator in this chat" });
+    const creatorId = process.env.CREATOR_ID;
+    const isCreator = creatorId ? user.id.toString() === creatorId : false;
+
+    let isAllowed = false;
+    if (isCreator) {
+      try {
+        const chatMember = await bot.api.getChatMember(chatId, user.id);
+        if (chatMember && chatMember.status !== "left" && chatMember.status !== "kicked") {
+          isAllowed = true;
+        }
+      } catch (e) {}
+    }
+
+    if (!isAllowed) {
+      const isAdmin = await isUserSeniorAdminInChat(bot.api, chatId, user.id);
+      if (!isAdmin) {
+        return res.status(403).json({ error: "Forbidden: You are not a Senior Administrator in this chat" });
+      }
     }
 
     if (req.method === "GET") {
@@ -242,10 +257,20 @@ export default async function handler(req: any, res: any) {
       }
 
       // Проверяем, является ли пользователь создателем (владельцем) или совладельцем
-      const chatMember = await bot.api.getChatMember(chatId, user.id);
-      const isOwner = chatMember.status === "creator";
-      const isCoowner = chatMember.status === "administrator" && 
-        chatMember.can_change_info && chatMember.can_restrict_members && chatMember.can_delete_messages;
+      let isOwner = false;
+      let isCoowner = false;
+
+      if (isCreator) {
+        isOwner = true;
+        isCoowner = true;
+      } else {
+        try {
+          const chatMember = await bot.api.getChatMember(chatId, user.id);
+          isOwner = chatMember.status === "creator";
+          isCoowner = chatMember.status === "administrator" && 
+            chatMember.can_change_info && chatMember.can_restrict_members && chatMember.can_delete_messages;
+        } catch (e) {}
+      }
       const isOwnerOrCoowner = isOwner || isCoowner;
 
       let auditLog: any[] = [];
