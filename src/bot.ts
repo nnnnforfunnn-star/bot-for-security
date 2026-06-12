@@ -188,8 +188,8 @@ bot.command("clear", clearNoteCommand);
 bot.command("notes", notesListCommand);
 
 // Text listeners for Notes (hashtags)
-bot.on("message:text", async (ctx, next) => {
-  const text = ctx.message.text.toLowerCase().trim();
+bot.on(["message:text", "message:caption"], async (ctx, next) => {
+  const text = (ctx.message.text || ctx.message.caption || "").toLowerCase().trim();
   
   if (text.includes("#")) {
     await getNoteCommand(ctx, true);

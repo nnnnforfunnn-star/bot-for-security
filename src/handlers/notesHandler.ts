@@ -48,7 +48,15 @@ async function replyWithStructuredContent(ctx: Context, content: string) {
       });
       return;
     } catch (e) {
-      // Fallback
+      try {
+        await ctx.replyWithPhoto(photoUrl, {
+          caption: text,
+          reply_markup: keyboard
+        });
+        return;
+      } catch (photoErr) {
+        // Fall through to text-only reply
+      }
     }
   }
 

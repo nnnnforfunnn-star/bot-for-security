@@ -109,9 +109,14 @@ export default async function handler(req: any, res: any) {
 
         if (config.rulesText && config.rulesText !== oldConfig.rulesText && (updatedConfig as any).autoPinRules) {
           try {
-            const rulesMsg = await bot.api.sendMessage(chatId, `📖 **Тайпанын жаңы эрежелери:**\n\n${config.rulesText}`, { parse_mode: "Markdown" }).catch(async () => {
+            const rulesMsg = await bot.api.sendMessage(chatId, `📖 **Тайпанын жаңы эрежелери:**\n\n${config.rulesText}`, {
+              parse_mode: "Markdown",
+              message_thread_id: config.mainTopicId
+            }).catch(async () => {
               // В случае невалидной Markdown-разметки отправляем как обычный текст
-              return await bot.api.sendMessage(chatId, `📖 **Тайпанын жаңы эрежелери:**\n\n${config.rulesText}`);
+              return await bot.api.sendMessage(chatId, `📖 **Тайпанын жаңы эрежелери:**\n\n${config.rulesText}`, {
+                message_thread_id: config.mainTopicId
+              });
             });
             await bot.api.pinChatMessage(chatId, rulesMsg.message_id, { disable_notification: true }).catch(() => {});
           } catch (e) {

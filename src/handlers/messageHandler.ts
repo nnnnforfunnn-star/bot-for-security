@@ -322,6 +322,7 @@ export async function messageHandler(ctx: Context, next: NextFunction): Promise<
   if (!msg || !ctx.chat || ctx.chat.type === "private") {
     return next();
   }
+  const msgEntities = [...(msg.entities || []), ...(msg.caption_entities || [])];
 
   const chatId = ctx.chat.id;
 
@@ -470,11 +471,11 @@ export async function messageHandler(ctx: Context, next: NextFunction): Promise<
 
       // 4. Шилтемелерди чектөө (Global Anti-Link)
       if (globalConfig.antiLinkEnabled) {
-        const hasLink = msg?.entities?.some(e => e.type === "url" || e.type === "text_link");
+        const hasLink = msgEntities.some(e => e.type === "url" || e.type === "text_link");
         if (hasLink) {
           const whitelistRaw = globalConfig.antiLinkWhitelist || "";
           const whitelist = whitelistRaw.split(/[\s,;\n]+/).map(d => d.trim().toLowerCase()).filter(Boolean);
-          const allWhitelisted = isLinkWhitelisted(text, msg.entities || [], whitelist);
+          const allWhitelisted = isLinkWhitelisted(text, msgEntities, whitelist);
           if (!allWhitelisted) {
             const act = globalConfig.antiLinkAction || "delete";
             await executeViolation(act, "Глобалдык анти-ссылка: шилтемелерге тыюу салынган.");
@@ -556,7 +557,15 @@ export async function messageHandler(ctx: Context, next: NextFunction): Promise<
                 });
                 break;
               } catch (e) {
-                // Fallback
+                try {
+                  await ctx.replyWithPhoto(photoUrl, {
+                    caption: replyText,
+                    reply_markup: keyboard
+                  });
+                  break;
+                } catch (photoErr) {
+                  // Fall through to text-only reply
+                }
               }
             }
 
@@ -974,9 +983,9 @@ export async function messageHandler(ctx: Context, next: NextFunction): Promise<
     let lockViolated = false;
     let lockReason = "";
 
-    if (config.locks.links && msg.entities?.some(e => e.type === "url" || e.type === "text_link")) {
+    if (config.locks.links && msgEntities.some(e => e.type === "url" || e.type === "text_link")) {
       const whitelist = config.linkWhitelist || [];
-      const allWhitelisted = isLinkWhitelisted(text, msg.entities, whitelist);
+      const allWhitelisted = isLinkWhitelisted(text, msgEntities, whitelist);
       if (!allWhitelisted) {
         lockViolated = true; lockReason = "Шилтемелер (Links) бөгөттөлгөн.";
       }
@@ -1022,7 +1031,7 @@ export async function messageHandler(ctx: Context, next: NextFunction): Promise<
     const hasMedia = msg?.photo || msg?.video || msg?.document || 
                       msg?.audio || msg?.voice || msg?.video_note || 
                       msg?.sticker || msg?.animation;
-    const hasLink = msg?.entities?.some(e => e.type === "url" || e.type === "text_link");
+    const hasLink = msgEntities.some(e => e.type === "url" || e.type === "text_link");
 
     if (hasMedia || hasLink) {
       try {
@@ -1057,7 +1066,10 @@ export async function messageHandler(ctx: Context, next: NextFunction): Promise<
           }
           return;
         } else {
-          await db.set(rateLimitKey, currentCount + 1, rateLimitPeriod);
+          const newCount = await db.incr(rateLimitKey);
+          if (newCount === 1) {
+            await db.expire(rateLimitKey, rateLimitPeriod);
+          }
         }
       } catch (e) {
         logger.error("Error checking media rate limit:", e);
@@ -1135,7 +1147,7 @@ export async function messageHandler(ctx: Context, next: NextFunction): Promise<
   if (config.nightModeEnabled) {
     const utcHour = new Date().getUTCHours();
     const bishkekHour = (utcHour + 6) % 24;
-    const hasMediaOrLink = msg.photo || msg.video || msg.document || msg.entities?.some(e => e.type === "url" || e.type === "text_link" || e.type === "mention");
+    const hasMediaOrLink = msg.photo || msg.video || msg.document || msgEntities.some(e => e.type === "url" || e.type === "text_link" || e.type === "mention");
     
     const start = config.nightModeStart;
     const end = config.nightModeEnd;
@@ -1156,7 +1168,7 @@ export async function messageHandler(ctx: Context, next: NextFunction): Promise<
 
   // 6. Quarantine (Карантин)
   if (config.quarantineEnabled) {
-    const hasLinkOrForward = msg.forward_origin || msg.entities?.some(e => e.type === "url" || e.type === "text_link");
+    const hasLinkOrForward = msg.forward_origin || msgEntities.some(e => e.type === "url" || e.type === "text_link");
     if (hasLinkOrForward) {
       const joinDate = await db.get<number>(`chat:${chatId}:user:${userId}:joinDate`);
       if (joinDate) {
