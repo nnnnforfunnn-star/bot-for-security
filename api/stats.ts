@@ -241,9 +241,12 @@ export default async function handler(req: any, res: any) {
         }
       }
 
-      // Проверяем, является ли пользователь создателем (владельцем)
+      // Проверяем, является ли пользователь создателем (владельцем) или совладельцем
       const chatMember = await bot.api.getChatMember(chatId, user.id);
       const isOwner = chatMember.status === "creator";
+      const isCoowner = chatMember.status === "administrator" && 
+        chatMember.can_change_info && chatMember.can_restrict_members && chatMember.can_delete_messages;
+      const isOwnerOrCoowner = isOwner || isCoowner;
 
       let auditLog: any[] = [];
       if (isOwner) {
@@ -266,6 +269,7 @@ export default async function handler(req: any, res: any) {
         groupTitle,
         myChats,
         isOwner,
+        isOwnerOrCoowner,
         auditLog
       });
     }

@@ -4135,13 +4135,23 @@
               }
 
               let webPanelHtml = "";
+              const currentUserCanManage = statsData.isOwnerOrCoowner === true;
+
               if (u.adminRole === "owner" || u.adminRole === "coowner") {
                 webPanelHtml = `<span class="badge" style="background: rgba(16, 185, 129, 0.15); color: var(--success); font-size:11px;">Жеткиликтүү (ээси/жардамчы)</span>`;
-              } else if (u.webAccess === true) {
-                webPanelHtml = `<button class="btn btn-sm btn-danger" style="background: var(--danger); font-size: 11px; padding: 2px 8px;" onclick="promptRevokeWebAccess(${u.id}, '${u.name.replace(/'/g, "\\'")}')">Алып салуу</button>`;
+              } else if (currentUserCanManage) {
+                if (u.webAccess === true) {
+                  webPanelHtml = `<button class="btn btn-sm btn-danger" style="background: var(--danger); font-size: 11px; padding: 2px 8px;" onclick="promptRevokeWebAccess(${u.id}, '${u.name.replace(/'/g, "\\'")}')">Кайтарып алуу</button>`;
+                } else {
+                  const roleType = u.adminRole || 'junior';
+                  webPanelHtml = `<button class="btn btn-sm" style="font-size: 11px; padding: 2px 8px;" onclick="promptGrantWebAccess(${u.id}, '${roleType}', '${u.name.replace(/'/g, "\\'")}')">Веб-панель берүү</button>`;
+                }
               } else {
-                const roleType = u.adminRole || 'junior';
-                webPanelHtml = `<button class="btn btn-sm" style="font-size: 11px; padding: 2px 8px;" onclick="promptGrantWebAccess(${u.id}, '${roleType}', '${u.name.replace(/'/g, "\\'")}')">Уруксат берүү</button>`;
+                if (u.webAccess === true) {
+                  webPanelHtml = `<span class="badge" style="background: rgba(16, 185, 129, 0.15); color: var(--success); font-size:11px;">Жеткиликтүү</span>`;
+                } else {
+                  webPanelHtml = `<span class="badge" style="background: rgba(239, 68, 68, 0.15); color: var(--danger); font-size:11px;">Жабык</span>`;
+                }
               }
 
               return `
