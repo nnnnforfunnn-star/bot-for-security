@@ -179,3 +179,31 @@ export async function welcomeConfigCommand(ctx: Context) {
     await ctx.reply("✅ Саламдашуу тексти сакталды жана күйгүзүлдү.");
   }
 }
+
+export async function mainchatCommand(ctx: Context) {
+  if (!ctx.chat || ctx.chat.type === "private" || !ctx.from) return;
+
+  const chatId = ctx.chat.id;
+  const userId = ctx.from.id;
+
+  const { isUserSeniorAdminInChat } = await import("../utils/telegram.js");
+  const isSenior = await isUserSeniorAdminInChat(ctx.api, chatId, userId);
+  
+  if (!isSenior) {
+    await ctx.reply("❌ Бул буйрукту тайпанын ээси же башкы администратору гана колдоно алат.");
+    return;
+  }
+
+  const threadId = ctx.message?.message_thread_id;
+  
+  await updateGroupConfig(chatId, { mainTopicId: threadId });
+  
+  if (threadId) {
+    await ctx.reply("✅ Негизги чат ийгиликтүү орнотулду! Эми бот бардык кулактандырууларды жана жигердүүлүк суроолорун ушул бөлүмгө жөнөтөт.", {
+      message_thread_id: threadId
+    });
+  } else {
+    await ctx.reply("✅ Негизги чат ийгиликтүү орнотулду! Бул тайпанын негизги чаты катары белгиленди.");
+  }
+}
+

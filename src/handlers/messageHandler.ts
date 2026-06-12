@@ -8,7 +8,7 @@ import { runActivityCheck } from "../utils/activityScheduler.js";
 
 // Импорт обработчиков команд для поддержки кастомных алиасов (коротких команд)
 import { zombiesCommand, muteallCommand, unmuteallCommand, pinCommand, unpinCommand, kickmeCommand, idCommand, warnsCommand, unwarnCommand } from "./modCommands.js";
-import { rulesCommand, meCommand, purgeCommand, reportCommand } from "./adminCommands.js";
+import { rulesCommand, meCommand, purgeCommand, reportCommand, mainchatCommand } from "./adminCommands.js";
 import { linkCommand, adminsCommand, infoCommand, slowmodeCommand, promoteCommand, demoteCommand } from "./groupCommands.js";
 import { handleMuteCommand, handleUnmuteCommand, handleBanCommand, handleUnbanCommand } from "./commandHandler.js";
 import { adminPanelCommand } from "./adminPanel.js";
@@ -37,6 +37,7 @@ const commandHandlers: Record<string, (ctx: Context) => Promise<any>> = {
   unban: handleUnbanCommand,
   mute: handleMuteCommand,
   unmute: handleUnmuteCommand,
+  mainchat: mainchatCommand
 };
 
 // Регулярное выражение для поиска арабской вязи и иероглифов

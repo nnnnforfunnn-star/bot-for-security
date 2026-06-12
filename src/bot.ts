@@ -14,7 +14,8 @@ import { lockCommand, unlockCommand, locksListCommand } from "./handlers/locksHa
 import { 
   delCommand, purgeCommand, setRulesCommand, rulesCommand, 
   titleCommand, meCommand, reportCommand, antifloodCommand, 
-  blacklistCommand, unblacklistCommand, welcomeConfigCommand 
+  blacklistCommand, unblacklistCommand, welcomeConfigCommand,
+  mainchatCommand 
 } from "./handlers/adminCommands.js";
 import { isUserAdminInChat, isUserSeniorAdminInChat } from "./utils/telegram.js";
 import {
@@ -339,5 +340,58 @@ bot.on("callback_query:data", rulesAgreementCallbackHandler);
 bot.on("callback_query:data", helpCallback);
 bot.on("message", messageHandler);
 bot.on("edited_message", messageHandler);
+
+bot.command("mainchat", mainchatCommand);
+
+bot.on("my_chat_member", async (ctx) => {
+  try {
+    const update = ctx.myChatMember;
+    const newStatus = update.new_chat_member.status;
+    const oldStatus = update.old_chat_member.status;
+
+    const wasNotInChat = ["left", "kicked"].includes(oldStatus);
+    const isNowInChat = ["member", "administrator"].includes(newStatus);
+
+    if (wasNotInChat && isNowInChat) {
+      const chatId = ctx.chat.id;
+
+      // 1. Find the owner/creator of the group
+      let ownerId: number | null = null;
+      try {
+        const admins = await ctx.api.getChatAdministrators(chatId);
+        const creator = admins.find(adm => adm.status === "creator");
+        if (creator) {
+          ownerId = creator.user.id;
+        }
+      } catch (e) {
+        logger.error("Error fetching chat administrators on add:", e);
+      }
+
+      const infoMessage = `Урматтуу тайпанын ээси! Ботту тайпаңызга кошконуңуз үчүн рахмат. Боттун жарыяларды жана кулактандырууларды туура жөнөтүүсү үчүн, сураныч, тайпанын негизги (активдүү) чатына барып \`/mainchat\` буйругун жазыңыз. Бул ботко кайсы темада иш алып барууну көрсөтөт.`;
+
+      let dmSent = false;
+      if (ownerId) {
+        try {
+          await ctx.api.sendMessage(ownerId, infoMessage, { parse_mode: "Markdown" });
+          dmSent = true;
+        } catch (dmErr: any) {
+          logger.warn(`Could not send DM to group owner ${ownerId}:`, dmErr);
+        }
+      }
+
+      // If DM failed or owner was not found, send a fallback message directly to the group!
+      if (!dmSent) {
+        try {
+          const groupMessage = `Урматтуу тайпанын жаратуучусу! Бот туура иштеши үчүн, сураныч, негизги чат катары белгилене турган темага (бөлүмгө) барып, \`/mainchat\` буйругун жазыңыз. Бул ботко кулактандырууларды жана суроолорду кайсы жерге жөнөтүү керек экенин билүүгө жардам берет.`;
+          await ctx.reply(groupMessage, { parse_mode: "Markdown" });
+        } catch (grpErr: any) {
+          logger.error("Error sending join fallback message to group:", grpErr);
+        }
+      }
+    }
+  } catch (err: any) {
+    logger.error("Error in my_chat_member handler:", err);
+  }
+});
 
 logger.info("Бот Коопсузбек ийгиликтүү ишке кирди!");
