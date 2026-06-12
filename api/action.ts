@@ -76,7 +76,7 @@ export default async function handler(req: any, res: any) {
     }
 
     // Защита: нельзя применять административные ограничения к другим администраторам чата
-    if (targetUserId && ["ban", "mute", "kick", "warn", "demote"].includes(action)) {
+    if (targetUserId && ["ban", "mute", "kick", "warn"].includes(action)) {
       const isTargetAdmin = await isUserAdminInChat(bot.api, chatId, targetUserId);
       if (isTargetAdmin) {
         return res.status(400).json({ error: "Кечиресиз, администраторлорго карата чектөөлөрдү колдонууга болбойт!" });
@@ -201,6 +201,7 @@ export default async function handler(req: any, res: any) {
         }
         await bot.api.promoteChatMember(chatId, targetUserId, rights);
         await logAction(bot.api, chatId, targetUserId, targetName, "Promote", `Web Panel: Админ кылынды (${roleType})`, user.first_name || "Админ");
+        await logAuditAction(chatId, user.id, user.first_name || "Админ", "moderation", `Колдонуучу [${targetName}](tg://user?id=${targetUserId}) администратор укугун алды (${roleType})`, { type: "promote", targetUserId, roleType });
         break;
       case "demote":
         await bot.api.promoteChatMember(chatId, targetUserId, {
@@ -209,6 +210,7 @@ export default async function handler(req: any, res: any) {
           can_change_info: false, can_manage_chat: false,
         });
         await logAction(bot.api, chatId, targetUserId, targetName, "Demote", "Web Panel аркылуу укугу алынды", user.first_name || "Админ");
+        await logAuditAction(chatId, user.id, user.first_name || "Админ", "moderation", `Колдонуучу [${targetName}](tg://user?id=${targetUserId}) администратор укугунан ажыратылды`, { type: "demote", targetUserId });
         break;
       case "resetwarns":
         const oldWarnsReset = await db.get<number>(`chat:${chatId}:user:${targetUserId}:warns`) || 0;

@@ -1,6 +1,7 @@
 import { Context, NextFunction } from "grammy";
 import { logger } from "../utils/logger.js";
 import { logAction } from "../utils/actionLogger.js";
+import { db } from "../utils/db.js";
 
 export async function chatMemberUpdateHandler(ctx: Context, next: NextFunction) {
   try {
@@ -13,13 +14,25 @@ export async function chatMemberUpdateHandler(ctx: Context, next: NextFunction) 
     const actor = update.from;
     const target = update.new_chat_member.user;
 
+    const oldStatus = update.old_chat_member.status;
+    const newStatus = update.new_chat_member.status;
+
+    // Синхронизация активных участников в базе данных
+    if (newStatus === "kicked" || newStatus === "left") {
+      await db.srem(`chat:${chatId}:users`, target.id.toString());
+    } else if (newStatus === "member" || newStatus === "restricted" || newStatus === "administrator") {
+      await db.sadd(`chat:${chatId}:users`, target.id.toString());
+      const targetName = target.first_name || "Колдонуучу";
+      await db.hset(`chat:${chatId}:user:${target.id}:info`, "name", targetName);
+      if (target.username) {
+        await db.hset(`chat:${chatId}:user:${target.id}:info`, "username", target.username);
+      }
+    }
+
     // Ignore self-actions to prevent double logging
     if (actor.id === ctx.me.id) {
       return next();
     }
-
-    const oldStatus = update.old_chat_member.status;
-    const newStatus = update.new_chat_member.status;
 
     // We only care if the status has actually changed
     if (oldStatus === newStatus) {

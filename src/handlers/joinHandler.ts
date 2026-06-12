@@ -163,8 +163,13 @@ export async function joinHandler(ctx: Context, next: NextFunction): Promise<voi
       }
     }
 
-    // Сохраняем дату входа
+    // Сохраняем дату входа и добавляем пользователя в список участников
     await db.set(`chat:${chatId}:user:${member.id}:joinDate`, Date.now());
+    await db.sadd(`chat:${chatId}:users`, member.id.toString());
+    await db.hset(`chat:${chatId}:user:${member.id}:info`, "name", member.first_name || "Колдонуучу");
+    if (member.username) {
+      await db.hset(`chat:${chatId}:user:${member.id}:info`, "username", member.username);
+    }
 
     // 2. Капча текшерүүсү
     if (config.captchaEnabled) {
@@ -300,7 +305,10 @@ export async function joinHandler(ctx: Context, next: NextFunction): Promise<voi
               if (config.captchaKick) {
                 await ctx.api.banChatMember(chatId, member.id).catch(() => {});
                 await ctx.api.unbanChatMember(chatId, member.id).catch(() => {});
-                await ctx.reply(`👢 [${member.first_name}](tg://user?id=${member.id}) капчаны өз убагында чечпегендиктен тайпадан чыгарылды.`, { parse_mode: "Markdown", message_thread_id: config.mainTopicId });
+                const textMsg = `👢 [${member.first_name}](tg://user?id=${member.id}) капчаны өз убагында чечпегендиктен тайпадан чыгарылды.`;
+                await ctx.reply(textMsg, { parse_mode: "Markdown", message_thread_id: config.mainTopicId }).catch(async () => {
+                  await ctx.reply(`👢 ${member.first_name} капчаны өз убагында чечпегендиктен тайпадан чыгарылды.`, { message_thread_id: config.mainTopicId });
+                });
                 await logAction(ctx.api, chatId, member.id, member.first_name, "Kick", "Капча убактысы бүттү");
               } else {
                 await logAction(ctx.api, chatId, member.id, member.first_name, "Restrict", "Капча убактысы бүттү (чектелген бойдон калды)");
@@ -608,6 +616,8 @@ export async function goodbyeHandler(ctx: Context, next: NextFunction): Promise<
 
   const chatId = ctx.chat.id;
   const chatTitle = ctx.chat.title || "Тайпа";
+  // Удаляем пользователя из активных участников
+  await db.srem(`chat:${chatId}:users`, member.id.toString()).catch(() => {});
   const config = await getOverriddenConfig(chatId);
 
   if (config.goodbye.enabled) {

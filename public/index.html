@@ -4569,7 +4569,7 @@
         <div class="member-item" id="member_card_${u.id}">
           <div class="member-header" onclick="toggleMemberCard(this)">
             <div class="member-info">
-              <div class="profile-avatar" style="background: linear-gradient(135deg, #4b5563, #1f2937); font-family: 'Outfit', sans-serif;">${u.name.substring(0,1).toUpperCase()}</div>
+              <div class="profile-avatar" style="background: linear-gradient(135deg, #4b5563, #1f2937); font-family: 'Outfit', sans-serif;">${(u.name || "K").substring(0,1).toUpperCase()}</div>
               <div>
                 <div class="member-title" style="display:flex; align-items:center; gap:8px;">
                   <span>${u.name}</span>
