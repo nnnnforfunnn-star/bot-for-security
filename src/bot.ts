@@ -82,8 +82,8 @@ bot.use(async (ctx, next) => {
       try {
         const config = await getGroupConfig(ctx.chat.id);
         
-        // Разрешаем только settings и start, если команды в группе отключены
-        const isAlwaysAllowed = ["settings", "start"].includes(cmdName);
+        // Разрешаем только settings, start и mainchat, если команды в группе отключены
+        const isAlwaysAllowed = ["settings", "start", "mainchat"].includes(cmdName);
         if (!isAlwaysAllowed && config.commandsEnabled !== true) {
           return;
         }
