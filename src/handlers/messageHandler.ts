@@ -665,23 +665,40 @@ export async function messageHandler(ctx: Context, next: NextFunction): Promise<
                 replyText = parsed.text || "";
                 photoUrl = parsed.photo;
                 
-                const kb = new InlineKeyboard();
-                let hasButtons = false;
+                const linkFormat = parsed.linkFormat || "button";
 
-                if (Array.isArray(parsed.buttons)) {
+                if (linkFormat === "inline_text" && Array.isArray(parsed.buttons)) {
+                  let linksStr = "";
                   for (const btn of parsed.buttons) {
                     if (btn.text && btn.url) {
-                      kb.url(btn.text, btn.url).row();
-                      hasButtons = true;
+                      if (linksStr) {
+                        linksStr += "\n-------------------\n";
+                      } else {
+                        linksStr += "\n\n";
+                      }
+                      linksStr += `[${btn.text}](${btn.url})`;
                     }
                   }
-                } else if (parsed.buttonText && parsed.buttonUrl) {
-                  kb.url(parsed.buttonText, parsed.buttonUrl);
-                  hasButtons = true;
-                }
+                  replyText += linksStr;
+                } else {
+                  const kb = new InlineKeyboard();
+                  let hasButtons = false;
 
-                if (hasButtons) {
-                  keyboard = kb;
+                  if (Array.isArray(parsed.buttons)) {
+                    for (const btn of parsed.buttons) {
+                      if (btn.text && btn.url) {
+                        kb.url(btn.text, btn.url).row();
+                        hasButtons = true;
+                      }
+                    }
+                  } else if (parsed.buttonText && parsed.buttonUrl) {
+                    kb.url(parsed.buttonText, parsed.buttonUrl);
+                    hasButtons = true;
+                  }
+
+                  if (hasButtons) {
+                    keyboard = kb;
+                  }
                 }
               }
             } catch (e) {

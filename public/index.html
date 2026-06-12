@@ -1966,6 +1966,13 @@
                   <label class="form-label">Шилтеме баскычтары (Ар бир сапта: Баскычтын Аты | Ссылка)</label>
                   <textarea class="form-textarea" id="fl_buttons" rows="2" placeholder="Мисалы:&#10;Каналга өтүү | https://t.me/kanal&#10;Чатка өтүү | https://t.me/chat"></textarea>
                 </div>
+                <div class="form-group" style="margin-top: 10px;">
+                  <label class="form-label">Шилтемелердин көрсөтүлүү форматы</label>
+                  <select class="form-select" id="fl_link_format" style="width: 100%;">
+                    <option value="button">Билдирүүнүн астында баскыч (Inline Button) түрүндө</option>
+                    <option value="inline_text">Билдирүүнүн текстиндеги шилтеме (Inline Link) түрүндө</option>
+                  </select>
+                </div>
                 <button class="btn btn-primary" style="width: 100%; margin-top: 10px;" onclick="addFilter()">Автожоопту кошуу/сактоо</button>
                 
                 <div style="margin-top: 24px;">
@@ -2021,6 +2028,13 @@
                 <div class="form-group" style="margin-top: 10px;">
                   <label class="form-label">Шилтеме баскычтары (Ар бир сапта: Баскычтын Аты | Ссылка)</label>
                   <textarea class="form-textarea" id="nt_buttons" rows="2" placeholder="Мисалы:&#10;Сайтты ачуу | https://site.com"></textarea>
+                </div>
+                <div class="form-group" style="margin-top: 10px;">
+                  <label class="form-label">Шилтемелердин көрсөтүлүү форматы</label>
+                  <select class="form-select" id="nt_link_format" style="width: 100%;">
+                    <option value="button">Билдирүүнүн астында баскыч (Inline Button) түрүндө</option>
+                    <option value="inline_text">Билдирүүнүн текстиндеги шилтеме (Inline Link) түрүндө</option>
+                  </select>
                 </div>
                 <button class="btn btn-primary" style="width: 100%; margin-top: 10px;" onclick="addNote()">Белгини кошуу/сактоо</button>
                 
@@ -3735,6 +3749,7 @@
           const parsed = JSON.parse(val);
           document.getElementById('fl_reply').value = parsed.text || '';
           document.getElementById('fl_photo').value = parsed.photo || '';
+          document.getElementById('fl_link_format').value = parsed.linkFormat || 'button';
           if (Array.isArray(parsed.buttons)) {
             const btnText = parsed.buttons.map(b => `${b.text} | ${b.url}`).join('\n');
             document.getElementById('fl_buttons').value = btnText;
@@ -3747,11 +3762,13 @@
           document.getElementById('fl_reply').value = val;
           document.getElementById('fl_buttons').value = '';
           document.getElementById('fl_photo').value = '';
+          document.getElementById('fl_link_format').value = 'button';
         }
       } catch (e) {
         document.getElementById('fl_reply').value = val;
         document.getElementById('fl_buttons').value = '';
         document.getElementById('fl_photo').value = '';
+        document.getElementById('fl_link_format').value = 'button';
       }
       document.getElementById('fl_word').focus();
       showToast("Оңдоо үчүн маалыматтар толтурулду.");
@@ -3765,6 +3782,7 @@
           const parsed = JSON.parse(val);
           document.getElementById('nt_text').value = parsed.text || '';
           document.getElementById('nt_photo').value = parsed.photo || '';
+          document.getElementById('nt_link_format').value = parsed.linkFormat || 'button';
           if (Array.isArray(parsed.buttons)) {
             const btnText = parsed.buttons.map(b => `${b.text} | ${b.url}`).join('\n');
             document.getElementById('nt_buttons').value = btnText;
@@ -3777,11 +3795,13 @@
           document.getElementById('nt_text').value = val;
           document.getElementById('nt_buttons').value = '';
           document.getElementById('nt_photo').value = '';
+          document.getElementById('nt_link_format').value = 'button';
         }
       } catch (e) {
         document.getElementById('nt_text').value = val;
         document.getElementById('nt_buttons').value = '';
         document.getElementById('nt_photo').value = '';
+        document.getElementById('nt_link_format').value = 'button';
       }
       document.getElementById('nt_name').focus();
       showToast("Оңдоо үчүн маалыматтар толтурулду.");
@@ -3837,7 +3857,10 @@
       let valueStr = r;
       if (buttons.length > 0 || photoUrl) {
         const payload = { text: r };
-        if (buttons.length > 0) payload.buttons = buttons;
+        if (buttons.length > 0) {
+          payload.buttons = buttons;
+          payload.linkFormat = document.getElementById('fl_link_format').value;
+        }
         if (photoUrl) payload.photo = photoUrl;
         valueStr = JSON.stringify(payload);
       }
@@ -3846,6 +3869,7 @@
       document.getElementById('fl_word').value = '';
       document.getElementById('fl_reply').value = '';
       document.getElementById('fl_buttons').value = '';
+      document.getElementById('fl_link_format').value = 'button';
       if (document.getElementById('fl_photo')) {
         document.getElementById('fl_photo').value = '';
       }
@@ -3879,7 +3903,10 @@
       let valueStr = t;
       if (buttons.length > 0 || photoUrl) {
         const payload = { text: t };
-        if (buttons.length > 0) payload.buttons = buttons;
+        if (buttons.length > 0) {
+          payload.buttons = buttons;
+          payload.linkFormat = document.getElementById('nt_link_format').value;
+        }
         if (photoUrl) payload.photo = photoUrl;
         valueStr = JSON.stringify(payload);
       }
@@ -3888,6 +3915,7 @@
       document.getElementById('nt_name').value = '';
       document.getElementById('nt_text').value = '';
       document.getElementById('nt_buttons').value = '';
+      document.getElementById('nt_link_format').value = 'button';
       if (document.getElementById('nt_photo')) {
         document.getElementById('nt_photo').value = '';
       }
