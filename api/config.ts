@@ -52,9 +52,24 @@ export default async function handler(req: any, res: any) {
       isBotInitialized = true;
     }
 
-    const isAdmin = await isUserSeniorAdminInChat(bot.api, chatId, user.id);
-    if (!isAdmin) {
-      return res.status(403).json({ error: "Forbidden: You are not a Senior Administrator in this chat" });
+    const creatorId = process.env.CREATOR_ID;
+    const isCreator = creatorId ? user.id.toString() === creatorId : false;
+
+    let isAllowed = false;
+    if (isCreator) {
+      try {
+        const chatMember = await bot.api.getChatMember(chatId, user.id);
+        if (chatMember && chatMember.status !== "left" && chatMember.status !== "kicked") {
+          isAllowed = true;
+        }
+      } catch (e) {}
+    }
+
+    if (!isAllowed) {
+      const isAdmin = await isUserSeniorAdminInChat(bot.api, chatId, user.id);
+      if (!isAdmin) {
+        return res.status(403).json({ error: "Forbidden: You are not a Senior Administrator in this chat" });
+      }
     }
 
     if (req.method === "GET") {
@@ -64,7 +79,6 @@ export default async function handler(req: any, res: any) {
       const notes = (await db.hgetall(`chat:${chatId}:notes`)) || {};
       const swearwords = await db.smembers(`chat:${chatId}:swearwords`) || [];
       const announcements = (await db.hgetall(`chat:${chatId}:announcements`)) || {};
-      const isCreator = process.env.CREATOR_ID ? user.id.toString() === process.env.CREATOR_ID : false;
       return res.status(200).json({ config, blacklist, filters, notes, swearwords, announcements, isCreator });
     } 
     
