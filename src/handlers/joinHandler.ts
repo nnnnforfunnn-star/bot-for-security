@@ -272,7 +272,17 @@ export async function joinHandler(ctx: Context, next: NextFunction): Promise<voi
             `**${answer.split("").join(" ")}**`;
         }
 
-        const captchaMsg = await ctx.reply(captchaText, { reply_markup: keyboard, parse_mode: "Markdown", message_thread_id: config.mainTopicId });
+        const captchaMsg = await ctx.reply(captchaText, {
+          reply_markup: keyboard,
+          parse_mode: "Markdown",
+          message_thread_id: config.mainTopicId
+        }).catch(async () => {
+          const plainText = captchaText.replace(/\[(.*?)\]\(tg:\/\/user\?id=\d+\)/g, "$1");
+          return await ctx.reply(plainText, {
+            reply_markup: keyboard,
+            message_thread_id: config.mainTopicId
+          });
+        });
 
         // Сохраняем состояние капчи в Redis
         const pendingKey = `chat:${chatId}:user:${member.id}:captchaPending`;
@@ -388,6 +398,11 @@ async function sendWelcomeFlow(ctx: Context, member: { id: number; first_name: s
         reply_markup: needsRules ? keyboard : undefined,
         parse_mode: "Markdown",
         message_thread_id: config.mainTopicId
+      }).catch(async () => {
+        return await ctx.reply(text, {
+          reply_markup: needsRules ? keyboard : undefined,
+          message_thread_id: config.mainTopicId
+        });
       });
 
       // Сохраняем ID последнего приветственного сообщения
@@ -403,8 +418,8 @@ async function sendWelcomeFlow(ctx: Context, member: { id: number; first_name: s
         await db.set(`chat:${chatId}:last_welcome_pinned_id`, welcomeMsg.message_id);
       }
 
-      // Авто-удаление приветствия через N секунд
-      if (config.welcomeAutoDelete && config.welcomeAutoDelete > 0) {
+      // Авто-удаление приветствия через N секунд (только если не требуется принятие эрежелер)
+      if (config.welcomeAutoDelete && config.welcomeAutoDelete > 0 && !needsRules) {
         setTimeout(async () => {
           await ctx.api.deleteMessage(chatId, welcomeMsg.message_id).catch(() => {});
         }, config.welcomeAutoDelete * 1000);
@@ -567,9 +582,13 @@ export async function rulesAgreementCallbackHandler(ctx: Context, next: NextFunc
 
     await ctx.answerCallbackQuery("✅ Рахмат! Эрежелер кабыл алынды.");
     
-    // Редактируем сообщение (убираем кнопку согласия)
+    // Редактируем сообщение (убираем кнопку согласия) или удаляем его, если включено авто-удаление приветствия
     if (query.message) {
-      await ctx.api.editMessageReplyMarkup(chatId, query.message.message_id, { reply_markup: undefined }).catch(() => {});
+      if (config.welcomeAutoDelete && config.welcomeAutoDelete > 0) {
+        await ctx.api.deleteMessage(chatId, query.message.message_id).catch(() => {});
+      } else {
+        await ctx.api.editMessageReplyMarkup(chatId, query.message.message_id, { reply_markup: undefined }).catch(() => {});
+      }
     }
 
   } catch (e) {
@@ -594,7 +613,14 @@ export async function goodbyeHandler(ctx: Context, next: NextFunction): Promise<
   if (config.goodbye.enabled) {
     try {
       const text = formatMessage(config.goodbye.text, member, chatTitle);
-      const goodbyeMsg = await ctx.reply(text, { parse_mode: "Markdown", message_thread_id: config.mainTopicId });
+      const goodbyeMsg = await ctx.reply(text, {
+        parse_mode: "Markdown",
+        message_thread_id: config.mainTopicId
+      }).catch(async () => {
+        return await ctx.reply(text, {
+          message_thread_id: config.mainTopicId
+        });
+      });
 
       // Авто-удаление коштошуу билдирүүсү через N секунд
       if (config.goodbyeAutoDelete && config.goodbyeAutoDelete > 0) {
