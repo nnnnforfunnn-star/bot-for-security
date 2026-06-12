@@ -315,61 +315,77 @@ const DEFAULT_ICEBREAKERS = [
   }
 ];
 
-async function checkAndRunActivityGenerator(ctx: Context, chatId: number) {
+async function checkAndRunActivityGenerator(ctx: Context) {
   try {
-    const config = await getGroupConfig(chatId);
-    if (!config.activityGeneratorEnabled) return;
-
-    const lastMsgTime = await db.get<number>(`chat:${chatId}:lastMessageTime`) || 0;
-    if (lastMsgTime === 0) {
-      await db.set(`chat:${chatId}:lastMessageTime`, Date.now());
-      return;
-    }
-
-    const idleTimeoutMs = (config.activityGeneratorTimeoutHours || 2) * 60 * 60 * 1000;
+    const allChatsRaw = await db.smembers("bot:chats") || [];
     const now = Date.now();
 
-    if (now - lastMsgTime >= idleTimeoutMs) {
-      const globalHash = await db.hgetall("global:icebreakers") || {};
-      let items: any[] = [];
-      for (const valRaw of Object.values(globalHash)) {
-        try {
-          items.push(typeof valRaw === "string" ? JSON.parse(valRaw) : valRaw);
-        } catch (e) {}
-      }
-
-      if (items.length === 0) {
-        items = DEFAULT_ICEBREAKERS;
-      }
-
-      const chosenItem = items[Math.floor(Math.random() * items.length)];
-      if (!chosenItem) return;
+    for (const chatIdStr of allChatsRaw) {
+      const targetChatId = parseInt(chatIdStr, 10);
+      if (isNaN(targetChatId)) continue;
 
       try {
-        const threadId = config.mainTopicId;
-        await ctx.api.sendMessage(chatId, chosenItem.text, {
-          parse_mode: "Markdown",
-          message_thread_id: threadId
-        }).catch(async () => {
-          return await ctx.api.sendMessage(chatId, chosenItem.text, {
-            message_thread_id: threadId
-          });
-        });
-      } catch (e) {
-        logger.error(`Error sending icebreaker to chat ${chatId}:`, e);
-      }
+        const config = await getGroupConfig(targetChatId);
+        if (!config.activityGeneratorEnabled) continue;
 
-      if (chosenItem.answer) {
-        await db.set(`chat:${chatId}:active_question`, JSON.stringify(chosenItem));
-        await db.set(`chat:${chatId}:active_question_time`, now);
-      }
+        const idleTimeoutMs = (config.activityGeneratorTimeoutHours || 2) * 60 * 60 * 1000;
+        let lastMsgTime = await db.get<number>(`chat:${targetChatId}:lastMessageTime`) || 0;
+        if (lastMsgTime === 0) {
+          // Initialize to trigger in 1 minute for testing/quick start
+          await db.set(`chat:${targetChatId}:lastMessageTime`, now - idleTimeoutMs + 60000);
+          continue;
+        }
 
-      await db.set(`chat:${chatId}:lastMessageTime`, now);
+        if (now - lastMsgTime >= idleTimeoutMs) {
+          const globalHash = await db.hgetall("global:icebreakers") || {};
+          let items: any[] = [];
+          for (const valRaw of Object.values(globalHash)) {
+            try {
+              items.push(typeof valRaw === "string" ? JSON.parse(valRaw) : valRaw);
+            } catch (e) {}
+          }
+
+          if (items.length === 0) {
+            items = DEFAULT_ICEBREAKERS;
+          }
+
+          const chosenItem = items[Math.floor(Math.random() * items.length)];
+          if (!chosenItem) continue;
+
+          try {
+            const threadId = config.mainTopicId;
+            await ctx.api.sendMessage(targetChatId, chosenItem.text, {
+              parse_mode: "Markdown",
+              message_thread_id: threadId
+            }).catch(async () => {
+              return await ctx.api.sendMessage(targetChatId, chosenItem.text, {
+                message_thread_id: threadId
+              });
+            });
+
+            if (chosenItem.answer) {
+              await db.set(`chat:${targetChatId}:active_question`, JSON.stringify(chosenItem));
+              await db.set(`chat:${targetChatId}:active_question_time`, now);
+            }
+
+            await db.set(`chat:${targetChatId}:lastMessageTime`, now);
+          } catch (e: any) {
+            logger.error(`Error sending global icebreaker to chat ${targetChatId}:`, e);
+            if (e && (e.description?.includes("bot was kicked") || e.description?.includes("chat not found") || e.description?.includes("not a member") || e.description?.includes("Forbidden"))) {
+              await db.srem("bot:chats", String(targetChatId)).catch(() => {});
+              await db.hdel("bot:chats_metadata", String(targetChatId)).catch(() => {});
+            }
+          }
+        }
+      } catch (chatErr) {
+        logger.error(`Error running activity check for chat ${targetChatId}:`, chatErr);
+      }
     }
   } catch (err) {
     logger.error("Error in checkAndRunActivityGenerator:", err);
   }
 }
+
 
 async function checkAndDeleteBroadcasts(ctx: Context) {
   try {
@@ -418,7 +434,7 @@ export async function messageHandler(ctx: Context, next: NextFunction): Promise<
     if (!hasLock) {
       await db.set(lockKey, "locked", 30);
       await checkAndSendAnnouncements(ctx, chatId).catch(err => logger.error("Error in announcements check:", err));
-      await checkAndRunActivityGenerator(ctx, chatId).catch(err => logger.error("Error in activity generator:", err));
+      await checkAndRunActivityGenerator(ctx).catch(err => logger.error("Error in activity generator:", err));
       await checkAndDeleteBroadcasts(ctx).catch(err => logger.error("Error in checkAndDeleteBroadcasts:", err));
     }
   } catch (lockErr) {
