@@ -3127,6 +3127,11 @@
       document.getElementById('sidebar').classList.toggle('open');
     }
 
+    function autoExpandTextarea(el) {
+      el.style.height = 'auto';
+      el.style.height = el.scrollHeight + 'px';
+    }
+
     function toggleAccordion(id) {
       const acc = document.getElementById(id);
       acc.classList.toggle('open');
@@ -5849,10 +5854,12 @@
             </div>
             
             <div id="msg_block_${c.id}" style="display: none; margin-top: 8px; border-top: 1px dashed var(--border-color); padding-top: 8px;">
-              <div style="display: flex; gap: 8px; width: 100%;">
-                <input type="text" class="form-input" id="msg_input_${c.id}" placeholder="Тайпага жөнөтүлүүчү текст (Markdown)..." style="font-size: 12px; padding: 6px 12px; flex: 1;">
-                <button type="button" class="btn btn-sm btn-primary" onclick="sendChatMessage('${c.id}')" style="font-size: 12px; padding: 6px 12px; white-space: nowrap;">Жөнөтүү</button>
-                <button type="button" class="btn btn-sm btn-secondary" onclick="document.getElementById('msg_block_${c.id}').style.display='none'" style="font-size: 12px; padding: 6px 12px; white-space: nowrap;">Жабуу</button>
+              <div style="display: flex; flex-direction: column; gap: 8px; width: 100%;">
+                <textarea class="form-textarea" id="msg_input_${c.id}" placeholder="Тайпага жөнөтүлүүчү текст (Markdown)..." rows="2" style="font-size: 12px; padding: 8px 12px; width: 100%; resize: vertical; min-height: 40px; box-sizing: border-box; font-family: inherit; line-height: 1.5; border-radius: 8px; border: 1px solid var(--border-color); background: rgba(0,0,0,0.2); color: var(--text-main);" oninput="autoExpandTextarea(this)"></textarea>
+                <div style="display: flex; justify-content: flex-end; gap: 8px; width: 100%;">
+                  <button type="button" class="btn btn-sm btn-primary" onclick="sendChatMessage('${c.id}')" style="font-size: 12px; padding: 6px 16px;"><i class="fa-solid fa-paper-plane" style="margin-right: 6px;"></i>Жөнөтүү</button>
+                  <button type="button" class="btn btn-sm btn-secondary" onclick="document.getElementById('msg_block_${c.id}').style.display='none'" style="font-size: 12px; padding: 6px 16px;">Жабуу</button>
+                </div>
               </div>
             </div>
           </div>
@@ -5902,6 +5909,7 @@
         if (res.ok) {
           showToast("Кабар ийгиликтүү жөнөтүлдү!");
           input.value = '';
+          input.style.height = 'auto';
           document.getElementById('msg_block_' + chatId).style.display = 'none';
         } else {
           showToast("Кабар жөнөтүүдө ката кетти", 'error');
