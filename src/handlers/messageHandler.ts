@@ -653,7 +653,20 @@ export async function messageHandler(ctx: Context, next: NextFunction): Promise<
       const filters = await db.hgetall(`chat:${chatId}:filters`);
       if (filters) {
         for (const trigger of Object.keys(filters)) {
-          if (lowerText.includes(trigger.toLowerCase())) {
+          const triggers = trigger.split(",").map(t => t.trim().toLowerCase()).filter(Boolean);
+          let isMatched = false;
+
+          for (const trig of triggers) {
+            const escaped = trig.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+            // Match trig as a whole word (bounded by non-alphanumeric Cyrillic/Latin characters)
+            const regex = new RegExp(`(?<=^|[^a-zA-Z0-9\\u0400-\\u04FF])${escaped}(?=$|[^a-zA-Z0-9\\u0400-\\u04FF])`, 'i');
+            if (regex.test(lowerText)) {
+              isMatched = true;
+              break;
+            }
+          }
+
+          if (isMatched) {
             let replyContent = filters[trigger];
             let replyText = replyContent;
             let keyboard: InlineKeyboard | undefined = undefined;

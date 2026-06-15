@@ -1947,12 +1947,13 @@
               </div>
               <div class="card-body">
                 <div class="form-group">
-                  <label class="form-label">Ачкыч сөз (Триггер)</label>
-                  <input type="text" class="form-input" id="fl_word" placeholder="Мисалы: салам">
+                  <label class="form-label">Ачкыч сөздөр / Триггерлер (Бир нече болсо, үтүр менен бөлүңүз)</label>
+                  <input type="text" class="form-input" id="fl_word" placeholder="Мисалы: салам, привет, кандай, ассалому алейкум">
+                  <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">Бот бул сөздөрдүн ар бирине өзүнчө акылдуу режимде (бүтүн сөз катары гана, башка сөздүн ичинде кокусунан куралбаса) реакция кылат.</div>
                 </div>
-                <div class="form-group">
-                  <label class="form-label">Боттун жообу</label>
-                  <textarea class="form-textarea" id="fl_reply" rows="3" placeholder="Мисалы: Саламатсызбы! Кандай жардам керек?"></textarea>
+                <div class="form-group" style="margin-top: 10px;">
+                  <label class="form-label">Боттун жообу (Markdown/HTML колдоого алынат)</label>
+                  <textarea class="form-textarea" id="fl_reply" rows="3" placeholder="Мисалы: Саламатсызбы! Кандай жардам керек?" style="resize: vertical; min-height: 60px;" oninput="autoExpandTextarea(this)"></textarea>
                 </div>
                 <div class="form-group" style="margin-top: 10px;">
                   <label class="form-label">Сүрөт шилтемеси (URL) — кааласаңыз</label>
@@ -3776,6 +3777,7 @@
         document.getElementById('fl_link_format').value = 'button';
       }
       document.getElementById('fl_word').focus();
+      autoExpandTextarea(document.getElementById('fl_reply'));
       showToast("Оңдоо үчүн маалыматтар толтурулду.");
     }
 
@@ -3872,7 +3874,9 @@
 
       appData.filters[w] = valueStr;
       document.getElementById('fl_word').value = '';
-      document.getElementById('fl_reply').value = '';
+      const replyEl = document.getElementById('fl_reply');
+      replyEl.value = '';
+      replyEl.style.height = 'auto';
       document.getElementById('fl_buttons').value = '';
       document.getElementById('fl_link_format').value = 'button';
       if (document.getElementById('fl_photo')) {
