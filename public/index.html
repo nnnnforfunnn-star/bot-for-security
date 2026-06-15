@@ -1270,6 +1270,17 @@
                     <span class="slider"></span>
                   </label>
                 </div>
+
+                <div class="setting-row" style="padding-top: 14px; border-top: 1px solid rgba(255,255,255,0.05); border-bottom: none;">
+                  <div class="setting-info">
+                    <div class="setting-name">Боттун «акылдуу контекст» режими (Боттун жаны)</div>
+                    <div class="setting-desc">Иштетилгенде бот кокусунан айтылган триггерлерге реакция кылбастан, маектин маанисине/контекстине карап гана автожоопторду жөнөтөт.</div>
+                  </div>
+                  <label class="switch">
+                    <input type="checkbox" id="smartContextFilters">
+                    <span class="slider"></span>
+                  </label>
+                </div>
                 <div class="form-group" style="margin-top: 14px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 14px;">
                   <label class="form-label">Lockdown учурундагы жаза</label>
                   <select class="form-select" id="lockdownAction">
@@ -3371,6 +3382,7 @@
       const cfg = appData.config;
       document.getElementById('lockdownMode').checked = cfg.lockdownMode || false;
       document.getElementById('disableFilters').checked = cfg.disableFilters || false;
+      document.getElementById('smartContextFilters').checked = cfg.smartContextFilters !== false;
       document.getElementById('lockdownAction').value = cfg.lockdownAction || 'delete';
 
       document.getElementById('captchaEnabled').checked = cfg.captchaEnabled || false;
@@ -5257,6 +5269,7 @@
       appData.config.lockdownMode = document.getElementById('lockdownMode').checked;
       appData.config.lockdownAction = document.getElementById('lockdownAction').value;
       appData.config.disableFilters = document.getElementById('disableFilters').checked;
+      appData.config.smartContextFilters = document.getElementById('smartContextFilters').checked;
       
       appData.config.nightModeEnabled = document.getElementById('nightModeEnabled').checked;
       appData.config.nightModeStart = parseInt(document.getElementById('nightModeStart').value) || 0;

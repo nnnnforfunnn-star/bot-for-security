@@ -1,5 +1,6 @@
 import { Context, NextFunction, InlineKeyboard } from "grammy";
 import { logger } from "../utils/logger.js";
+import { config as botEnvConfig } from "../config.js";
 import { isUserAdmin, muteUser, banUser, unbanUser, formatMessageToHtml, parseDurationAndReason } from "../utils/telegram.js";
 import { getGroupConfig, updateGroupConfig } from "../utils/configManager.js";
 import { db } from "../utils/db.js";
@@ -667,6 +668,34 @@ export async function messageHandler(ctx: Context, next: NextFunction): Promise<
           }
 
           if (isMatched) {
+            if (config.smartContextFilters !== false) {
+              let confidence = 0.3;
+              if (text.includes("?")) {
+                confidence += 0.3;
+              }
+              const inquiryWords = [
+                "кандай", "эмне", "качан", "кайда", "эмнеге", "ким", "кайсы", "канча", "неге", "кылабыз", "болобу", "барбы", "жардам", "көмөк",
+                "как", "что", "где", "когда", "почему", "зачем", "кто", "какой", "сколько", "можно", "есть", "ли", "помочь", "помощь", "подскажите"
+              ];
+              const words = lowerText.split(/[^a-zA-Z0-9\u0400-\u04FF]/).filter(Boolean);
+              const hasInquiryWord = words.some(w => inquiryWords.includes(w));
+              if (hasInquiryWord) {
+                confidence += 0.3;
+              }
+              if (text.length < 60) {
+                confidence += 0.2;
+              } else if (text.length > 200) {
+                confidence -= 0.1;
+              }
+              const botId = parseInt(botEnvConfig.BOT_TOKEN.split(":")[0], 10);
+              if (ctx.message?.reply_to_message?.from?.id === botId) {
+                confidence += 0.2;
+              }
+              if (confidence < 0.5) {
+                continue;
+              }
+            }
+
             let replyContent = filters[trigger];
             let replyText = replyContent;
             let keyboard: InlineKeyboard | undefined = undefined;

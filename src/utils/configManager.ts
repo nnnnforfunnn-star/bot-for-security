@@ -21,6 +21,7 @@ export interface GroupConfig {
   logChannelId: string;
   lockdownMode: boolean;
   disableFilters: boolean;
+  smartContextFilters?: boolean;
   disabledCommands?: Record<string, boolean>;
   commandsEnabled?: boolean;
   linkWhitelist?: string[];
@@ -133,6 +134,7 @@ export const DEFAULT_CONFIG: GroupConfig = {
   logChannelId: "",
   lockdownMode: false,
   disableFilters: false,
+  smartContextFilters: true,
   disabledCommands: {},
   commandsEnabled: false,
   linkWhitelist: [],
