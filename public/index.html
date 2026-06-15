@@ -6308,10 +6308,15 @@
         return;
       }
 
-      const nextIndex = appData.config.quizCurrentIndex || 0;
+      const firstUnsentIdx = quizzes.findIndex(q => !q.sent);
 
       container.innerHTML = quizzes.map((q, idx) => {
-        const isNext = idx === (nextIndex % quizzes.length);
+        const isNext = idx === firstUnsentIdx;
+        const isSent = q.sent === true;
+        const badgeHtml = isNext 
+          ? '<span class="badge" style="background: var(--accent); font-size: 9px;">Кийинки</span>' 
+          : (isSent ? '<span class="badge" style="background: var(--success); font-size: 9px;">Жиберилди</span>' : '');
+
         const optionsHtml = q.options.map((opt, oIdx) => {
           const isCorrect = oIdx === q.correctOptionIndex;
           return `<div style="font-size: 12px; color: ${isCorrect ? 'var(--success)' : 'var(--text-muted)'}; margin-top: 2px; display: flex; align-items: center; gap: 4px;">
@@ -6320,11 +6325,11 @@
         }).join('');
 
         return `
-          <div class="list-item" style="border: 1px solid ${isNext ? 'rgba(0,112,243,0.4)' : 'var(--border-color)'}; background: ${isNext ? 'rgba(0,112,243,0.02)' : 'rgba(255,255,255,0.01)'}; border-radius: 8px; padding: 12px; display: flex; justify-content: space-between; align-items: flex-start; gap: 10px;">
+          <div class="list-item" style="border: 1px solid ${isNext ? 'rgba(0,112,243,0.4)' : 'var(--border-color)'}; background: ${isNext ? 'rgba(0,112,243,0.02)' : (isSent ? 'rgba(255,255,255,0.005)' : 'rgba(255,255,255,0.01)')}; border-radius: 8px; padding: 12px; display: flex; justify-content: space-between; align-items: flex-start; gap: 10px;">
             <div style="flex: 1;">
               <div style="font-weight: 600; font-size: 13px; color: var(--text-main); display: flex; align-items: center; gap: 6px;">
                 <span>#${idx + 1} ${q.question}</span>
-                ${isNext ? '<span class="badge" style="background: var(--accent); font-size: 9px;">Кийинки</span>' : ''}
+                ${badgeHtml}
               </div>
               <div style="margin-top: 6px;">
                 ${optionsHtml}

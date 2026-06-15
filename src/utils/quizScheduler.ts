@@ -27,22 +27,22 @@ export async function runQuizCheck(): Promise<void> {
           const quizzes = await db.get<any[]>(`chat:${targetChatId}:quizzes`) || [];
           if (quizzes.length === 0) continue;
 
-          let index = config.quizCurrentIndex || 0;
-          if (index >= quizzes.length) {
-            index = 0; // Wrap around to the start
+          // Find the first unsent quiz
+          const quizIndex = quizzes.findIndex(q => !q.sent);
+          if (quizIndex === -1) {
+            continue; // All quizzes have been sent
           }
 
-          const quiz = quizzes[index];
+          const quiz = quizzes[quizIndex];
           if (!quiz || !quiz.question || !quiz.options || quiz.options.length < 2) {
-            // Skip invalid quiz
-            await updateGroupConfig(targetChatId, {
-              quizCurrentIndex: index + 1
-            });
+            // Skip invalid quiz by marking it as sent
+            quizzes[quizIndex].sent = true;
+            await db.set(`chat:${targetChatId}:quizzes`, quizzes);
             continue;
           }
 
-          // Format quiz question: Analogy format
-          const questionText = `Эталонная пара: ${quiz.question}\n\nНайдите пару с такой же связью:`;
+          // Format quiz question: Analogy format without "Эталонная пара:"
+          const questionText = `${quiz.question}\n\nНайдите пару с такой же связью:`;
 
           // Send poll/quiz using Telegram API
           const threadId = config.quizTopicId ? parseInt(config.quizTopicId, 10) : undefined;
@@ -59,10 +59,13 @@ export async function runQuizCheck(): Promise<void> {
             } as any
           );
 
+          // Mark the quiz as sent in the quizzes array and persist
+          quizzes[quizIndex].sent = true;
+          await db.set(`chat:${targetChatId}:quizzes`, quizzes);
+
           // Update config values in db
           await updateGroupConfig(targetChatId, {
-            quizLastSentTime: now,
-            quizCurrentIndex: index + 1
+            quizLastSentTime: now
           });
         }
       } catch (chatErr) {
