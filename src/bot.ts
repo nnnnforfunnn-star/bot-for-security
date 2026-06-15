@@ -332,6 +332,23 @@ bot.on("callback_query:data", async (ctx, next) => {
   }
 });
 
+// Көзөмөлдөөчү темалар (Forum Topics tracker)
+bot.on(["message:forum_topic_created", "message:forum_topic_edited"], async (ctx, next) => {
+  try {
+    const chatId = ctx.chat?.id;
+    if (chatId && ctx.chat.type === "supergroup") {
+      const threadId = ctx.message?.message_thread_id;
+      const name = ctx.message?.forum_topic_created?.name || ctx.message?.forum_topic_edited?.name;
+      if (threadId && name) {
+        await db.hset(`chat:${chatId}:topics`, String(threadId), name);
+      }
+    }
+  } catch (e) {
+    logger.error("Error in forum topic tracking:", e);
+  }
+  await next();
+});
+
 // Обработчики
 bot.on("message:new_chat_members", joinHandler);
 bot.on("message:left_chat_member", goodbyeHandler);

@@ -6,6 +6,7 @@ import { getGroupConfig, updateGroupConfig } from "../utils/configManager.js";
 import { db } from "../utils/db.js";
 import { logAction } from "../utils/actionLogger.js";
 import { runActivityCheck } from "../utils/activityScheduler.js";
+import { runQuizCheck } from "../utils/quizScheduler.js";
 
 // Импорт обработчиков команд для поддержки кастомных алиасов (коротких команд)
 import { zombiesCommand, muteallCommand, unmuteallCommand, pinCommand, unpinCommand, kickmeCommand, idCommand, warnsCommand, unwarnCommand } from "./modCommands.js";
@@ -347,6 +348,7 @@ export async function messageHandler(ctx: Context, next: NextFunction): Promise<
       await db.set(lockKey, "locked", 30);
       await checkAndSendAnnouncements(ctx, chatId).catch(err => logger.error("Error in announcements check:", err));
       await runActivityCheck().catch(err => logger.error("Error in activity generator:", err));
+      await runQuizCheck().catch(err => logger.error("Error in quiz check:", err));
       await checkAndDeleteBroadcasts(ctx).catch(err => logger.error("Error in checkAndDeleteBroadcasts:", err));
     }
   } catch (lockErr) {

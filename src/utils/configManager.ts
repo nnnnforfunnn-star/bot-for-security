@@ -30,6 +30,13 @@ export interface GroupConfig {
   activityGeneratorKarmaReward?: number;
   mainTopicId?: number;
   
+  // Quizzes Module
+  quizzesEnabled?: boolean;
+  quizIntervalMinutes?: number;
+  quizTopicId?: string;
+  quizLastSentTime?: number;
+  quizCurrentIndex?: number;
+  
   // Advanced Granular Actions
   lockdownAction?: "delete" | "mute" | "warn" | "kick" | "ban";
   swearAction?: "delete" | "warn" | "mute" | "kick" | "ban";
@@ -142,6 +149,13 @@ export const DEFAULT_CONFIG: GroupConfig = {
   activityGeneratorTimeoutHours: 2,
   activityGeneratorKarmaReward: 1,
   mainTopicId: undefined,
+  
+  // Quizzes Defaults
+  quizzesEnabled: false,
+  quizIntervalMinutes: 60,
+  quizTopicId: "",
+  quizLastSentTime: 0,
+  quizCurrentIndex: 0,
   
   lockdownAction: "delete",
   swearAction: "warn",

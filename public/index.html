@@ -1124,6 +1124,23 @@
       .member-actions-inner {
         padding: 12px;
       }
+      .nav-item-add {
+        margin: 10px 14px;
+        padding: 10px;
+        border: 1px dashed rgba(255,255,255,0.15);
+        border-radius: 8px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.2s;
+        color: var(--text-muted);
+        font-size: 13px;
+        font-weight: 500;
+      }
+      .nav-item-add:hover {
+        border-color: var(--accent) !important;
+        color: var(--accent) !important;
+        background: rgba(0, 112, 243, 0.05);
+      }
     }
   </style>
 </head>
@@ -1175,6 +1192,16 @@
         </div>
         <div class="nav-item" id="nav-creator" style="display: none;" onclick="openTab('tab-creator', this)">
           <div class="nav-item-inner"><i class="fa-solid fa-crown" style="margin-right: 10px; width: 16px; text-align: center; color: #fbbf24;"></i>Глобалдык башкаруу</div>
+        </div>
+
+        <!-- Викторины Tab (Dynamic) -->
+        <div class="nav-item" id="nav-quizzes" style="display: none;" onclick="openTab('tab-quizzes', this)">
+          <div class="nav-item-inner"><i class="fa-solid fa-circle-question" style="margin-right: 10px; width: 16px; text-align: center; color: var(--accent);"></i>Викториналар</div>
+        </div>
+
+        <!-- Add Module Button "+" -->
+        <div class="nav-item-add" id="nav-add-module" onclick="openAddModuleModal()">
+          <i class="fa-solid fa-plus" style="margin-right: 6px;"></i>Жаңы модуль кошуу
         </div>
 
         <div class="nav-label" style="margin-top: 10px;">Аналитика & Статистика</div>
@@ -2967,7 +2994,107 @@
               </div>
             </div>
           </div>
+          <!-- 8. ТАБ: ВИКТОРИНАЛАР -->
+          <div id="tab-quizzes" class="tab-content">
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title"><i class="fa-solid fa-circle-question" style="color: var(--accent); margin-right: 8px;"></i>Аналогия викториналары</div>
+                <div class="card-description">ОРТ аналогия викториналарын белгилүү убакыт интервалы менен автоматтык түрдө тайпаңызга жөнөтүү орнотуулары.</div>
+              </div>
+              <div class="card-body">
+                <div class="setting-row">
+                  <div class="setting-info">
+                    <div class="setting-name">Викториналарды жиберүүнү күйгүзүү</div>
+                    <div class="setting-desc">Суроолорду орнотулган интервал менен тайпага жөнөтүп баштайт.</div>
+                  </div>
+                  <label class="switch">
+                    <input type="checkbox" id="quizzesEnabled">
+                    <span class="slider"></span>
+                  </label>
+                </div>
+
+                <div class="grid-2" style="margin-top: 14px;">
+                  <div class="form-group">
+                    <label class="form-label">Билдирүү жөнөтүү интервалы мүнөт менен</label>
+                    <input type="number" class="form-input" id="quizIntervalMinutes" min="5" value="60">
+                    <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">Ар бир N мүнөт сайын жаңы викторина жөнөтүлөт.</div>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Викториналар жөнөтүлүүчү тема</label>
+                    <select class="form-select" id="quizTopicId">
+                      <option value="">Негизги чат / тема табылбады</option>
+                    </select>
+                    <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">Форум тайпалар үчүн суроолор жөнөтүлө турган негизги тема.</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Import Quizzes Card -->
+            <div class="card" style="margin-top: 20px;">
+              <div class="card-header">
+                <div class="card-title"><i class="fa-solid fa-file-import" style="color: var(--success); margin-right: 8px;"></i>Массалык түрдө викториналарды импорттоо</div>
+                <div class="card-description">Аналогия суроолорун ылдам жүктөө. Текстти төмөндөгү калыпта киргизип, туура жоопту <b>✓</b> белгиси менен белгилеңиз.</div>
+              </div>
+              <div class="card-body">
+                <div class="form-group">
+                  <label class="form-label">Импорттоо тексти</label>
+                  <textarea class="form-textarea" id="quiz_import_input" rows="8" placeholder="СКАЛЬПЕЛЬ : ХИРУРГ&#10;А) микроскоп : биолог&#10;Б) штурвал : пилот&#10;В) ножницы : парикмахер ✓&#10;Г) мел : учитель&#10;&#10;АЛИБИ : ПОДОЗРЕНИЕ&#10;А) броня : пуля&#10;Б) аргумент : спор&#10;В) прививка : virus&#10;Г) опровержение : обвинение ✓" style="resize: vertical; font-family: monospace; font-size: 12px;"></textarea>
+                </div>
+                <button type="button" class="btn btn-primary" style="width: 100%; margin-top: 14px;" onclick="importAnalogies()"><i class="fa-solid fa-check" style="margin-right: 6px;"></i>Маалыматтарды талдоо жана кошуу</button>
+              </div>
+            </div>
+
+            <!-- List of Quizzes -->
+            <div class="card" style="margin-top: 20px;">
+              <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                <div>
+                  <div class="card-title"><i class="fa-solid fa-list-ol" style="color: var(--accent); margin-right: 8px;"></i>Жүктөлгөн викториналардын тизмеси</div>
+                  <div class="card-description" id="quizzes_count_badge">Жалпы суроолор: 0</div>
+                </div>
+                <div>
+                  <button type="button" class="btn btn-sm btn-danger" onclick="clearAllQuizzes()" style="font-size: 11px; padding: 4px 8px; background: rgba(239, 68, 68, 0.2); color: var(--danger); border: none;"><i class="fa-solid fa-trash-can" style="margin-right: 4px;"></i>Баарын өчүрүү</button>
+                </div>
+              </div>
+              <div class="card-body">
+                <div id="quizzes_list_container" style="display: flex; flex-direction: column; gap: 10px; max-height: 400px; overflow-y: auto; padding-right: 4px;">
+                  <!-- Dynamically populated list of quizzes -->
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal for Adding Modules -->
+  <div id="add-module-modal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(5px); z-index: 2000; justify-content: center; align-items: center;">
+    <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 16px; padding: 24px; max-width: 450px; width: 90%; box-shadow: 0 20px 50px rgba(0,0,0,0.5); position: relative;">
+      <h3 style="margin-top: 0; margin-bottom: 8px; font-size: 18px; color: var(--text-main); display: flex; align-items: center; gap: 8px;">
+        <i class="fa-solid fa-square-plus" style="color: var(--accent);"></i>Жаңы модуль кошуу
+      </h3>
+      <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 20px;">Тайпаңыздын мүмкүнчүлүктөрүн кеңейтүү үчүн төмөнкү кошумча модулдарды активдештириңиз:</p>
+      
+      <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 24px;">
+        <!-- Quiz Module Option Card -->
+        <div id="modal-quiz-card" style="border: 1px solid var(--border-color); background: rgba(255,255,255,0.02); border-radius: 12px; padding: 14px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; transition: all 0.2s;" onclick="toggleQuizModuleInModal()">
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <div style="font-size: 20px; color: var(--accent);"><i class="fa-solid fa-circle-question"></i></div>
+            <div>
+              <div style="font-weight: 600; font-size: 14px; color: var(--text-main);">Викториналар</div>
+              <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">ОРТ аналогия суроолорун тайпага автоматтык түрдө жөнөтүү.</div>
+            </div>
+          </div>
+          <div id="modal-quiz-check" style="width: 20px; height: 20px; border-radius: 50%; border: 2px solid var(--border-color); display: flex; justify-content: center; align-items: center;">
+            <i class="fa-solid fa-check" style="font-size: 10px; color: transparent;"></i>
+          </div>
+        </div>
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; gap: 10px;">
+        <button type="button" class="btn btn-secondary" onclick="closeAddModuleModal()" style="font-size: 13px; padding: 8px 16px;">Жабуу</button>
+        <button type="button" class="btn btn-primary" onclick="applyAddedModules()" style="font-size: 13px; padding: 8px 16px;">Кошуу</button>
       </div>
     </div>
   </div>
@@ -3458,6 +3585,32 @@
       document.getElementById('activityGeneratorTimeoutHours').value = cfg.activityGeneratorTimeoutHours !== undefined ? cfg.activityGeneratorTimeoutHours : 2;
       document.getElementById('activityGeneratorKarmaReward').value = cfg.activityGeneratorKarmaReward !== undefined ? cfg.activityGeneratorKarmaReward : 1;
       document.getElementById('mainTopicId').value = cfg.mainTopicId !== undefined && cfg.mainTopicId !== null ? cfg.mainTopicId : '';
+
+      // Quizzes Module rendering
+      document.getElementById('quizzesEnabled').checked = cfg.quizzesEnabled || false;
+      document.getElementById('quizIntervalMinutes').value = cfg.quizIntervalMinutes || 60;
+      
+      const topicSelect = document.getElementById('quizTopicId');
+      if (topicSelect) {
+        topicSelect.innerHTML = '<option value="">Негизги чат</option>';
+        if (appData.topics) {
+          Object.entries(appData.topics).forEach(([tid, tname]) => {
+            const opt = document.createElement('option');
+            opt.value = tid;
+            opt.innerText = `${tname} (ID: ${tid})`;
+            topicSelect.appendChild(opt);
+          });
+        }
+        topicSelect.value = cfg.quizTopicId || '';
+      }
+
+      if (cfg.quizzesEnabled) {
+        document.getElementById('nav-quizzes').style.display = 'block';
+      } else {
+        document.getElementById('nav-quizzes').style.display = 'none';
+      }
+
+      renderQuizzesList();
     }
 
     function renderLists() {
@@ -5363,6 +5516,10 @@
       const mainTopicIdVal = document.getElementById('mainTopicId').value.trim();
       appData.config.mainTopicId = mainTopicIdVal ? parseInt(mainTopicIdVal) : null;
 
+      appData.config.quizzesEnabled = document.getElementById('quizzesEnabled').checked;
+      appData.config.quizIntervalMinutes = parseInt(document.getElementById('quizIntervalMinutes').value) || 60;
+      appData.config.quizTopicId = document.getElementById('quizTopicId').value;
+
       try {
         await fetch(apiUrl, {
           method: 'POST',
@@ -6055,6 +6212,188 @@
       } finally {
         btn.innerText = 'Сактоо';
         btn.disabled = false;
+      }
+    }
+
+    function parseAnalogies(text) {
+      const blocks = text.split(/\n\s*\n/).map(b => b.trim()).filter(Boolean);
+      const parsed = [];
+      
+      for (const block of blocks) {
+        const lines = block.split('\n').map(l => l.trim()).filter(Boolean);
+        if (lines.length < 3) continue;
+        
+        const question = lines[0];
+        const options = [];
+        let correctOptionIndex = -1;
+        
+        const optionLines = lines.slice(1);
+        for (let i = 0; i < optionLines.length; i++) {
+          let line = optionLines[i];
+          const isCorrect = line.includes('✓') || line.includes('✔️') || line.includes('correct');
+          let cleaned = line.replace(/^[А-Яа-яA-Za-z]\)\s*/, '')
+                            .replace(/[✓✔️\s]+$/, '')
+                            .trim();
+          
+          options.push(cleaned);
+          if (isCorrect) {
+            correctOptionIndex = i;
+          }
+        }
+        
+        if (options.length >= 2) {
+          if (correctOptionIndex === -1) {
+            correctOptionIndex = 0;
+          }
+          parsed.push({
+            question,
+            options,
+            correctOptionIndex
+          });
+        }
+      }
+      return parsed;
+    }
+
+    function importAnalogies() {
+      const textarea = document.getElementById('quiz_import_input');
+      const text = textarea.value.trim();
+      if (!text) {
+        showToast("Сураныч, импорттоо үчүн текстти киргизиңиз!", "error");
+        return;
+      }
+
+      const parsed = parseAnalogies(text);
+      if (parsed.length === 0) {
+        showToast("Бир дагы суроо таанылган жок. Форматты текшериңиз!", "error");
+        return;
+      }
+
+      if (!appData.quizzes) appData.quizzes = [];
+      appData.quizzes = appData.quizzes.concat(parsed);
+
+      textarea.value = "";
+      showToast(`${parsed.length} суроо кошулду!`);
+      renderQuizzesList();
+      saveAll();
+    }
+
+    function deleteQuiz(idx) {
+      if (!appData.quizzes) return;
+      appData.quizzes.splice(idx, 1);
+      renderQuizzesList();
+      saveAll();
+    }
+
+    function clearAllQuizzes() {
+      tg.showConfirm("Бардык викториналарды өчүрүүнү каалайсызбы?", (confirmed) => {
+        if (confirmed) {
+          appData.quizzes = [];
+          renderQuizzesList();
+          saveAll();
+          showToast("Бардык викториналар тазаланды.");
+        }
+      });
+    }
+
+    function renderQuizzesList() {
+      const container = document.getElementById('quizzes_list_container');
+      if (!container) return;
+
+      const quizzes = appData.quizzes || [];
+      document.getElementById('quizzes_count_badge').innerText = `Жалпы суроолор: ${quizzes.length}`;
+
+      if (quizzes.length === 0) {
+        container.innerHTML = `<p style="font-size:12px; color:var(--text-muted); text-align: center; padding: 20px 0;">Азырынча суроолор жүктөлө элек. Тез импорттоо талаасынан кошуңуз.</p>`;
+        return;
+      }
+
+      const nextIndex = appData.config.quizCurrentIndex || 0;
+
+      container.innerHTML = quizzes.map((q, idx) => {
+        const isNext = idx === (nextIndex % quizzes.length);
+        const optionsHtml = q.options.map((opt, oIdx) => {
+          const isCorrect = oIdx === q.correctOptionIndex;
+          return `<div style="font-size: 12px; color: ${isCorrect ? 'var(--success)' : 'var(--text-muted)'}; margin-top: 2px; display: flex; align-items: center; gap: 4px;">
+            ${isCorrect ? '✓' : '•'} ${opt}
+          </div>`;
+        }).join('');
+
+        return `
+          <div class="list-item" style="border: 1px solid ${isNext ? 'rgba(0,112,243,0.4)' : 'var(--border-color)'}; background: ${isNext ? 'rgba(0,112,243,0.02)' : 'rgba(255,255,255,0.01)'}; border-radius: 8px; padding: 12px; display: flex; justify-content: space-between; align-items: flex-start; gap: 10px;">
+            <div style="flex: 1;">
+              <div style="font-weight: 600; font-size: 13px; color: var(--text-main); display: flex; align-items: center; gap: 6px;">
+                <span>#${idx + 1} ${q.question}</span>
+                ${isNext ? '<span class="badge" style="background: var(--accent); font-size: 9px;">Кийинки</span>' : ''}
+              </div>
+              <div style="margin-top: 6px;">
+                ${optionsHtml}
+              </div>
+            </div>
+            <button class="btn btn-sm btn-danger" onclick="deleteQuiz(${idx})" style="padding: 4px 8px; border: none; font-size: 11px; background: rgba(239,68,68,0.1); color: var(--danger);"><i class="fa-solid fa-trash-can"></i></button>
+          </div>
+        `;
+      }).join('');
+    }
+
+    let isQuizSelectedInModal = false;
+
+    function openAddModuleModal() {
+      const modal = document.getElementById('add-module-modal');
+      modal.style.display = 'flex';
+      
+      const isCurrentlyEnabled = appData.config.quizzesEnabled || false;
+      isQuizSelectedInModal = isCurrentlyEnabled;
+      
+      updateQuizModalCardStyle();
+    }
+
+    function closeAddModuleModal() {
+      document.getElementById('add-module-modal').style.display = 'none';
+    }
+
+    function toggleQuizModuleInModal() {
+      isQuizSelectedInModal = !isQuizSelectedInModal;
+      updateQuizModalCardStyle();
+    }
+
+    function updateQuizModalCardStyle() {
+      const card = document.getElementById('modal-quiz-card');
+      const check = document.getElementById('modal-quiz-check');
+      const checkIcon = check.querySelector('i');
+      
+      if (isQuizSelectedInModal) {
+        card.style.borderColor = 'var(--accent)';
+        card.style.background = 'rgba(0, 112, 243, 0.05)';
+        check.style.borderColor = 'var(--accent)';
+        check.style.background = 'var(--accent)';
+        checkIcon.style.color = 'white';
+      } else {
+        card.style.borderColor = 'var(--border-color)';
+        card.style.background = 'rgba(255, 255, 255, 0.02)';
+        check.style.borderColor = 'var(--border-color)';
+        check.style.background = 'transparent';
+        checkIcon.style.color = 'transparent';
+      }
+    }
+
+    async function applyAddedModules() {
+      const prevEnabled = appData.config.quizzesEnabled || false;
+      appData.config.quizzesEnabled = isQuizSelectedInModal;
+      document.getElementById('quizzesEnabled').checked = isQuizSelectedInModal;
+
+      if (isQuizSelectedInModal) {
+        document.getElementById('nav-quizzes').style.display = 'block';
+      } else {
+        document.getElementById('nav-quizzes').style.display = 'none';
+      }
+
+      closeAddModuleModal();
+      await saveAll();
+
+      if (isQuizSelectedInModal && !prevEnabled) {
+        const quizzesNavItem = document.getElementById('nav-quizzes');
+        openTab('tab-quizzes', quizzesNavItem);
       }
     }
 

@@ -79,11 +79,13 @@ export default async function handler(req: any, res: any) {
       const notes = (await db.hgetall(`chat:${chatId}:notes`)) || {};
       const swearwords = await db.smembers(`chat:${chatId}:swearwords`) || [];
       const announcements = (await db.hgetall(`chat:${chatId}:announcements`)) || {};
-      return res.status(200).json({ config, blacklist, filters, notes, swearwords, announcements, isCreator });
+      const topics = (await db.hgetall(`chat:${chatId}:topics`)) || {};
+      const quizzes = (await db.get<any[]>(`chat:${chatId}:quizzes`)) || [];
+      return res.status(200).json({ config, blacklist, filters, notes, swearwords, announcements, topics, quizzes, isCreator });
     } 
     
     if (req.method === "POST") {
-      const { config, blacklist, filters, notes, swearwords, announcements } = req.body;
+      const { config, blacklist, filters, notes, swearwords, announcements, quizzes } = req.body;
       const adminName = user.first_name || "Администратор";
 
       // Сохраняем ID чата в список активных чатов
@@ -191,6 +193,10 @@ export default async function handler(req: any, res: any) {
         for (const word of swearwords) {
           if (word && word.trim()) await db.sadd(`chat:${chatId}:swearwords`, word.trim().toLowerCase());
         }
+      }
+
+      if (quizzes && Array.isArray(quizzes)) {
+        await db.set(`chat:${chatId}:quizzes`, quizzes);
       }
 
       return res.status(200).json({ success: true, config: updatedConfig });
