@@ -41,8 +41,8 @@ export async function runQuizCheck(): Promise<void> {
             continue;
           }
 
-          // Format quiz question: Analogy format without "Эталонная пара:"
-          const questionText = `${quiz.question}\n\nНайдите пару с такой же связью:`;
+          // Format quiz question
+          const questionText = quiz.question;
 
           // Send poll/quiz using Telegram API
           const threadId = config.quizTopicId ? parseInt(config.quizTopicId, 10) : undefined;
