@@ -41,7 +41,7 @@ export async function kickCommand(ctx: Context) {
     await ctx.api.unbanChatMember(ctx.chat.id, target.id); // Kick = ban + unban
     const name = target.first_name || "Колдонуучу";
     await logAction(ctx.api, ctx.chat.id, target.id, name, "Кик", "Чаттан чыгарылды (/kick)", ctx.from?.first_name || "Админ");
-    await replyMaybeSilent(ctx, `👢 **${name}** тайпадан чыгарылды.`);
+    await replyMaybeSilent(ctx, `👢 **${name}** тайпадан чыгарылды.\nБашкаруучу: ${ctx.from?.first_name || "Админ"}`);
   } catch (e) {
     await ctx.reply("Ката кетти. Боттун укуктарын текшериңиз.");
   }
@@ -103,12 +103,12 @@ export async function warnCommand(ctx: Context) {
     if (actionName === "ban") {
       await ctx.api.banChatMember(ctx.chat.id, target.id);
       await logAction(ctx.api, ctx.chat.id, target.id, name, "Бан", `Эскертүү лимити толду (${config.warnLimit})`, ctx.from?.first_name || "Бот");
-      await replyMaybeSilent(ctx, `🚷 **${name}** эскертүү лимити толгондуктан бөгөттөлдү. Чек: ${config.warnLimit}.`);
+      await replyMaybeSilent(ctx, `🚷 **${name}** эскертүү лимити толгондуктан бөгөттөлдү. Чек: ${config.warnLimit}.\nБашкаруучу: ${ctx.from?.first_name || "Админ"}`);
     } else if (actionName === "kick") {
       await ctx.api.banChatMember(ctx.chat.id, target.id);
       await ctx.api.unbanChatMember(ctx.chat.id, target.id);
       await logAction(ctx.api, ctx.chat.id, target.id, name, "Кик", `Эскертүү лимити толду (${config.warnLimit})`, ctx.from?.first_name || "Бот");
-      await replyMaybeSilent(ctx, `👢 **${name}** эскертүү лимити толгондуктан тайпадан чыгарылды. Чек: ${config.warnLimit}.`);
+      await replyMaybeSilent(ctx, `👢 **${name}** эскертүү лимити толгондуктан тайпадан чыгарылды. Чек: ${config.warnLimit}.\nБашкаруучу: ${ctx.from?.first_name || "Админ"}`);
     } else {
       // mute
       const duration = 24 * 60 * 60; // 24 hours default
@@ -119,12 +119,12 @@ export async function warnCommand(ctx: Context) {
         can_add_web_page_previews: false,
       }, { until_date: Math.floor(Date.now() / 1000) + duration });
       await logAction(ctx.api, ctx.chat.id, target.id, name, "Мут", `Эскертүү лимити толду (${config.warnLimit})`, ctx.from?.first_name || "Бот");
-      await replyMaybeSilent(ctx, `🔇 **${name}** эскертүү лимити толгондуктан 24 саатка мутка салынды. Чек: ${config.warnLimit}.`);
+      await replyMaybeSilent(ctx, `🔇 **${name}** эскертүү лимити толгондуктан 24 саатка мутка салынды. Чек: ${config.warnLimit}.\nБашкаруучу: ${ctx.from?.first_name || "Админ"}`);
     }
   } else {
     const name = target.first_name || "Колдонуучу";
     await logAction(ctx.api, ctx.chat.id, target.id, name, "Эскертүү", `Эскертүү берилди (${warns}/${config.warnLimit})`, ctx.from?.first_name || "Админ");
-    await replyMaybeSilent(ctx, `⚠️ **Эскертүү!** ${name}, сизге эскертүү берилди. Жалпы эскертүүлөр: **${warns}/${config.warnLimit}**`);
+    await replyMaybeSilent(ctx, `⚠️ **Эскертүү!** ${name}, сизге эскертүү берилди. Жалпы эскертүүлөр: **${warns}/${config.warnLimit}**\nБашкаруучу: ${ctx.from?.first_name || "Админ"}`);
   }
 }
 
@@ -142,7 +142,7 @@ export async function unwarnCommand(ctx: Context) {
   }
   const name = target.first_name || "Колдонуучу";
   await logAction(ctx.api, ctx.chat.id, target.id, name, "Эскертүүнү Алуу", "Эскертүү саны азайтылды", ctx.from?.first_name || "Админ");
-  await replyMaybeSilent(ctx, `✅ **Эскертүү алынды!** ${name}, сиздин калган эскертүүлөрүңүз: **${warns}/${config.warnLimit}**`);
+  await replyMaybeSilent(ctx, `✅ **Эскертүү алынды!** ${name}, сиздин калган эскертүүлөрүңүз: **${warns}/${config.warnLimit}**\nБашкаруучу: ${ctx.from?.first_name || "Админ"}`);
 }
 
 export async function warnsCommand(ctx: Context) {
@@ -198,7 +198,7 @@ export async function muteallCommand(ctx: Context) {
       can_add_web_page_previews: false
     });
     await logAction(ctx.api, ctx.chat.id, 0, "Группа", "Muteall", "Группа жабылды (/muteall)", ctx.from?.first_name || "Админ");
-    await ctx.reply("🔇 **Тайпада жазуу толук бөгөттөлдү!**\nАдминистраторлордон башка эч ким билдирүү жөнөтө албайт.", { parse_mode: "Markdown" });
+    await ctx.reply(`🔇 **Тайпада жазуу толук бөгөттөлдү!**\nАдминистраторлордон башка эч ким билдирүү жөнөтө албайт.\nБашкаруучу: ${ctx.from?.first_name || "Админ"}`, { parse_mode: "Markdown" });
   } catch (e) {
     await ctx.reply("❌ Чаттын укуктарын өзгөртүү мүмкүн болбоду.");
   }
@@ -221,7 +221,7 @@ export async function unmuteallCommand(ctx: Context) {
       can_add_web_page_previews: true
     });
     await logAction(ctx.api, ctx.chat.id, 0, "Группа", "Unmuteall", "Группа ачылды (/unmuteall)", ctx.from?.first_name || "Админ");
-    await ctx.reply("🔊 **Тайпа толугу менен ачылды!**\nЭми бардык колдонуучулар жаза алышат.", { parse_mode: "Markdown" });
+    await ctx.reply(`🔊 **Тайпа толугу менен ачылды!**\nЭми бардык колдонуучулар жаза алышат.\nБашкаруучу: ${ctx.from?.first_name || "Админ"}`, { parse_mode: "Markdown" });
   } catch (e) {
     await ctx.reply("❌ Чаттын укуктарын өзгөртүү мүмкүн болбоду.");
   }

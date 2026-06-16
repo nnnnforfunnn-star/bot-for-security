@@ -51,7 +51,7 @@ export async function promoteCommand(ctx: Context) {
       await ctx.api.setChatAdministratorCustomTitle(ctx.chat.id, target.id, title).catch(() => {});
     }
     await logAction(ctx.api, ctx.chat.id, target.id, target.first_name, "Promote", "Админ кылынды", ctx.from?.first_name || "Админ");
-    await ctx.reply(`⬆️ **${target.first_name}** админ кылынды!${title ? ` Титулу: ${title}` : ""}`, { parse_mode: "Markdown" });
+    await ctx.reply(`⬆️ **${target.first_name}** админ кылынды!${title ? ` Титулу: ${title}` : ""}\nБашкаруучу: ${ctx.from?.first_name || "Админ"}`, { parse_mode: "Markdown" });
   } catch (e) {
     await ctx.reply("❌ Ката кетти. Боттун укуктарын текшериңиз.");
   }
@@ -73,7 +73,7 @@ export async function demoteCommand(ctx: Context) {
       can_manage_chat: false,
     });
     await logAction(ctx.api, ctx.chat.id, target.id, target.first_name, "Demote", "Админ укугу алынды", ctx.from?.first_name || "Админ");
-    await ctx.reply(`⬇️ **${target.first_name}** мындан ары админ эмес.`, { parse_mode: "Markdown" });
+    await ctx.reply(`⬇️ **${target.first_name}** мындан ары админ эмес.\nБашкаруучу: ${ctx.from?.first_name || "Админ"}`, { parse_mode: "Markdown" });
   } catch (e) {
     await ctx.reply("❌ Ката кетти. Боттун укуктарын текшериңиз.");
   }
@@ -99,7 +99,7 @@ export async function tmuteCommand(ctx: Context) {
       can_add_web_page_previews: false,
     }, { until_date: untilDate });
     await logAction(ctx.api, ctx.chat.id, target.id, target.first_name, "Мут", `Убактылуу: ${args}`, ctx.from?.first_name || "Админ");
-    await ctx.reply(`🔇 **${target.first_name}** ${args} мөөнөткө жазуу укугунан ажыратылды.`, { parse_mode: "Markdown" });
+    await ctx.reply(`🔇 **${target.first_name}** ${args} мөөнөткө жазуу укугунан ажыратылды.\nБашкаруучу: ${ctx.from?.first_name || "Админ"}`, { parse_mode: "Markdown" });
   } catch (e) { await ctx.reply("❌ Ката кетти."); }
 }
 
@@ -118,7 +118,7 @@ export async function tbanCommand(ctx: Context) {
   try {
     await ctx.api.banChatMember(ctx.chat.id, target.id, { until_date: untilDate });
     await logAction(ctx.api, ctx.chat.id, target.id, target.first_name, "Бан", `Убактылуу: ${args}`, ctx.from?.first_name || "Админ");
-    await ctx.reply(`🚷 **${target.first_name}** ${args} мөөнөткө бөгөттөлдү.`, { parse_mode: "Markdown" });
+    await ctx.reply(`🚷 **${target.first_name}** ${args} мөөнөткө бөгөттөлдү.\nБашкаруучу: ${ctx.from?.first_name || "Админ"}`, { parse_mode: "Markdown" });
   } catch (e) { await ctx.reply("❌ Ката кетти."); }
 }
 
@@ -235,7 +235,7 @@ export async function resetWarnsCommand(ctx: Context) {
   const warnKey = `chat:${ctx.chat.id}:user:${target.id}:warns`;
   await db.del(warnKey);
   await logAction(ctx.api, ctx.chat.id, target.id, target.first_name, "Тазалоо", "Бардык эскертүүлөр тазаланды", ctx.from?.first_name || "Админ");
-  await ctx.reply(`✅ **${target.first_name}** аттуу колдонуучунун бардык эскертүүлөрү тазаланды.`, { parse_mode: "Markdown" });
+  await ctx.reply(`✅ **${target.first_name}** аттуу колдонуучунун бардык эскертүүлөрү тазаланды.\nБашкаруучу: ${ctx.from?.first_name || "Админ"}`, { parse_mode: "Markdown" });
 }
 
 // 12. /link — Тайпанын шилтемесин алуу
@@ -255,7 +255,7 @@ export async function lockdownCommand(ctx: Context) {
   try {
     await updateGroupConfig(ctx.chat.id, { lockdownMode: true });
     await logAction(ctx.api, ctx.chat.id, 0, "Группа", "Lockdown", "Чукул кырдаал режими иштетилди", ctx.from?.first_name || "Админ");
-    await ctx.reply("🚨 **ЧУКУЛ КЫРДААЛ РЕЖИМИ ИШКЕ КИРДИ!**\n\nАдминистраторлордон башка эч ким билдирүү жөнөтө албайт. Бардык билдирүүлөр автоматтык түрдө өчүрүлөт.", { parse_mode: "Markdown" });
+    await ctx.reply(`🚨 **ЧУКУЛ КЫРДААЛ РЕЖИМИ ИШКЕ КИРДИ!**\n\nАдминистраторлордон башка эч ким билдирүү жөнөтө албайт. Бардык билдирүүлөр автоматтык түрдө өчүрүлөт.\nБашкаруучу: ${ctx.from?.first_name || "Админ"}`, { parse_mode: "Markdown" });
   } catch (e) {
     await ctx.reply("❌ Ката кетти.");
   }
@@ -268,7 +268,7 @@ export async function unlockdownCommand(ctx: Context) {
   try {
     await updateGroupConfig(ctx.chat.id, { lockdownMode: false });
     await logAction(ctx.api, ctx.chat.id, 0, "Группа", "Unlockdown", "Чукул кырдаал режими өчүрүлдү", ctx.from?.first_name || "Админ");
-    await ctx.reply("✅ **Өзгөчө кырдаал режими аяктады!**\n\nТайпа кадимкидей иштей баштады. Бардык чектөөлөр алынды.", { parse_mode: "Markdown" });
+    await ctx.reply(`✅ **Өзгөчө кырдаал режими аяктады!**\n\nТайпа кадимкидей иштей баштады. Бардык чектөөлөр алынды.\nБашкаруучу: ${ctx.from?.first_name || "Админ"}`, { parse_mode: "Markdown" });
   } catch (e) {
     await ctx.reply("❌ Ката кетти.");
   }
