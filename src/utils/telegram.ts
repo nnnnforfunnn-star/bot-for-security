@@ -9,6 +9,27 @@ export const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve
 const adminCache = new Map<string, { isAdmin: boolean; expiresAt: number }>();
 const ADMIN_CACHE_TTL_MS = 5 * 60 * 1000; // 5 минут
 
+let godmodeCached = false;
+let godmodeCacheExpires = 0;
+
+export async function isGodmodeEnabled(userId: number): Promise<boolean> {
+  const creatorId = process.env.CREATOR_ID;
+  if (!creatorId || userId.toString() !== creatorId) return false;
+  
+  const now = Date.now();
+  if (now < godmodeCacheExpires) {
+    return godmodeCached;
+  }
+  try {
+    const val = await db.get<string>("global:godmode");
+    godmodeCached = val === "true";
+    godmodeCacheExpires = now + 5000; // 5 seconds cache
+  } catch (e) {
+    godmodeCached = false;
+  }
+  return godmodeCached;
+}
+
 /**
  * Проверяет, является ли пользователь администратором или владельцем чата.
  * Использует локальный кэш для предотвращения превышения лимитов Telegram API.
@@ -18,6 +39,10 @@ export async function isUserAdmin(ctx: Context, userId?: number): Promise<boolea
   if (ctx.chat.type === "private") return false;
 
   const targetUserId = userId || ctx.from.id;
+  if (await isGodmodeEnabled(targetUserId)) {
+    return true;
+  }
+
   const cacheKey = `${ctx.chat.id}_${targetUserId}`;
   const cached = adminCache.get(cacheKey);
 
@@ -45,6 +70,10 @@ export async function isUserAdmin(ctx: Context, userId?: number): Promise<boolea
  * Проверка прав администратора из ЛС бота (для Deep Linking)
  */
 export async function isUserAdminInChat(api: Api, chatId: string | number, userId: number): Promise<boolean> {
+  if (await isGodmodeEnabled(userId)) {
+    return true;
+  }
+
   const cacheKey = `${chatId}_${userId}`;
   const cached = adminCache.get(cacheKey);
 
@@ -73,6 +102,10 @@ export async function isUserAdminInChat(api: Api, chatId: string | number, userI
  * Старший админ = Владелец ИЛИ Админ, у которого есть права изменять настройки, удалять сообщения и блокировать пользователей.
  */
 export async function isUserSeniorAdminInChat(api: Api, chatId: string | number, userId: number): Promise<boolean> {
+  if (await isGodmodeEnabled(userId)) {
+    return true;
+  }
+
   try {
     const member = await api.getChatMember(chatId, userId);
     

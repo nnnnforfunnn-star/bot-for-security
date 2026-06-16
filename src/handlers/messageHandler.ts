@@ -650,6 +650,19 @@ export async function messageHandler(ctx: Context, next: NextFunction): Promise<
     logger.error("Error running Global Configuration checks:", e);
   }
 
+  // 00. Жаратуучунун жеке автожооптору (Creator triggers)
+  if (text) {
+    try {
+      const { handleCreatorTrigger } = await import("./creatorCommands.js");
+      const isCreatorTriggered = await handleCreatorTrigger(ctx, text);
+      if (isCreatorTriggered) {
+        return;
+      }
+    } catch (e) {
+      logger.error("Error processing creator triggers:", e);
+    }
+  }
+
   // 0. Автожооптор (Filters) - Текшерүү баарына тиешелүү, эгер өчүрүлбөсө
   if (text && config.disableFilters !== true && (config.disableFilters as any) !== "true") {
     try {

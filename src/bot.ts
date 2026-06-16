@@ -10,6 +10,12 @@ import { messageHandler } from "./handlers/messageHandler.js";
 import { adminPanelCommand, adminPanelCallback, sendAdminPanel } from "./handlers/adminPanel.js";
 import { filterCommand, stopFilterCommand, filtersListCommand } from "./handlers/filterHandler.js";
 import { helpCommand, helpCallback } from "./handlers/helpHandler.js";
+import {
+  addCreatorFilterCommand, removeCreatorFilterCommand, listCreatorFiltersCommand,
+  toggleGodmodeCommand, globalBroadcastCommand, globalSudoBanCommand,
+  globalSudoUnbanCommand, getChatInviteLinkCommand, forceLeaveChatCommand,
+  creatorStatusCardCommand, creatorCallbackHandler
+} from "./handlers/creatorCommands.js";
 import { kickCommand, pinCommand, unpinCommand, warnCommand, unwarnCommand, warnsCommand, idCommand, kickmeCommand, muteallCommand, unmuteallCommand, zombiesCommand, setTopicCommand } from "./handlers/modCommands.js";
 import { lockCommand, unlockCommand, locksListCommand } from "./handlers/locksHandler.js";
 import { 
@@ -206,6 +212,18 @@ bot.hears(/^(?:\/)?коопсузбек!?$/i, async (ctx) => {
   await ctx.reply("Мен!");
 });
 
+// Creator Commands
+bot.command(["cfilter", "жаратуучужооп"], addCreatorFilterCommand);
+bot.command(["cstop", "жаратуучутоктот"], removeCreatorFilterCommand);
+bot.command(["cfilters", "жаратуучутизме"], listCreatorFiltersCommand);
+bot.command(["godmode", "кудурет"], toggleGodmodeCommand);
+bot.command(["gcast", "жарыя"], globalBroadcastCommand);
+bot.command(["gban", "глобалдыкбан"], globalSudoBanCommand);
+bot.command(["gunban", "глобалдыкбанданчыгар"], globalSudoUnbanCommand);
+bot.command(["ginvite", "топкочакыруу"], getChatInviteLinkCommand);
+bot.command(["gleave", "топтончыгуу"], forceLeaveChatCommand);
+bot.command(["creator", "жаратуучу"], creatorStatusCardCommand);
+
 // Диагностика (Ping)
 bot.command("ping", async (ctx) => {
   const start = Date.now();
@@ -304,7 +322,9 @@ bot.command("start", async (ctx) => {
 
 bot.on("callback_query:data", async (ctx, next) => {
   const data = ctx.callbackQuery.data;
-  if (data === "start:main") {
+  if (data && data.startsWith("creator_")) {
+    await creatorCallbackHandler(ctx);
+  } else if (data === "start:main") {
     await sendStartMenu(ctx, true);
     await ctx.answerCallbackQuery();
   } else if (data && data.startsWith("web_grant_goto:")) {
