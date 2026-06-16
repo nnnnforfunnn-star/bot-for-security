@@ -3,6 +3,13 @@ import { db } from "./db.js";
 import { logger } from "./logger.js";
 import { getGroupConfig } from "./configManager.js";
 
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+
 export async function logAction(
   api: Api,
   chatId: number,
@@ -40,7 +47,12 @@ export async function logAction(
       if (action.includes("Warn") || action.includes("Эскертүү")) emoji = "⚠️";
       if (action.includes("Delete") || action.includes("Удаление")) emoji = "🗑";
 
-      const text = `${emoji} **Аракет:** ${action}\n👤 **Колдонуучу:** [${name}](tg://user?id=${userId}) (<code>${userId}</code>)\n📝 **Себеби:** ${reason}\n🛡 **Администратор:** ${adminName}`;
+      const safeAction = escapeHtml(action);
+      const safeName = escapeHtml(name);
+      const safeReason = escapeHtml(reason);
+      const safeAdmin = escapeHtml(adminName);
+
+      const text = `${emoji} <b>Аракет:</b> ${safeAction}\n👤 <b>Колдонуучу:</b> <a href="tg://user?id=${userId}">${safeName}</a> (<code>${userId}</code>)\n📝 <b>Себеби:</b> ${safeReason}\n🛡 <b>Администратор:</b> ${safeAdmin}`;
       await api.sendMessage(logChannelId, text, { parse_mode: "HTML" }).catch(() => {});
     }
   } catch (e) {
