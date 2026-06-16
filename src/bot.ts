@@ -201,6 +201,11 @@ bot.on(["message:text", "message:caption"], async (ctx, next) => {
 // Помощь
 bot.command("help", helpCommand);
 
+// Коопсузбек командасы
+bot.hears(/^(?:\/)?коопсузбек!?$/i, async (ctx) => {
+  await ctx.reply("Мен!");
+});
+
 // Диагностика (Ping)
 bot.command("ping", async (ctx) => {
   const start = Date.now();
@@ -211,7 +216,7 @@ bot.command("ping", async (ctx) => {
   try {
     await db.set("ping:test", "1", 5);
     const test = await db.get("ping:test");
-    if (test !== "1") dbStatus = "Ката ❌";
+    if (String(test) !== "1") dbStatus = "Ката ❌";
   } catch (e) {
     dbStatus = "Иштебей жатат ❌";
   }
@@ -225,9 +230,9 @@ bot.command("ping", async (ctx) => {
     ctx.chat.id,
     msg.message_id,
     `🏓 **Понг!**\n\n` +
-    `⚡️ **Боттун жооп убактысы:** \`${latency} мс\`\n` +
-    `🗄 **Базанын абалы (Redis):** \`${dbStatus}\`\n` +
-    `⏱ **Боттун иштөө убактысы:** \`${hours}саат ${minutes}мүн ${secs}сек\``,
+    `⚡️ **Боттун жооп убактысы:** \`${latency} миллисекунд\`\n` +
+    `🗄 **Базанын абалы:** \`${dbStatus}\`\n` +
+    `⏱ **Боттун иштөө убактысы:** \`${hours} саат ${minutes} мүнөт ${secs} секунд\``,
     { parse_mode: "Markdown" }
   ).catch(() => {});
 });
